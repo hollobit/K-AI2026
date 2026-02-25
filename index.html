@@ -756,7 +756,7 @@ mark.highlight {
   <h1>대한민국 AI 행동계획 2026 대시보드 (NOT OFFICIAL)</h1>
   <div class="subtitle">대통령 직속 국가AI위원회 | 99개 실천과제 / 321개 정책권고 종합 현황</div>
   <div class="search-bar" role="search" aria-label="전역 검색">
-    <input type="text" id="globalSearch" placeholder="과제, 부처, 키워드 검색... (Ctrl+F)"
+    <input type="text" id="globalSearch" placeholder="과제·부처·키워드 검색 — 여러 단어는 공백 또는 쉼표로 구분하면 AND 검색됩니다 (Ctrl+F)"
            onkeyup="handleSearchInput(event)" oninput="showSearchHints()" onfocus="showSearchHints();if(!this.value.trim())showRecentSearches()"
            aria-label="검색어 입력" autocomplete="off">
     <button onclick="globalSearch()" aria-label="검색 실행">검색</button>
@@ -842,7 +842,7 @@ mark.highlight {
         <option value="26Q4">'26년 4분기</option>
         <option value="27+">'27년 이후</option>
       </select>
-      <input type="text" id="filterKeyword" placeholder="키워드 필터..." onkeyup="debouncedApplyFilters()" aria-label="키워드 검색 필터">
+      <input type="text" id="filterKeyword" placeholder="키워드 필터 (공백·쉼표로 AND 검색)..." onkeyup="debouncedApplyFilters()" aria-label="키워드 검색 필터">
       <button class="secondary" onclick="resetFilters()" aria-label="필터 초기화">초기화</button>
     </div>
     <div class="active-filters" id="activeFilters"></div>
@@ -1219,8 +1219,13 @@ function handleSearchInput(e) {
 }
 
 function showSearchHints() {
-  const q = document.getElementById('globalSearch').value.trim().toLowerCase();
+  const fullVal = document.getElementById('globalSearch').value;
   const hintBox = document.getElementById('searchHint');
+  // Use only the last keyword for autocomplete suggestions
+  const parts = fullVal.trim().toLowerCase().split(/[\s,]+/);
+  const q = parts[parts.length - 1];
+  const prefix = parts.length > 1 ? parts.slice(0, -1).join(' ') + ' ' : '';
+
   if (!q || q.length < 1) {
     hintBox.classList.remove('visible');
     return;
@@ -1230,20 +1235,20 @@ function showSearchHints() {
   // Search tasks
   DATA.tasks.tasks.forEach(t => {
     if (t.title.toLowerCase().includes(q)) {
-      hints.push({ type: '과제', text: t.number + ' ' + t.title, id: t.id });
+      hints.push({ type: '과제', text: t.number + ' ' + t.title, id: t.id, completion: prefix + t.title });
     }
   });
   // Search ministries
   DATA.ministries.ministries.forEach(m => {
     if (m.name.toLowerCase().includes(q) || (m.full_name && m.full_name.toLowerCase().includes(q))) {
-      hints.push({ type: '부처', text: m.full_name || m.name });
+      hints.push({ type: '부처', text: m.full_name || m.name, completion: prefix + (m.full_name || m.name) });
     }
   });
   // Search references
   if (DATA.references && DATA.references.references) {
     DATA.references.references.forEach(r => {
       if (r.title && r.title.toLowerCase().includes(q)) {
-        hints.push({ type: '참고', text: '[' + r.id + '] ' + truncate(r.title, 60) });
+        hints.push({ type: '참고', text: '[' + r.id + '] ' + truncate(r.title, 60), completion: prefix + r.title });
       }
     });
   }
@@ -1255,7 +1260,8 @@ function showSearchHints() {
 
   let html = '';
   hints.slice(0, 8).forEach(h => {
-    html += '<div class="search-hint-item" onclick="selectSearchHint(\'' + escapeHtml(h.text.replace(/'/g, "\\'")) + '\', ' + (h.id || 'null') + ')" role="option">';
+    const safeCompletion = (h.completion || h.text).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+    html += '<div class="search-hint-item" onclick="selectSearchHint(\'' + safeCompletion + '\', ' + (h.id || 'null') + ')" role="option">';
     html += '<span class="hint-type">' + h.type + '</span>';
     html += highlightText(h.text, q);
     html += '</div>';
