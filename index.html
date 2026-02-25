@@ -37,7 +37,7 @@ body { font-family: var(--font); background: var(--bg); color: var(--dark); line
   color: white; padding: 20px 24px;
 }
 .header h1 { font-size: 1.6rem; font-weight: 700; }
-.header .subtitle { font-size: 0.9rem; opacity: 0.85; margin-top: 4px; }
+.header .subtitle { font-size: 0.9rem; opacity: 0.85; margin-top: 4px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
 
 /* Search Bar */
 .search-bar { display: flex; gap: 8px; margin-top: 12px; position: relative; }
@@ -166,7 +166,16 @@ mark.highlight {
   background: #fff3cd; border: 1px solid #ffc107; border-radius: var(--radius);
   padding: 16px; margin-bottom: 16px;
 }
-.alert-panel h4 { color: #856404; margin-bottom: 8px; font-size: 0.95rem; }
+.alert-panel-header { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:6px; margin-bottom:8px; }
+.alert-panel h4 { color: #856404; font-size: 0.95rem; margin:0; }
+.alert-ctrl-btn { background:rgba(133,100,4,0.12); border:1px solid rgba(133,100,4,0.3); color:#856404; font-size:0.78rem; font-weight:600; padding:3px 10px; border-radius:5px; cursor:pointer; font-family:inherit; transition:background .15s; }
+.alert-ctrl-btn:hover { background:rgba(133,100,4,0.22); }
+.alert-ctrl-btn.active { background:rgba(133,100,4,0.25); border-color:#856404; }
+.alert-rec-item { font-size:0.83rem; color:var(--dark); padding:8px 0; border-bottom:1px solid #ffeeba; }
+.alert-rec-item:last-child { border-bottom:none; }
+.alert-rec-item .arc-head { display:flex; align-items:center; gap:6px; flex-wrap:wrap; margin-bottom:4px; cursor:pointer; }
+.alert-rec-item .arc-head:hover .arc-title { text-decoration:underline; }
+.alert-rec-item .arc-content { background:rgba(133,100,4,0.07); border-left:3px solid #ffc107; padding:6px 10px; border-radius:4px; font-size:0.8rem; color:#4a3800; line-height:1.55; }
 .alert-item {
   font-size: 0.85rem; color: var(--dark); padding: 6px 0;
   border-bottom: 1px solid #ffeeba; cursor: pointer;
@@ -389,6 +398,20 @@ mark.highlight {
   display: grid; grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
   gap: 12px;
 }
+.ref-search-bar { background: white; border-radius: var(--radius); padding: 14px 16px; box-shadow: var(--shadow); margin-bottom: 16px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.ref-search-bar input { flex: 1; min-width: 200px; padding: 8px 12px; border: 1px solid var(--border); border-radius: 6px; font-family: var(--font); font-size: 0.85rem; }
+.ref-search-bar .ref-search-count { font-size: 0.82rem; color: var(--gray); }
+.ref-search-results-box { background: white; border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow); margin-top: 24px; }
+.ref-search-results-box h3 { font-size: 1rem; font-weight: 700; color: var(--dark); margin-bottom: 14px; padding-bottom: 8px; border-bottom: 2px solid var(--border); display: flex; align-items: center; gap: 8px; }
+.ref-search-section-hd { font-size: 0.84rem; font-weight: 700; color: var(--primary); background: #e8f0fe; padding: 6px 12px; border-radius: 6px; margin: 14px 0 8px; }
+.ref-search-fn-hd { font-size: 0.84rem; font-weight: 700; color: #6a1b9a; background: #f3e5f5; padding: 6px 12px; border-radius: 6px; margin: 14px 0 8px; }
+.ref-search-item { border: 1px solid var(--border); border-left: 3px solid var(--info); border-radius: 6px; padding: 12px 14px; margin-bottom: 8px; background: #fafafa; }
+.ref-search-item.fn-result { border-left-color: var(--gray); }
+.ref-search-item .rsi-id { font-size: 0.76rem; font-weight: 700; color: var(--gray); margin-bottom: 4px; }
+.ref-search-item .rsi-title { font-size: 0.9rem; font-weight: 700; color: var(--dark); margin-bottom: 5px; line-height: 1.4; }
+.ref-search-item .rsi-body { font-size: 0.83rem; color: #444; line-height: 1.65; }
+.rsi-link { display: inline-block; margin-top: 6px; font-size: 0.78rem; color: var(--primary); cursor: pointer; text-decoration: underline; }
+mark.hl { background: #fff176; padding: 0 1px; border-radius: 2px; font-style: normal; }
 .ref-card {
   background: white; border-radius: var(--radius); padding: 18px;
   box-shadow: var(--shadow); border-left: 3px solid var(--info);
@@ -915,7 +938,23 @@ mark.highlight {
 <!-- Header -->
 <header class="header" role="banner">
   <h1>대한민국 AI 행동계획 2026 대시보드 (UNOFFICIAL)</h1>
-  <div class="subtitle">대통령 직속 국가AI위원회 | 99개 실천과제 / 321개 정책권고 종합 현황</div>
+  <div class="subtitle">
+    <span>대통령 직속 국가AI위원회 | 99개 실천과제 / 321개 정책권고 종합 현황</span>
+    <span style="display:inline-flex;gap:8px;align-items:center;flex-shrink:0">
+      <a href="https://github.com/hollobit/K-AI2026" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;gap:5px;background:rgba(255,255,255,0.15);color:white;padding:4px 10px;border-radius:5px;font-size:0.78rem;font-weight:600;text-decoration:none;border:1px solid rgba(255,255,255,0.35)">
+        <svg viewBox="0 0 16 16" width="13" height="13" fill="white" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+        GitHub
+      </a>
+      <a href="https://github.com/hollobit/K-AI2026/issues" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;gap:5px;background:rgba(255,255,255,0.15);color:white;padding:4px 10px;border-radius:5px;font-size:0.78rem;font-weight:600;text-decoration:none;border:1px solid rgba(255,255,255,0.35)">
+        <svg viewBox="0 0 16 16" width="13" height="13" fill="white" aria-hidden="true"><path d="M8 9.5a1.5 1.5 0 100-3 1.5 1.5 0 000 3z"/><path fill-rule="evenodd" d="M8 0a8 8 0 100 16A8 8 0 008 0zM1.5 8a6.5 6.5 0 1113 0 6.5 6.5 0 01-13 0z"/></svg>
+        이슈 · 수정 제안
+      </a>
+      <a href="sankey.html" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;gap:5px;background:rgba(255,200,60,0.18);color:#ffe87c;padding:4px 10px;border-radius:5px;font-size:0.78rem;font-weight:600;text-decoration:none;border:1px solid rgba(255,210,80,0.4)">
+        <svg viewBox="0 0 16 16" width="13" height="13" fill="currentColor" aria-hidden="true"><path d="M1 2h3v2H1zM6 2h3v2H6zM11 2h3v2h-3zM1 7h3v2H1zM6 7h3v2H6zM11 7h3v2h-3zM1 12h3v2H1zM11 12h3v2h-3z"/><path d="M4 3h2v1H4zm5 0h2v1H9zm-5 5h2v1H4zm5 0h2v1H9zM4 13h7v1H4z"/></svg>
+        Sankey 흐름도
+      </a>
+    </span>
+  </div>
   <div class="search-bar" role="search" aria-label="전역 검색">
     <input type="text" id="globalSearch" placeholder="과제·부처·키워드 검색 — 여러 단어는 공백 또는 쉼표로 구분하면 AND 검색됩니다 (Ctrl+F)"
            onkeyup="handleSearchInput(event)" oninput="showSearchHints()" onfocus="showSearchHints();if(!this.value.trim())showRecentSearches()"
@@ -956,10 +995,17 @@ mark.highlight {
 <div class="view active" id="view-overview" role="tabpanel" aria-label="종합 현황판">
   <div style="background:#fff8e1;border:1px solid #ffe082;border-left:4px solid #f59e0b;border-radius:6px;padding:12px 16px;margin-bottom:20px;font-size:0.88rem;color:#5a4000;line-height:1.6">
     <strong>&#x26A0;&#xFE0F; 안내</strong>: 이 페이지는 행동계획에 대한 이해를 돕기 위해 개인이 만든 분석용 페이지일 뿐 공식 페이지가 아닙니다. 분석 결과는 공개된 PDF 문서를 기초로 한 내용이라 hallucination이 있을 수 있습니다.
+
   </div>
   <div class="kpi-grid" id="kpiGrid"></div>
   <div class="alert-panel" id="alertPanel" style="display:none">
-    <h4>긴급/기한 임박 과제</h4>
+    <div class="alert-panel-header">
+      <h4 id="alertPanelTitle">기한초과 · 기한 임박 과제</h4>
+      <div style="display:flex;gap:6px;align-items:center">
+        <button class="alert-ctrl-btn" id="alertRecViewBtn" onclick="toggleAlertRecView()">📋 정책권고 목록</button>
+        <button class="alert-ctrl-btn" id="alertCollapseBtn" onclick="toggleAlertCollapse()">▲ 접기</button>
+      </div>
+    </div>
     <div id="alertItems"></div>
   </div>
   <div class="chart-grid" id="chartGrid">
@@ -1020,6 +1066,7 @@ mark.highlight {
   </div>
   <div class="task-grid" id="taskGrid"></div>
   <ul class="rec-list-view" id="recListView" style="display:none"></ul>
+  <div id="refSearchResults" style="display:none"></div>
 </div>
 
 <!-- View 3: Ministries -->
@@ -1051,6 +1098,11 @@ mark.highlight {
 <!-- View 5: References -->
 <div class="view" id="view-references" role="tabpanel" aria-label="참고자료 및 각주">
   <div class="section-title">참고자료 및 각주</div>
+  <div class="ref-search-bar">
+    <input type="text" id="refSearchInput" placeholder="참고자료·각주 내용 검색..." oninput="filterReferences()" autocomplete="off">
+    <span class="ref-search-count" id="refSearchCount"></span>
+    <button onclick="document.getElementById('refSearchInput').value='';filterReferences()" style="padding:6px 12px;border:1px solid var(--border);border-radius:6px;background:white;cursor:pointer;font-size:0.82rem">초기화</button>
+  </div>
   <div class="ref-grid" id="refGrid"></div>
 </div>
 
@@ -1366,16 +1418,19 @@ function debounce(fn, delay) {
 
 function classifyDeadline(deadline) {
   if (!deadline) return 'none';
-  const d = deadline.toUpperCase();
-  if (d === '25Q4' || d === '26Q1') return 'critical';
-  if (d === '26Q2') return 'urgent';
-  if (d === '26Q3' || d === '26Q4') return 'caution';
+  const deadlineDate = DEADLINE_DATES[deadline.toUpperCase()];
+  if (!deadlineDate) return 'safe';
+  const daysLeft = Math.ceil((deadlineDate - RISK_TODAY) / (1000 * 60 * 60 * 24));
+  if (daysLeft < 0)    return 'overdue';
+  if (daysLeft <= 34)  return 'critical';
+  if (daysLeft <= 120) return 'urgent';
+  if (daysLeft <= 240) return 'caution';
   return 'safe';
 }
 
 function getTaskDeadlineStatus(task) {
   let worst = 'safe';
-  const priority = { critical: 3, urgent: 2, caution: 1, safe: 0, none: 0 };
+  const priority = { overdue: 4, critical: 3, urgent: 2, caution: 1, safe: 0, none: 0 };
   (task.recommendations || []).forEach(r => {
     const level = classifyDeadline(r.deadline);
     if (priority[level] > priority[worst]) worst = level;
@@ -1405,6 +1460,14 @@ function switchView(viewId) {
   if (viewId === 'overview' && !STATE.chartsInitialized) {
     initCharts();
     STATE.chartsInitialized = true;
+  }
+  // Sync reference search when navigating to references tab
+  if (viewId === 'references') {
+    const refInput = document.getElementById('refSearchInput');
+    if (refInput && STATE.searchQuery && !refInput.value) {
+      refInput.value = STATE.searchQuery;
+    }
+    renderReferences(refInput ? refInput.value.trim().toLowerCase() : '');
   }
 }
 
@@ -1488,6 +1551,69 @@ function selectSearchHint(text, taskId) {
   }
 }
 
+function openRefTab() {
+  const kw = document.getElementById('filterKeyword') ? document.getElementById('filterKeyword').value : '';
+  switchView('references');
+  setTimeout(function() {
+    var inp = document.getElementById('refSearchInput');
+    if (inp && kw) inp.value = kw;
+    filterReferences();
+  }, 80);
+}
+
+function renderRefSearchResults(kwList) {
+  const el = document.getElementById('refSearchResults');
+  if (!el) return;
+  if (!kwList || kwList.length === 0) { el.style.display = 'none'; return; }
+
+  const matchRefs = (DATA.references.references || []).filter(r => {
+    const hay = ((r.title || '') + ' ' + (r.content || '')).toLowerCase();
+    return kwList.every(k => hay.includes(k));
+  });
+  const matchFns = (DATA.references.footnotes || []).filter(f => {
+    const hay = (f.content || '').toLowerCase();
+    return kwList.every(k => hay.includes(k));
+  });
+
+  if (matchRefs.length === 0 && matchFns.length === 0) {
+    el.style.display = 'none';
+    return;
+  }
+
+  const hl = (text) => highlightTextMulti(text, kwList);
+  let html = '<div class="ref-search-results-box">';
+  html += '<h3>📎 참고자료 · 각주 검색결과 <span style="font-size:0.82rem;font-weight:400;color:var(--gray)">참고자료 ' + matchRefs.length + '건 · 각주 ' + matchFns.length + '건</span></h3>';
+
+  if (matchRefs.length > 0) {
+    html += '<div class="ref-search-section-hd">📄 참고자료 (' + matchRefs.length + '건)</div>';
+    matchRefs.forEach(ref => {
+      html += '<div class="ref-search-item">';
+      html += '<div class="rsi-id">참고자료 #' + ref.id + '</div>';
+      html += '<div class="rsi-title">' + hl(ref.title || '') + '</div>';
+      if (ref.content && ref.content !== ref.title) {
+        const snippet = ref.content.length > 400 ? ref.content.substring(0, 400) + '...' : ref.content;
+        html += '<div class="rsi-body">' + hl(snippet) + '</div>';
+      }
+      html += '<span class="rsi-link" onclick="openRefTab()">참고자료 탭에서 전체 보기 →</span>';
+      html += '</div>';
+    });
+  }
+
+  if (matchFns.length > 0) {
+    html += '<div class="ref-search-fn-hd">📝 각주 (' + matchFns.length + '건)</div>';
+    matchFns.forEach(fn => {
+      html += '<div class="ref-search-item fn-result">';
+      html += '<div class="rsi-id">각주 ' + fn.id + '</div>';
+      html += '<div class="rsi-body">' + hl(fn.content || '') + '</div>';
+      html += '</div>';
+    });
+  }
+
+  html += '</div>';
+  el.innerHTML = html;
+  el.style.display = 'block';
+}
+
 function globalSearch() {
   const q = document.getElementById('globalSearch').value.trim().toLowerCase();
   STATE.searchQuery = q;
@@ -1507,10 +1633,23 @@ function globalSearch() {
   document.getElementById('filterKeyword').value = q;
   applyFilters();
 
-  // Show result count
+  // Show result count (tasks + refs + footnotes)
+  const q2 = STATE.searchQuery;
+  const kwList2 = parseKeywords(q2);
   const count = STATE.filteredTasks.length;
+  const matchRefs2 = (DATA.references.references || []).filter(r => {
+    const hay = ((r.title || '') + ' ' + (r.content || '')).toLowerCase();
+    return kwList2.every(k => hay.includes(k));
+  });
+  const matchFns2 = (DATA.references.footnotes || []).filter(f => {
+    const hay = (f.content || '').toLowerCase();
+    return kwList2.every(k => hay.includes(k));
+  });
   const countEl = document.getElementById('searchResultCount');
-  countEl.textContent = count + '건';
+  let countText = '과제 ' + count + '건';
+  if (matchRefs2.length > 0) countText += ' · 참고자료 ' + matchRefs2.length + '건';
+  if (matchFns2.length > 0) countText += ' · 각주 ' + matchFns2.length + '건';
+  countEl.textContent = countText;
   countEl.style.display = 'inline-block';
 }
 
@@ -1622,6 +1761,14 @@ function applyFilters() {
   STATE.filteredTasks = filtered;
   renderTaskGrid(filtered);
   renderActiveFilters();
+
+  // Also search references/footnotes when keyword is present
+  if (keyword) {
+    renderRefSearchResults(parseKeywords(keyword));
+  } else {
+    const el = document.getElementById('refSearchResults');
+    if (el) el.style.display = 'none';
+  }
 }
 
 function renderActiveFilters() {
@@ -1690,7 +1837,8 @@ function openTaskModal(taskId) {
   html += '<span class="badge badge-axis' + task.policy_axis_id + '">' + escapeHtml(task.policy_axis_name) + '</span> ';
   html += '<span class="badge badge-area">' + escapeHtml(task.strategic_area_name) + '</span>';
   const dlStatus = getTaskDeadlineStatus(task);
-  if (dlStatus === 'critical') html += ' <span class="badge badge-overdue">기한 임박</span>';
+  if (dlStatus === 'overdue') html += ' <span class="badge badge-overdue">기한초과</span>';
+  else if (dlStatus === 'critical') html += ' <span class="badge badge-overdue">기한 임박</span>';
   else if (dlStatus === 'urgent') html += ' <span class="badge badge-urgent-deadline">긴급</span>';
   html += '</div>';
 
@@ -1726,7 +1874,7 @@ function openTaskModal(taskId) {
     html += '<ul class="rec-list">';
     displayRecs.forEach((r, i) => {
       const riskLevel = classifyDeadline(r.deadline);
-      const borderStyle = riskLevel === 'critical' ? 'border-left-color:#dc3545' :
+      const borderStyle = (riskLevel === 'overdue' || riskLevel === 'critical') ? 'border-left-color:#dc3545' :
                           riskLevel === 'urgent' ? 'border-left-color:#fd7e14' : '';
       const bmKey = taskId + '_' + r.seq;
       const bmActive = STATE.bookmarks.has(String(bmKey)) ? ' bm-active' : '';
@@ -1736,7 +1884,7 @@ function openTaskModal(taskId) {
       html += '<span><strong>권고 ' + r.seq + '</strong></span>';
       html += '<span class="badge badge-ministry">' + escapeHtml(r.ministry) + '</span>';
       if (r.deadline_label) {
-        const dlBadgeClass = riskLevel === 'critical' ? 'badge-overdue' :
+        const dlBadgeClass = (riskLevel === 'overdue' || riskLevel === 'critical') ? 'badge-overdue' :
                              riskLevel === 'urgent' ? 'badge-urgent-deadline' : 'badge-deadline';
         html += '<span class="badge ' + dlBadgeClass + '">' + escapeHtml(r.deadline_label) + '</span>';
       }
@@ -1894,31 +2042,43 @@ function renderOverview() {
   `;
   document.getElementById('kpiGrid').innerHTML = kpiHtml;
 
-  // Urgent alerts
+  // Urgent alerts — real-time calculation using classifyDeadline
   const urgentItems = [];
-  DATA.ministries.ministries.forEach(m => {
-    m.actions.forEach(a => {
-      if (a.is_urgent || a.is_overdue) {
-        urgentItems.push(a);
+  DATA.tasks.tasks.forEach(t => {
+    t.recommendations.forEach(r => {
+      const level = classifyDeadline(r.deadline);
+      if (level === 'overdue' || level === 'critical') {
+        urgentItems.push({
+          task_id: t.id,
+          task_number: t.number,
+          task_title: t.title,
+          ministry: r.ministry,
+          deadline_label: r.deadline_label || r.deadline || '',
+          level: level
+        });
       }
     });
   });
+  urgentItems.sort((a, b) => {
+    if (a.level !== b.level) return a.level === 'overdue' ? -1 : 1;
+    return a.task_id - b.task_id;
+  });
+  const alertOverdue  = urgentItems.filter(x => x.level === 'overdue').length;
+  const alertCritical = urgentItems.filter(x => x.level === 'critical').length;
+  const titleEl = document.getElementById('alertPanelTitle');
+  if (titleEl) {
+    const parts = [];
+    if (alertOverdue  > 0) parts.push('기한초과 ' + alertOverdue + '건');
+    if (alertCritical > 0) parts.push('기한 임박 ' + alertCritical + '건');
+    titleEl.textContent = (parts.length ? parts.join(' · ') : '해당 없음') + ' (권고 기준)';
+  }
   if (urgentItems.length > 0) {
     document.getElementById('alertPanel').style.display = 'block';
-    let alertHtml = '';
-    urgentItems.slice(0, 15).forEach(a => {
-      const label = a.is_overdue ? '<span style="color:var(--danger);font-weight:700">[기한초과]</span>' :
-                                   '<span style="color:var(--warning);font-weight:700">[긴급]</span>';
-      alertHtml += '<div class="alert-item" onclick="openTaskModal(' + a.task_id + ')" tabindex="0" role="button">'
-        + label + ' ' + escapeHtml(a.task_title) + ' - ' + escapeHtml(a.content.substring(0, 60)) + '...</div>';
-    });
-    if (urgentItems.length > 15) {
-      alertHtml += '<div class="alert-item" style="color:var(--accent);font-weight:600" onclick="switchView(\'risk\')">'
-        + '... 외 ' + (urgentItems.length - 15) + '건 더 보기 (위험 관리 탭)</div>';
-    }
-    document.getElementById('alertItems').innerHTML = alertHtml;
+    STATE._alertItems = urgentItems;
+    STATE._alertCollapsed = false;
+    STATE._alertRecView = false;
+    renderAlertItems();
   }
-
   // Axis overview
   const axisMap = {};
   tasks.forEach(t => {
@@ -1979,7 +2139,7 @@ function renderTaskGrid(tasks) {
     const recCount = t.recommendations ? t.recommendations.length : 0;
     const ministries = [...new Set(t.recommendations.map(r => r.ministry))];
     const dlStatus = getTaskDeadlineStatus(t);
-    const dlClass = dlStatus === 'critical' ? ' deadline-overdue' : dlStatus === 'urgent' ? ' deadline-urgent' : '';
+    const dlClass = (dlStatus === 'overdue' || dlStatus === 'critical') ? ' deadline-overdue' : dlStatus === 'urgent' ? ' deadline-urgent' : '';
 
     html += '<div class="task-card axis-' + t.policy_axis_id + dlClass + '" onclick="openTaskModal(' + t.id + ')" tabindex="0" role="button" aria-label="과제 ' + escapeHtml(t.title) + '">';
     html += '<div class="task-number">과제 ' + t.number + ' | ' + escapeHtml(t.strategic_area_name) + '</div>';
@@ -1988,7 +2148,8 @@ function renderTaskGrid(tasks) {
     html += '<div class="badges">';
     html += '<span class="badge badge-axis' + t.policy_axis_id + '">' + escapeHtml(t.policy_axis_name) + '</span>';
     html += '<span class="badge badge-count">' + recCount + '건</span>';
-    if (dlStatus === 'critical') html += '<span class="badge badge-overdue">기한임박</span>';
+    if (dlStatus === 'overdue') html += '<span class="badge badge-overdue">기한초과</span>';
+    else if (dlStatus === 'critical') html += '<span class="badge badge-overdue">기한 임박</span>';
     else if (dlStatus === 'urgent') html += '<span class="badge badge-urgent-deadline">긴급</span>';
     html += '</div></div>';
   });
@@ -2045,7 +2206,7 @@ function renderRecListView(tasks) {
     html += '<span><strong>권고 ' + r.seq + '</strong></span>';
     html += '<span class="badge badge-ministry">' + escapeHtml(r.ministry) + '</span>';
     if (r.deadline_label) {
-      const dlBadgeClass = riskLevel === 'critical' ? 'badge-overdue' : riskLevel === 'urgent' ? 'badge-urgent-deadline' : 'badge-deadline';
+      const dlBadgeClass = (riskLevel === 'overdue' || riskLevel === 'critical') ? 'badge-overdue' : riskLevel === 'urgent' ? 'badge-urgent-deadline' : 'badge-deadline';
       html += '<span class="badge ' + dlBadgeClass + '">' + escapeHtml(r.deadline_label) + '</span>';
     }
     html += '<span class="badge badge-axis' + t.policy_axis_id + '">' + escapeHtml(t.policy_axis_name) + '</span>';
@@ -2060,6 +2221,82 @@ function renderRecListView(tasks) {
     html += '</li>';
   });
   listView.innerHTML = html;
+}
+
+function renderAlertItems() {
+  const urgentItems = STATE._alertItems || [];
+  const collapsed = STATE._alertCollapsed;
+  const recView = STATE._alertRecView;
+  const collapseBtn = document.getElementById('alertCollapseBtn');
+  const recBtn = document.getElementById('alertRecViewBtn');
+  const itemsEl = document.getElementById('alertItems');
+  if (!itemsEl) return;
+  if (collapseBtn) collapseBtn.textContent = collapsed ? '▼ 펼치기' : '▲ 접기';
+  if (recBtn) recBtn.classList.toggle('active', recView);
+  if (collapsed) { itemsEl.style.display = 'none'; return; }
+  itemsEl.style.display = '';
+  let alertHtml = '';
+  if (!recView) {
+    // Compact list view
+    urgentItems.slice(0, 20).forEach(item => {
+      const label = item.level === 'overdue'
+        ? '<span style="background:#ffcdd2;color:#b71c1c;font-weight:700;padding:1px 6px;border-radius:4px;font-size:0.8rem;margin-right:4px">[기한초과]</span>'
+        : '<span style="background:#fff3e0;color:#e65100;font-weight:700;padding:1px 6px;border-radius:4px;font-size:0.8rem;margin-right:4px">[기한 임박]</span>';
+      const dlBadge = item.deadline_label
+        ? '<span style="font-size:0.78rem;color:var(--gray);margin-right:6px">' + escapeHtml(item.deadline_label) + '</span>'
+        : '';
+      const ministry = '<span style="font-size:0.8rem;color:var(--gray)"> — ' + escapeHtml(item.ministry) + '</span>';
+      alertHtml += '<div class="alert-item" onclick="openTaskModal(' + item.task_id + ')" tabindex="0" role="button">'
+        + label + dlBadge + escapeHtml(item.task_number) + ' ' + escapeHtml(item.task_title) + ministry + '</div>';
+    });
+    if (urgentItems.length > 20) {
+      alertHtml += '<div class="alert-item" style="color:var(--accent);font-weight:600" onclick="switchView(\'risk\')">'
+        + '... 외 ' + (urgentItems.length - 20) + '건 더 보기 (위험 관리 탭)</div>';
+    }
+  } else {
+    // Recommendation content view — full recommendation text grouped by task
+    const taskMap = {};
+    urgentItems.forEach(item => {
+      if (!taskMap[item.task_id]) taskMap[item.task_id] = { task: item, recs: [] };
+    });
+    DATA.tasks.tasks.forEach(t => {
+      if (!taskMap[t.id]) return;
+      t.recommendations.forEach(r => {
+        const level = classifyDeadline(r.deadline);
+        if (level === 'overdue' || level === 'critical') {
+          taskMap[t.id].recs.push(r);
+        }
+      });
+    });
+    Object.values(taskMap).forEach(({ task, recs }) => {
+      const levelBadge = task.level === 'overdue'
+        ? '<span style="background:#ffcdd2;color:#b71c1c;font-weight:700;padding:1px 5px;border-radius:4px;font-size:0.77rem">[기한초과]</span>'
+        : '<span style="background:#fff3e0;color:#e65100;font-weight:700;padding:1px 5px;border-radius:4px;font-size:0.77rem">[기한 임박]</span>';
+      alertHtml += '<div class="alert-rec-item">';
+      alertHtml += '<div class="arc-head" onclick="openTaskModal(' + task.task_id + ')">'
+        + levelBadge
+        + '<span class="arc-title" style="font-weight:600">' + escapeHtml(task.task_number) + ' ' + escapeHtml(task.task_title) + '</span>'
+        + '</div>';
+      recs.forEach(r => {
+        const dl = r.deadline_label ? escapeHtml(r.deadline_label) : escapeHtml(r.deadline || '');
+        alertHtml += '<div class="arc-content"><strong>' + escapeHtml(r.ministry) + '</strong>'
+          + (dl ? ' <span style="font-size:0.77rem;color:#856404">(' + dl + ')</span>' : '')
+          + '<br>' + escapeHtml(r.content) + '</div>';
+      });
+      alertHtml += '</div>';
+    });
+  }
+  itemsEl.innerHTML = alertHtml;
+}
+
+function toggleAlertCollapse() {
+  STATE._alertCollapsed = !STATE._alertCollapsed;
+  renderAlertItems();
+}
+
+function toggleAlertRecView() {
+  STATE._alertRecView = !STATE._alertRecView;
+  renderAlertItems();
 }
 
 function setTaskViewMode(mode) {
@@ -2252,7 +2489,7 @@ function selectMinistry(name) {
   DATA.tasks.tasks.forEach(t => { taskNumMap[t.id] = t.number; });
   m.actions.forEach((a, i) => {
     const riskLevel = classifyDeadline(a.deadline);
-    const borderStyle = riskLevel === 'critical' ? 'border-left-color:#dc3545' :
+    const borderStyle = (riskLevel === 'overdue' || riskLevel === 'critical') ? 'border-left-color:#dc3545' :
                         riskLevel === 'urgent' ? 'border-left-color:#fd7e14' : '';
     html += '<li class="rec-item" onclick="openTaskModal(' + a.task_id + ')" style="cursor:pointer;' + borderStyle + '" tabindex="0" role="button">';
     const minTask = DATA.tasks.tasks.find(t => t.id === a.task_id);
@@ -2266,7 +2503,7 @@ function selectMinistry(name) {
     const tNum = taskNumMap[a.task_id] ? escapeHtml(taskNumMap[a.task_id]) + ' ' : '';
     html += '<span>과제 ' + tNum + escapeHtml(a.task_title) + '</span>';
     if (a.deadline_label) {
-      const dlBadgeClass = riskLevel === 'critical' ? 'badge-overdue' : riskLevel === 'urgent' ? 'badge-urgent-deadline' : 'badge-deadline';
+      const dlBadgeClass = (riskLevel === 'overdue' || riskLevel === 'critical') ? 'badge-overdue' : riskLevel === 'urgent' ? 'badge-urgent-deadline' : 'badge-deadline';
       html += '<span class="badge ' + dlBadgeClass + '">' + escapeHtml(a.deadline_label) + '</span>';
     }
     if (a.is_urgent) html += '<span style="color:var(--warning);font-weight:700">[긴급]</span>';
@@ -2350,19 +2587,33 @@ function renderTimeline() {
 // ============================================================
 // Rendering: References
 // ============================================================
-function renderReferences() {
+function renderReferences(q) {
   const grid = document.getElementById('refGrid');
+  const kwList = q ? parseKeywords(q) : [];
   let html = '';
+  let refCount = 0, fnCount = 0;
+
+  const hl = (text) => kwList.length > 0 ? highlightTextMulti(text, kwList) : escapeHtml(text);
 
   if (DATA.references && DATA.references.references) {
-    DATA.references.references.forEach(ref => {
+    const refs = kwList.length > 0
+      ? DATA.references.references.filter(r => {
+          const hay = ((r.title || '') + ' ' + (r.content || '')).toLowerCase();
+          return kwList.every(k => hay.includes(k));
+        })
+      : DATA.references.references;
+    refCount = refs.length;
+    refs.forEach(ref => {
       html += '<div class="ref-card">';
       html += '<div class="ref-id">참고자료 #' + ref.id + '</div>';
-      html += '<div class="ref-title">' + escapeHtml(truncate(ref.title, 120)) + '</div>';
+      html += '<div class="ref-title">' + hl(truncate(ref.title, 120)) + '</div>';
       if (ref.content && ref.content !== ref.title) {
         const contentId = 'ref-content-' + ref.id;
-        html += '<div class="ref-content" id="' + contentId + '">' + escapeHtml(ref.content) + '</div>';
-        html += '<div class="ref-toggle" onclick="toggleRefContent(\'' + contentId + '\', this)" tabindex="0" role="button">더 보기</div>';
+        const expanded = kwList.length > 0 ? ' expanded' : '';
+        html += '<div class="ref-content' + expanded + '" id="' + contentId + '">' + hl(ref.content) + '</div>';
+        if (!expanded) {
+          html += '<div class="ref-toggle" onclick="toggleRefContent(\'' + contentId + '\', this)" tabindex="0" role="button">더 보기</div>';
+        }
       }
       html += '</div>';
     });
@@ -2370,16 +2621,43 @@ function renderReferences() {
 
   // Footnotes
   if (DATA.references && DATA.references.footnotes && DATA.references.footnotes.length > 0) {
+    const fns = kwList.length > 0
+      ? DATA.references.footnotes.filter(f => {
+          const hay = (f.content || '').toLowerCase();
+          return kwList.every(k => hay.includes(k));
+        })
+      : DATA.references.footnotes;
+    fnCount = fns.length;
     html += '<div style="grid-column:1/-1"><div class="section-title" style="margin-top:24px">각주</div></div>';
-    DATA.references.footnotes.forEach(fn => {
+    if (fns.length === 0 && kwList.length > 0) {
+      html += '<div style="grid-column:1/-1;color:var(--gray);padding:12px">검색어에 일치하는 각주가 없습니다.</div>';
+    }
+    fns.forEach(fn => {
       html += '<div class="ref-card" style="border-left-color:var(--gray)">';
       html += '<div class="ref-id">각주 ' + fn.id + '</div>';
-      html += '<div class="ref-content" style="max-height:none">' + escapeHtml(fn.content || fn.text || '') + '</div>';
+      html += '<div class="ref-content" style="max-height:none">' + hl(fn.content || fn.text || '') + '</div>';
       html += '</div>';
     });
   }
 
   grid.innerHTML = html;
+
+  // Update search count
+  const countEl = document.getElementById('refSearchCount');
+  if (countEl) {
+    if (kwList.length > 0) {
+      countEl.textContent = '참고자료 ' + refCount + '건 · 각주 ' + fnCount + '건 일치';
+      countEl.style.color = (refCount + fnCount > 0) ? 'var(--primary)' : 'var(--danger)';
+    } else {
+      countEl.textContent = '참고자료 ' + (DATA.references.references || []).length + '건 · 각주 ' + (DATA.references.footnotes || []).length + '건';
+      countEl.style.color = 'var(--gray)';
+    }
+  }
+}
+
+function filterReferences() {
+  const q = document.getElementById('refSearchInput').value.trim().toLowerCase();
+  renderReferences(q);
 }
 
 function toggleRefContent(id, el) {
@@ -4151,7 +4429,84 @@ function init() {
   initCharts();
 }
 
-document.addEventListener('DOMContentLoaded', init);
+document.addEventListener('DOMContentLoaded', function() {
+  init();
+
+  // Helper: find task by id (number) or by circled-number string (①②…)
+  function findTaskByParam(param) {
+    var decoded = decodeURIComponent(param).trim();
+    var num = parseInt(decoded, 10);
+    if (!isNaN(num)) {
+      return DATA.tasks.tasks.find(function(x) { return x.id === num; });
+    }
+    // match by t.number string (e.g. "①")
+    return DATA.tasks.tasks.find(function(x) { return x.number === decoded; });
+  }
+
+  // Query parameter handler: ?task=N | ?axis=N | ?area=N
+  var params = new URLSearchParams(window.location.search);
+  var taskParam = params.get('task');
+  var axisParam = params.get('axis');
+  var areaParam = params.get('area');
+
+  if (taskParam) {
+    var found = findTaskByParam(taskParam);
+    if (found) {
+      switchView('tasks');
+      setTimeout(function() { openTaskModal(found.id); }, 300);
+    }
+    return;
+  }
+
+  if (axisParam) {
+    switchView('tasks');
+    setTimeout(function() {
+      var sel = document.getElementById('filterAxis');
+      if (sel) { sel.value = String(parseInt(axisParam, 10)); applyFilters(); }
+      var fp = document.querySelector('.filter-panel');
+      if (fp) fp.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 200);
+    return;
+  }
+
+  if (areaParam) {
+    switchView('tasks');
+    setTimeout(function() {
+      var sel = document.getElementById('filterArea');
+      if (sel) { sel.value = String(parseInt(areaParam, 10)); applyFilters(); }
+      var fp = document.querySelector('.filter-panel');
+      if (fp) fp.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 200);
+    return;
+  }
+
+  // Hash handler (legacy deep links)
+  var hash = window.location.hash;
+  if (hash) {
+    var h = hash.slice(1);
+    if (h === 'overview') {
+      switchView('overview');
+    } else if (h.startsWith('tasks_area_')) {
+      var areaId = parseInt(h.replace('tasks_area_',''), 10);
+      switchView('tasks');
+      setTimeout(function() {
+        var sel = document.getElementById('filterArea');
+        if (sel) { sel.value = String(areaId); applyFilters(); }
+      }, 200);
+    } else if (h.startsWith('task_')) {
+      var taskId = parseInt(h.replace('task_',''), 10);
+      switchView('tasks');
+      setTimeout(function() {
+        var t = DATA.tasks.tasks.find(function(x){ return x.id === taskId; });
+        if (t) openTaskModal(t.id);
+      }, 300);
+    } else if (h.startsWith('ministry_')) {
+      var mName = decodeURIComponent(h.replace('ministry_',''));
+      switchView('ministries');
+      setTimeout(function() { selectMinistry(mName); }, 300);
+    }
+  }
+});
 
 function renderGlobalRecListView(tasks) {
   const listView = document.getElementById('globalRecListView');
@@ -4188,7 +4543,7 @@ function renderGlobalRecListView(tasks) {
     html += '<span><strong>권고 ' + r.seq + '</strong></span>';
     html += '<span class="badge badge-ministry">' + escapeHtml(r.ministry) + '</span>';
     if (r.deadline_label) {
-      const dlBadgeClass = riskLevel === 'critical' ? 'badge-overdue' : riskLevel === 'urgent' ? 'badge-urgent-deadline' : 'badge-deadline';
+      const dlBadgeClass = (riskLevel === 'overdue' || riskLevel === 'critical') ? 'badge-overdue' : riskLevel === 'urgent' ? 'badge-urgent-deadline' : 'badge-deadline';
       html += '<span class="badge ' + dlBadgeClass + '">' + escapeHtml(r.deadline_label) + '</span>';
     }
     html += '<span class="badge" style="background:' + meta.color + ';color:white;font-size:0.72rem">' + meta.label + '</span>';
