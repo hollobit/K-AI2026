@@ -434,6 +434,8 @@ mark.highlight {
   margin-bottom: 10px; padding-bottom: 6px; border-bottom: 1px solid var(--border);
 }
 .modal-section .bg-text { font-size: 0.9rem; line-height: 1.7; color: var(--dark); }
+.fn-item { background: #f8f9fa; border-left: 3px solid #adb5bd; border-radius: 0 6px 6px 0; padding: 8px 12px; margin-bottom: 8px; font-size: 0.85rem; line-height: 1.65; color: #444; }
+.fn-num { display: inline-block; background: #6c757d; color: white; font-size: 0.71rem; font-weight: 700; padding: 1px 7px; border-radius: 10px; margin-right: 6px; vertical-align: middle; white-space: nowrap; }
 
 /* Modal navigation */
 .modal-nav {
@@ -686,6 +688,24 @@ mark.highlight {
 
 .rel-top5 { background: white; border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow); margin-bottom: 16px; }
 .rel-top5 h3 { font-size: 1rem; font-weight: 700; color: var(--dark); margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+.rel-criteria-box { background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 8px; padding: 14px 16px; margin-bottom: 16px; }
+.rel-criteria-box summary { font-size: 0.85rem; font-weight: 700; color: #333; cursor: pointer; }
+.rel-criteria-table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 0.78rem; }
+.rel-criteria-table td { padding: 4px 8px; border: 1px solid #e0e0e0; vertical-align: top; }
+.rel-criteria-table tr:nth-child(odd) td { background: #f5f5f5; }
+.rel-score-detail { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 5px; }
+.rel-score-chip { font-size: 0.72rem; padding: 2px 7px; border-radius: 10px; font-weight: 600; }
+.rel-score-chip.chip-cross { background: #fce4ec; color: #c62828; }
+.rel-score-chip.chip-ref { background: #e3f2fd; color: #1565c0; }
+.rel-score-chip.chip-kw { background: #fff8e1; color: #e65100; }
+.rel-score-chip.chip-min { background: #f3e5f5; color: #7b1fa2; }
+.rel-score-chip.chip-area { background: #e8f5e9; color: #2e7d32; }
+.rel-type-reason { font-size: 0.78rem; margin-top: 6px; padding: 5px 10px; border-radius: 4px; line-height: 1.55; }
+.rel-type-reason.prec { background: #e3f2fd; color: #0d47a1; border-left: 3px solid #1565c0; }
+.rel-type-reason.para { background: #f3e5f5; color: #4a148c; border-left: 3px solid #6a1b9a; }
+.rel-type-reason.foll { background: #e8f5e9; color: #1b5e20; border-left: 3px solid #2e7d32; }
+.rel-deadline-badge { font-size: 0.71rem; font-weight: 600; background: #fff3e0; color: #e65100; padding: 1px 6px; border-radius: 4px; margin-left: 6px; vertical-align: middle; }
+.rel-section-desc { font-size: 0.79rem; color: #666; padding: 6px 12px; background: #fafafa; border-left: 3px solid #ddd; margin-bottom: 10px; border-radius: 0 4px 4px 0; line-height: 1.55; }
 
 #network-svg { width: 100%; height: 500px; background: white; border-radius: var(--radius); box-shadow: var(--shadow); }
 .net-node { cursor: pointer; }
@@ -834,6 +854,57 @@ mark.highlight {
 .rec-list-meta-left { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
 .rec-list-content { font-size: 0.88rem; line-height: 1.6; }
 .rec-list-count { font-size: 0.82rem; color: var(--gray); }
+
+/* ── Similarity Pair Enhanced ── */
+.sim-reason {
+  margin: 10px 0 6px;
+  display: flex; flex-wrap: wrap; gap: 8px; font-size: 0.82rem;
+}
+.sim-reason-tag {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 3px 10px; border-radius: 12px; background: #f0f4f8;
+  border: 1px solid #dee2e6; color: var(--dark);
+}
+.sim-reason-tag.tag-area  { background: #e8f5e9; border-color: #a5d6a7; }
+.sim-reason-tag.tag-kw    { background: #fff8e1; border-color: #ffe082; }
+.sim-reason-tag.tag-min   { background: #e3f2fd; border-color: #90caf9; }
+.sim-score-bar {
+  height: 6px; background: #e9ecef; border-radius: 3px; margin: 8px 0 4px; overflow: hidden;
+}
+.sim-score-fill {
+  height: 100%; border-radius: 3px; transition: width 0.4s;
+}
+.sim-score-fill.high   { background: linear-gradient(90deg, #dc3545, #fd7e14); }
+.sim-score-fill.medium { background: linear-gradient(90deg, #fd7e14, #ffc107); }
+.sim-score-fill.low    { background: linear-gradient(90deg, #20c997, #0dcaf0); }
+.sim-cmp-toggle {
+  margin-top: 10px; font-size: 0.82rem; color: var(--accent); cursor: pointer;
+  font-weight: 600; user-select: none; display: flex; align-items: center; gap: 4px;
+  border: none; background: none; padding: 0; font-family: var(--font);
+}
+.sim-cmp-toggle:hover { text-decoration: underline; }
+.sim-cmp-panel {
+  display: none; margin-top: 10px;
+  border-top: 1px solid #e9ecef; padding-top: 10px;
+}
+.sim-cmp-panel.open { display: block; }
+.sim-cmp-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+}
+.sim-cmp-col { }
+.sim-cmp-col-hdr {
+  font-size: 0.8rem; font-weight: 700; color: white;
+  padding: 5px 10px; border-radius: 6px 6px 0 0; margin-bottom: 0;
+}
+.sim-rec-row {
+  background: #f8f9fa; border-radius: 0 0 6px 6px; padding: 8px 10px;
+  margin-bottom: 6px; border-left: 3px solid #dee2e6; font-size: 0.82rem; line-height: 1.55;
+}
+.sim-rec-row.common-min { border-left-color: var(--primary); background: #e8f0fe; }
+.sim-rec-row + .sim-rec-row { border-radius: 6px; }
+.sim-rec-meta { font-size: 0.75rem; color: var(--gray); margin-bottom: 4px; display: flex; gap: 6px; flex-wrap: wrap; }
+.sim-kw-highlight { background: #fff176; padding: 0 2px; border-radius: 2px; font-weight: 600; }
+@media (max-width: 600px) { .sim-cmp-grid { grid-template-columns: 1fr; } }
 </style>
 </head>
 <body>
@@ -1061,13 +1132,36 @@ mark.highlight {
 
 <!-- View 8: Related Tasks -->
 <div class="view" id="view-relations">
-  <div class="section-title">연관 과제 네트워크</div>
+  <div class="section-title">연관 과제 분석</div>
   <div class="rel-controls">
     <label style="font-size:0.85rem;font-weight:600">과제 선택:</label>
     <select id="relTaskSelect" onchange="onRelTaskSelect()">
       <option value="">-- 과제를 선택하세요 --</option>
     </select>
   </div>
+
+  <details class="rel-criteria-box">
+    <summary>ℹ️ 연관도 분석 기준 및 선행·병행·후행 분류 방법 (클릭하여 펼치기)</summary>
+    <div style="margin-top:10px">
+      <p style="font-size:0.82rem;color:#555;margin-bottom:8px">연관도는 5가지 기준을 합산한 <strong>0~100점 척도</strong>로 평가합니다:</p>
+      <table class="rel-criteria-table">
+        <tr><td style="font-weight:600">직접 언급 (상호)</td><td style="color:#c62828;font-weight:600">+50점</td><td>두 과제 본문이 서로를 명시적으로 인용·참조 — 가장 강한 연관 신호</td></tr>
+        <tr><td style="font-weight:600">직접 언급 (단방향)</td><td style="color:#c62828;font-weight:600">+35점</td><td>한 과제의 내용이 다른 과제를 직접 언급</td></tr>
+        <tr><td style="font-weight:600">공통 참고자료</td><td style="color:#1565c0;font-weight:600">최대 +40점</td><td>동일한 참고문헌·데이터를 공유 (참고자료 1건당 +20점)</td></tr>
+        <tr><td style="font-weight:600">키워드 중복도</td><td style="color:#e65100;font-weight:600">최대 +20점</td><td>과제 제목·배경·권고 본문의 핵심 키워드 Jaccard 유사도 × 25</td></tr>
+        <tr><td style="font-weight:600">공통 주관부처</td><td style="color:#7b1fa2;font-weight:600">최대 +20점</td><td>동일 부처가 두 과제를 동시 담당 (부처 1개당 +8점)</td></tr>
+        <tr><td style="font-weight:600">동일 전략분야</td><td style="color:#2e7d32;font-weight:600">+20점</td><td>12개 전략분야 중 같은 분야에 속함</td></tr>
+        <tr><td style="font-weight:600">인접 전략분야</td><td style="color:#2e7d32;font-weight:600">+8점</td><td>같은 정책축 내 바로 인접한 전략분야</td></tr>
+      </table>
+      <p style="font-size:0.82rem;color:#555;margin-top:10px;margin-bottom:6px"><strong>선행·병행·후행 분류 기준</strong> (4가지 증거를 종합하여 분류):</p>
+      <ul style="font-size:0.8rem;color:#555;padding-left:18px;line-height:1.8;margin:0">
+        <li><strong>직접 언급 방향 (최우선)</strong>: 내 과제가 상대를 언급 → 상대가 나의 선행과제. 상대가 나를 언급 → 상대가 나의 후행과제</li>
+        <li><strong>추진기한 차이</strong>: 2분기 이상 차이 시 기한 빠른 쪽이 선행 (근거: 성과물 활용 시점)</li>
+        <li><strong>정책축 순서</strong>: 정책축 1(혁신생태계 조성) → 정책축 2(AI 기반 대전환) → 정책축 3(글로벌 기여) 순으로 진행</li>
+        <li><strong>전략분야 순서</strong>: 같은 정책축 내에서 앞 번호 전략분야가 기초 인프라·기술을 제공하는 선행 분야</li>
+      </ul>
+    </div>
+  </details>
 
   <div id="relContent" style="display:none">
     <div class="rel-info-card" id="relInfoCard"></div>
@@ -1134,8 +1228,15 @@ mark.highlight {
       <button style="background:var(--gray);color:white" onclick="resetGlobalFilters()">초기화</button>
     </div>
   </div>
-  <div class="task-count-info" id="globalCountInfo"></div>
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+    <div class="task-count-info" id="globalCountInfo"></div>
+    <div class="view-toggle" role="group" aria-label="보기 방식">
+      <button class="view-toggle-btn active" id="btnGlobalCard" onclick="setGlobalViewMode('card')" title="과제 카드 보기">&#9638; 카드뷰</button>
+      <button class="view-toggle-btn" id="btnGlobalList" onclick="setGlobalViewMode('list')" title="정책권고 목록 보기">&#9776; 권고 목록</button>
+    </div>
+  </div>
   <div class="task-grid" id="globalTaskList"></div>
+  <ul class="rec-list-view" id="globalRecListView" style="display:none"></ul>
 </div>
 
 <!-- ===== 뷰 10: 표준화 현황 ===== -->
@@ -1202,6 +1303,7 @@ const STATE = {
   currentView: 'overview',
   searchQuery: '',
   taskViewMode: 'card',
+  globalViewMode: 'card',
   bookmarks: new Set(JSON.parse(localStorage.getItem('aiap_bookmarks') || '[]')),
   recentSearches: JSON.parse(localStorage.getItem('aiap_recent_searches') || '[]'),
   filters: { axis: '', area: '', ministry: '', keyword: '', deadline: '' },
@@ -1665,10 +1767,16 @@ function openTaskModal(taskId) {
 
   // Related footnotes
   if (task.related_footnotes && task.related_footnotes.length > 0) {
-    html += '<div class="modal-section"><h4>관련 각주</h4>';
-    html += '<div style="font-size:0.85rem;color:var(--gray)">';
-    html += '각주 번호: ' + task.related_footnotes.join(', ');
-    html += '</div></div>';
+    html += '<div class="modal-section"><h4>관련 각주 (' + task.related_footnotes.length + '건)</h4>';
+    task.related_footnotes.forEach(fnId => {
+      const fn = DATA.references.footnotes.find(f => f.id === fnId);
+      if (fn) {
+        html += '<div class="fn-item"><span class="fn-num">각주 ' + fn.id + '</span>' + escapeHtml(fn.content) + '</div>';
+      } else {
+        html += '<div class="fn-item"><span class="fn-num">각주 ' + fnId + '</span><span style="color:var(--gray)">(내용 없음)</span></div>';
+      }
+    });
+    html += '</div>';
   }
 
   document.getElementById('modalBody').innerHTML = html;
@@ -2915,29 +3023,132 @@ function renderSimilarityPairs() {
   }
 
   let html = '';
-  filtered.slice(0, 100).forEach(p => {
+  filtered.slice(0, 100).forEach(function(p, idx) {
     const pct = (p.score * 100).toFixed(0);
-    let riskClass = 'risk-low';
-    let scoreClass = 'low';
+    let riskClass = 'risk-low', scoreClass = 'low';
     if (p.score >= 0.6) { riskClass = 'risk-high'; scoreClass = 'high'; }
     else if (p.score >= 0.4) { riskClass = 'risk-medium'; scoreClass = 'medium'; }
 
-    html += '<div class="sim-pair ' + riskClass + '">';
+    const sameArea = p.taskA.strategic_area_id === p.taskB.strategic_area_id;
+
+    // Score breakdown
+    const ministriesA = new Set(p.taskA.recommendations.map(function(r){return r.ministry;}));
+    const ministriesB = new Set(p.taskB.recommendations.map(function(r){return r.ministry;}));
+    const commonMins = p.commonMinistries || [...ministriesA].filter(function(m){return ministriesB.has(m);});
+    const kwSim = Math.max(0, p.score - (sameArea ? 0.2 : 0) - (commonMins.length > 0 ? 0.15 : 0));
+
+    html += '<div class="sim-pair ' + riskClass + '" id="sp-' + idx + '">';
+
+    // ── 과제 제목 쌍 ──
     html += '<div class="pair-tasks">';
     html += '<span class="pair-task" onclick="openTaskModal(' + p.taskA.id + ')">' + escapeHtml(p.taskA.number) + ' ' + escapeHtml(p.taskA.title) + '</span>';
     html += '<span class="pair-arrow">&harr;</span>';
     html += '<span class="pair-task" onclick="openTaskModal(' + p.taskB.id + ')">' + escapeHtml(p.taskB.number) + ' ' + escapeHtml(p.taskB.title) + '</span>';
     html += '</div>';
-    html += '<div class="pair-meta">';
-    html += '<span>유사도: <span class="pair-score ' + scoreClass + '">' + pct + '%</span></span>';
-    if (p.commonKeywords.length > 0) html += '<span>공통 키워드: ' + p.commonKeywords.slice(0, 5).join(', ') + '</span>';
-    if (p.commonMinistries.length > 0) html += '<span>공통 부처: ' + p.commonMinistries.join(', ') + '</span>';
-    html += '</div></div>';
+
+    // ── 유사도 바 ──
+    html += '<div class="sim-score-bar"><div class="sim-score-fill ' + scoreClass + '" style="width:' + pct + '%"></div></div>';
+    html += '<div style="font-size:0.8rem;color:var(--gray);margin-bottom:6px">유사도 <strong style="color:var(--dark)">' + pct + '%</strong>';
+    html += ' &nbsp;(키워드 ' + (kwSim * 100).toFixed(0) + '%';
+    if (sameArea) html += ' + 전략분야일치 20%';
+    if (commonMins.length > 0) html += ' + 부처중복 15%';
+    html += ')</div>';
+
+    // ── 유사 이유 태그 ──
+    html += '<div class="sim-reason">';
+    if (sameArea) {
+      html += '<span class="sim-reason-tag tag-area">&#128193; 같은 전략분야: ' + escapeHtml(p.taskA.strategic_area_name) + '</span>';
+    } else {
+      html += '<span class="sim-reason-tag" style="color:var(--gray)">&#128193; ' + escapeHtml(p.taskA.strategic_area_name) + ' &harr; ' + escapeHtml(p.taskB.strategic_area_name) + '</span>';
+    }
+    if (p.commonKeywords && p.commonKeywords.length > 0) {
+      html += '<span class="sim-reason-tag tag-kw">&#128273; 공통 키워드 ' + p.commonKeywords.length + '개: ' + p.commonKeywords.slice(0, 6).map(function(k){return escapeHtml(k);}).join(', ') + '</span>';
+    }
+    if (commonMins.length > 0) {
+      html += '<span class="sim-reason-tag tag-min">&#127963; 공통 부처: ' + commonMins.map(function(m){return escapeHtml(m);}).join(', ') + '</span>';
+    }
+    html += '</div>';
+
+    // ── 정책권고 비교 버튼 ──
+    const pairId = 'cmp-' + idx;
+    html += '<button class="sim-cmp-toggle" data-pair="' + pairId + '" onclick="toggleSimCmp(this.dataset.pair, this)">';
+    html += '&#9656; 정책권고 비교 (' + p.taskA.recommendations.length + '건 vs ' + p.taskB.recommendations.length + '건)';
+    html += '</button>';
+
+    // ── 정책권고 비교 패널 (접기/펼치기) ──
+    html += '<div class="sim-cmp-panel" id="' + pairId + '">';
+    html += '<div class="sim-cmp-grid">';
+
+    // 공통부처 세트
+    const commonMinSet = new Set(commonMins);
+
+    // 컬럼 A
+    const colColorA = p.taskA.policy_axis_id === 1 ? '#1B5FA4' : p.taskA.policy_axis_id === 2 ? '#2e7d32' : '#6a1b9a';
+    html += '<div class="sim-cmp-col">';
+    html += '<div class="sim-cmp-col-hdr" style="background:' + colColorA + '">' + escapeHtml(p.taskA.number) + ' ' + escapeHtml(p.taskA.title.substring(0, 30)) + (p.taskA.title.length > 30 ? '...' : '') + '</div>';
+    p.taskA.recommendations.forEach(function(r) {
+      const isCommon = commonMinSet.has(r.ministry);
+      const riskLevel = classifyDeadline(r.deadline);
+      const dlBadge = r.deadline_label ? '<span class="badge badge-deadline" style="font-size:0.7rem">' + escapeHtml(r.deadline_label) + '</span>' : '';
+      // Highlight common keywords in content
+      let content = escapeHtml(r.content);
+      if (p.commonKeywords && p.commonKeywords.length > 0) {
+        p.commonKeywords.slice(0, 6).forEach(function(kw) {
+          const re = new RegExp('(' + kw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi');
+          content = content.replace(re, '<span class="sim-kw-highlight">$1</span>');
+        });
+      }
+      html += '<div class="sim-rec-row' + (isCommon ? ' common-min' : '') + '">';
+      html += '<div class="sim-rec-meta">';
+      html += '<span class="badge badge-ministry">' + escapeHtml(r.ministry) + '</span>';
+      html += dlBadge;
+      if (isCommon) html += '<span style="color:var(--primary);font-weight:700;font-size:0.72rem">&#9733; 공통부처</span>';
+      html += '</div>';
+      html += content;
+      html += '</div>';
+    });
+    html += '</div>';
+
+    // 컬럼 B
+    const colColorB = p.taskB.policy_axis_id === 1 ? '#1B5FA4' : p.taskB.policy_axis_id === 2 ? '#2e7d32' : '#6a1b9a';
+    html += '<div class="sim-cmp-col">';
+    html += '<div class="sim-cmp-col-hdr" style="background:' + colColorB + '">' + escapeHtml(p.taskB.number) + ' ' + escapeHtml(p.taskB.title.substring(0, 30)) + (p.taskB.title.length > 30 ? '...' : '') + '</div>';
+    p.taskB.recommendations.forEach(function(r) {
+      const isCommon = commonMinSet.has(r.ministry);
+      const dlBadge = r.deadline_label ? '<span class="badge badge-deadline" style="font-size:0.7rem">' + escapeHtml(r.deadline_label) + '</span>' : '';
+      let content = escapeHtml(r.content);
+      if (p.commonKeywords && p.commonKeywords.length > 0) {
+        p.commonKeywords.slice(0, 6).forEach(function(kw) {
+          const re = new RegExp('(' + kw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi');
+          content = content.replace(re, '<span class="sim-kw-highlight">$1</span>');
+        });
+      }
+      html += '<div class="sim-rec-row' + (isCommon ? ' common-min' : '') + '">';
+      html += '<div class="sim-rec-meta">';
+      html += '<span class="badge badge-ministry">' + escapeHtml(r.ministry) + '</span>';
+      html += dlBadge;
+      if (isCommon) html += '<span style="color:var(--primary);font-weight:700;font-size:0.72rem">&#9733; 공통부처</span>';
+      html += '</div>';
+      html += content;
+      html += '</div>';
+    });
+    html += '</div>';
+
+    html += '</div></div>'; // sim-cmp-grid, sim-cmp-panel
+    html += '</div>'; // sim-pair
   });
+
   if (filtered.length > 100) {
     html += '<div style="text-align:center;color:var(--gray);padding:12px">... 외 ' + (filtered.length - 100) + '쌍 (임계값을 높여 줄일 수 있습니다)</div>';
   }
   container.innerHTML = html;
+}
+
+function toggleSimCmp(pairId, btn) {
+  const panel = document.getElementById(pairId);
+  if (!panel) return;
+  const isOpen = panel.classList.toggle('open');
+  btn.innerHTML = (isOpen ? '&#9662; ' : '&#9656; ') + btn.innerHTML.replace(/^[▶▾]\s*/, '');
 }
 
 function renderOverloadSection() {
@@ -3043,65 +3254,198 @@ function renderSimilarity() {
 // ============================================================
 let RELATION_EDGES = [];
 
+// ── Relation helpers ────────────────────────────────────────────────────────
+function deadlineToNum(q) {
+  if (!q) return 9999;
+  const m = q.match(/^(\d{2})Q(\d)/);
+  if (m) return parseInt(m[1]) * 4 + parseInt(m[2]);
+  const y = q.match(/(\d+)/);
+  if (y) return (parseInt(y[1]) - 2000) * 4;
+  return 9999;
+}
+
+function getTaskEarliestDeadline(task) {
+  const quarters = task.recommendations.map(r => r.deadline).filter(Boolean);
+  if (!quarters.length) return null;
+  return quarters.reduce((best, q) => deadlineToNum(q) < deadlineToNum(best) ? q : best, quarters[0]);
+}
+
+function deadlineLabel(q) {
+  if (!q) return '-';
+  const m = q.match(/^(\d{2})Q(\d)/);
+  if (m) return "'" + m[1] + "년 " + m[2] + "분기";
+  return q;
+}
+
+function classifyRelationType(selectedTask, otherTask, edge) {
+  // Returns { type, precScore, follScore, evidences[] }
+  // From selectedTask's perspective: is otherTask a prerequisite (선행), parallel (병행), or successor (후행)?
+  const iAmSource = edge.source === selectedTask.id;
+  const selectedMentionsOther = iAmSource ? edge.crossRefAtoB : edge.crossRefBtoA;
+  const otherMentionsSelected  = iAmSource ? edge.crossRefBtoA : edge.crossRefAtoB;
+
+  let precScore = 0, follScore = 0;
+  const precEv = [], follEv = [], paraEv = [];
+
+  // Evidence 1: Direct cross-reference (strongest — weight 4)
+  if (selectedMentionsOther && !otherMentionsSelected) {
+    precScore += 4;
+    precEv.push(selectedTask.number + '의 내용이 ' + otherTask.number + '을(를) 직접 인용 → 선행 의존관계');
+  } else if (otherMentionsSelected && !selectedMentionsOther) {
+    follScore += 4;
+    follEv.push(otherTask.number + '의 내용이 ' + selectedTask.number + '을(를) 직접 인용 → 후속 연계관계');
+  } else if (selectedMentionsOther && otherMentionsSelected) {
+    paraEv.push('두 과제가 서로를 상호 언급 — 상호 의존적 협력 관계');
+  }
+
+  // Evidence 2: Deadline comparison (weight up to 4)
+  const selDL = getTaskEarliestDeadline(selectedTask);
+  const othDL = getTaskEarliestDeadline(otherTask);
+  const dlDiff = deadlineToNum(selDL) - deadlineToNum(othDL); // positive = other is earlier
+  if (dlDiff >= 2) {
+    const pts = Math.min(dlDiff, 4);
+    precScore += pts;
+    precEv.push('추진기한: ' + otherTask.number + ' (' + deadlineLabel(othDL) + ') → ' + selectedTask.number + ' (' + deadlineLabel(selDL) + ') — 기한 ' + dlDiff + '분기 선행');
+  } else if (dlDiff <= -2) {
+    const pts = Math.min(-dlDiff, 4);
+    follScore += pts;
+    follEv.push('추진기한: ' + selectedTask.number + ' (' + deadlineLabel(selDL) + ') → ' + otherTask.number + ' (' + deadlineLabel(othDL) + ') — 기한 ' + (-dlDiff) + '분기 후행');
+  } else {
+    if (selDL && othDL) paraEv.push('유사 추진기한 (' + deadlineLabel(selDL) + ' / ' + deadlineLabel(othDL) + ') — 병행 추진 적합');
+  }
+
+  // Evidence 3: Policy axis ordering (weight 2)
+  if (otherTask.policy_axis_id < selectedTask.policy_axis_id) {
+    precScore += 2;
+    precEv.push('정책축 순서: ' + otherTask.policy_axis_name + '(정책축 ' + otherTask.policy_axis_id + ')가 ' + selectedTask.policy_axis_name + '(정책축 ' + selectedTask.policy_axis_id + ')의 기반');
+  } else if (otherTask.policy_axis_id > selectedTask.policy_axis_id) {
+    follScore += 2;
+    follEv.push('정책축 순서: ' + selectedTask.policy_axis_name + '(정책축 ' + selectedTask.policy_axis_id + ')가 ' + otherTask.policy_axis_name + '(정책축 ' + otherTask.policy_axis_id + ')의 기반');
+  }
+
+  // Evidence 4: Strategic area ordering within same axis (weight 1)
+  if (selectedTask.policy_axis_id === otherTask.policy_axis_id) {
+    if (otherTask.strategic_area_id < selectedTask.strategic_area_id) {
+      precScore += 1;
+      precEv.push('전략분야 순서: ' + otherTask.strategic_area_name + '(전략분야 ' + otherTask.strategic_area_id + ')가 더 기초적 분야');
+    } else if (otherTask.strategic_area_id > selectedTask.strategic_area_id) {
+      follScore += 1;
+      follEv.push('전략분야 순서: ' + otherTask.strategic_area_name + '(전략분야 ' + otherTask.strategic_area_id + ')는 후속 전략분야');
+    } else {
+      paraEv.push('동일 전략분야(' + selectedTask.strategic_area_name + ') 내 과제 — 병행 추진 가능');
+    }
+  }
+
+  let type;
+  if (precScore >= follScore + 2) type = 'preceding';
+  else if (follScore >= precScore + 2) type = 'following';
+  else type = 'parallel';
+
+  const evidences = type === 'preceding' ? precEv :
+                    type === 'following' ? follEv :
+                    paraEv.length > 0   ? paraEv : [...precEv, ...follEv];
+
+  return { type, precScore, follScore, evidences };
+}
+
+// ── Main relation graph builder ──────────────────────────────────────────────
 function buildRelationGraph() {
   const tasks = DATA.tasks.tasks;
   RELATION_EDGES = [];
 
+  // Pre-build full text and keyword sets per task (includes recs for better coverage)
+  const taskFullText = {};
+  const taskKwSet = {};
+  tasks.forEach(t => {
+    const text = (t.title || '') + ' ' + (t.background || '') + ' ' +
+                 t.recommendations.map(r => r.content).join(' ');
+    taskFullText[t.id] = text;
+    taskKwSet[t.id] = new Set(extractKeywords(text));
+  });
+
   for (let i = 0; i < tasks.length; i++) {
     for (let j = i + 1; j < tasks.length; j++) {
-      const taskA = tasks[i];
-      const taskB = tasks[j];
-
-      const commonRefs = (taskA.related_refs || []).filter(r => (taskB.related_refs || []).includes(r));
-
-      const bgA = (taskA.background || '') + ' ' + taskA.recommendations.map(r => r.content).join(' ');
-      const bgB = (taskB.background || '') + ' ' + taskB.recommendations.map(r => r.content).join(' ');
-      const patternB = new RegExp(taskB.number.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g');
-      const patternA = new RegExp(taskA.number.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g');
-      const crossRefAB = bgA.match(patternB);
-      const crossRefBA = bgB.match(patternA);
-
-      const ministriesA = new Set(taskA.recommendations.map(r => r.ministry));
-      const ministriesB = new Set(taskB.recommendations.map(r => r.ministry));
-      const commonMin = [...ministriesA].filter(m => ministriesB.has(m));
-
-      let strength = 0;
+      const tA = tasks[i];
+      const tB = tasks[j];
       const reasons = [];
+      const scoreDetails = {};
+      let score = 0;
 
+      // 1. Direct cross-reference (직접 언급) — max 50점
+      const escA = tA.number.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const escB = tB.number.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const aMentionsB = new RegExp(escB).test(taskFullText[tA.id]);
+      const bMentionsA = new RegExp(escA).test(taskFullText[tB.id]);
+      if (aMentionsB && bMentionsA) {
+        score += 50; scoreDetails.crossRef = 50;
+        reasons.push('상호 직접 언급 (↔)');
+      } else if (aMentionsB) {
+        score += 35; scoreDetails.crossRef = 35;
+        reasons.push(tA.number + ' → ' + tB.number + ' 직접 언급');
+      } else if (bMentionsA) {
+        score += 35; scoreDetails.crossRef = 35;
+        reasons.push(tB.number + ' → ' + tA.number + ' 직접 언급');
+      }
+
+      // 2. Common references (공통 참고자료) — max 40점
+      const commonRefs = (tA.related_refs || []).filter(r => (tB.related_refs || []).includes(r));
       if (commonRefs.length > 0) {
-        strength += commonRefs.length * 0.3;
-        reasons.push('공통 참고자료 ' + commonRefs.length + '건');
-      }
-      if (crossRefAB || crossRefBA) {
-        strength += 0.5;
-        reasons.push('과제 간 상호 언급');
-      }
-      if (commonMin.length > 0) {
-        strength += 0.1 * Math.min(commonMin.length, 3);
-        reasons.push('공통 부처 ' + commonMin.length + '개');
-      }
-      if (Math.abs(taskA.strategic_area_id - taskB.strategic_area_id) <= 1 && taskA.policy_axis_id === taskB.policy_axis_id) {
-        strength += 0.1;
-        reasons.push('인접 전략분야');
-      }
-      if (taskA.strategic_area_id === taskB.strategic_area_id) {
-        strength += 0.15;
-        reasons.push('동일 전략분야');
+        const pts = Math.min(commonRefs.length * 20, 40);
+        score += pts; scoreDetails.refs = pts;
+        reasons.push('공통 참고자료 ' + commonRefs.length + '건 (참고 ' + commonRefs.slice(0,3).join('·') + (commonRefs.length > 3 ? ' 등' : '') + ')');
       }
 
-      if (strength > 0.1) {
+      // 3. Keyword Jaccard — max 20점
+      const kwA = taskKwSet[tA.id];
+      const kwB = taskKwSet[tB.id];
+      const kwIntersect = [...kwA].filter(k => kwB.has(k));
+      const kwUnion = new Set([...kwA, ...kwB]);
+      const jaccard = kwUnion.size > 0 ? kwIntersect.length / kwUnion.size : 0;
+      if (jaccard > 0.04) {
+        const pts = Math.min(Math.round(jaccard * 25), 20);
+        score += pts; scoreDetails.keywords = pts;
+        reasons.push('키워드 중복 ' + Math.round(jaccard * 100) + '% (' + kwIntersect.length + '개)');
+      }
+
+      // 4. Common ministries (공통 부처) — max 20점
+      const minA = new Set(tA.recommendations.map(r => r.ministry));
+      const minB = new Set(tB.recommendations.map(r => r.ministry));
+      const commonMin = [...minA].filter(m => minB.has(m));
+      if (commonMin.length > 0) {
+        const pts = Math.min(commonMin.length * 8, 20);
+        score += pts; scoreDetails.ministries = pts;
+        reasons.push('공통 부처 ' + commonMin.length + '개 (' + commonMin.slice(0, 2).join(', ') + (commonMin.length > 2 ? ' 등' : '') + ')');
+      }
+
+      // 5. Strategic area relationship — max 20점
+      if (tA.strategic_area_id === tB.strategic_area_id) {
+        score += 20; scoreDetails.area = 20;
+        reasons.push('동일 전략분야: ' + tA.strategic_area_name);
+      } else if (tA.policy_axis_id === tB.policy_axis_id &&
+                 Math.abs(tA.strategic_area_id - tB.strategic_area_id) <= 1) {
+        score += 8; scoreDetails.area = 8;
+        reasons.push('인접 전략분야 (' + tA.strategic_area_name + ' ↔ ' + tB.strategic_area_name + ')');
+      }
+
+      const normalizedScore = Math.min(100, score);
+      if (normalizedScore >= 8) {
         RELATION_EDGES.push({
-          source: taskA.id,
-          target: taskB.id,
-          strength: Math.min(1, strength),
+          source: tA.id,
+          target: tB.id,
+          strength: normalizedScore / 100,
+          score: normalizedScore,
+          scoreDetails,
           commonRefs,
           commonMin,
+          commonKeywords: kwIntersect.slice(0, 8),
+          crossRefAtoB: aMentionsB,
+          crossRefBtoA: bMentionsA,
           reasons
         });
       }
     }
   }
-  RELATION_EDGES.sort((a, b) => b.strength - a.strength);
+  RELATION_EDGES.sort((a, b) => b.score - a.score);
 }
 
 function renderRelationsInit() {
@@ -3129,87 +3473,138 @@ function onRelTaskSelect() {
   const task = DATA.tasks.tasks.find(t => t.id === taskId);
   if (!task) return;
 
-  // Info card
+  // ── Info card ──────────────────────────────────────────────────────────────
+  const taskDL = getTaskEarliestDeadline(task);
   let infoHtml = '<h3>' + escapeHtml(task.number) + ' ' + escapeHtml(task.title) + '</h3>';
   infoHtml += '<div class="rel-badges">';
   infoHtml += '<span class="badge badge-axis' + task.policy_axis_id + '">' + escapeHtml(task.policy_axis_name) + '</span>';
   infoHtml += '<span class="badge badge-area">' + escapeHtml(task.strategic_area_name) + '</span>';
   infoHtml += '<span class="badge badge-count">' + task.recommendations.length + '건 권고</span>';
+  if (taskDL) infoHtml += '<span class="rel-deadline-badge">최조기한: ' + deadlineLabel(taskDL) + '</span>';
   infoHtml += '</div>';
   document.getElementById('relInfoCard').innerHTML = infoHtml;
 
-  // Get related edges for this task
-  const related = RELATION_EDGES.filter(e => e.source === taskId || e.target === taskId)
+  // ── Get & classify related edges ──────────────────────────────────────────
+  const related = RELATION_EDGES
+    .filter(e => e.source === taskId || e.target === taskId)
     .map(e => {
       const otherId = e.source === taskId ? e.target : e.source;
       const other = DATA.tasks.tasks.find(t => t.id === otherId);
-      return { ...e, other, otherId };
+      const classification = classifyRelationType(task, other, e);
+      return { ...e, other, otherId, classification };
     })
-    .sort((a, b) => b.strength - a.strength);
+    .sort((a, b) => b.score - a.score);
 
-  // Top 5
+  // ── Top 5 ──────────────────────────────────────────────────────────────────
   let top5Html = '';
   if (related.length === 0) {
     top5Html = '<div style="color:var(--gray);padding:12px">연관 과제가 없습니다.</div>';
   } else {
     related.slice(0, 5).forEach((rel, i) => {
-      const pct = (rel.strength * 100).toFixed(0);
-      const color = rel.strength >= 0.5 ? '#1565c0' : rel.strength >= 0.3 ? '#6a1b9a' : '#2e7d32';
+      const pct = rel.score;
+      const color = pct >= 50 ? '#c62828' : pct >= 30 ? '#1565c0' : '#2e7d32';
+      const typeLabel = rel.classification.type === 'preceding' ? '▲선행' :
+                        rel.classification.type === 'following' ? '▼후행' : '↔병행';
+      const typeColor = rel.classification.type === 'preceding' ? '#1565c0' :
+                        rel.classification.type === 'following' ? '#2e7d32' : '#7b1fa2';
+      const otherDL = getTaskEarliestDeadline(rel.other);
       top5Html += '<div class="rel-item" onclick="openTaskModal(' + rel.otherId + ')">';
       top5Html += '<div class="rel-item-left">';
-      top5Html += '<div class="rel-item-title">' + (i + 1) + '. ' + escapeHtml(rel.other.number) + ' ' + escapeHtml(rel.other.title) + '</div>';
-      top5Html += '<div class="rel-item-meta">' + rel.reasons.join(' | ') + '</div>';
+      top5Html += '<div class="rel-item-title">';
+      top5Html += (i + 1) + '. ' + escapeHtml(rel.other.number) + ' ' + escapeHtml(rel.other.title);
+      if (otherDL) top5Html += '<span class="rel-deadline-badge">' + deadlineLabel(otherDL) + '</span>';
+      top5Html += ' <span style="font-size:0.75rem;font-weight:700;color:' + typeColor + '">[' + typeLabel + ']</span>';
+      top5Html += '</div>';
+      top5Html += '<div class="rel-score-detail">';
+      if (rel.scoreDetails.crossRef) top5Html += '<span class="rel-score-chip chip-cross">직접언급 +' + rel.scoreDetails.crossRef + '</span>';
+      if (rel.scoreDetails.refs)     top5Html += '<span class="rel-score-chip chip-ref">참고자료 +' + rel.scoreDetails.refs + '</span>';
+      if (rel.scoreDetails.keywords) top5Html += '<span class="rel-score-chip chip-kw">키워드 +' + rel.scoreDetails.keywords + '</span>';
+      if (rel.scoreDetails.ministries) top5Html += '<span class="rel-score-chip chip-min">부처 +' + rel.scoreDetails.ministries + '</span>';
+      if (rel.scoreDetails.area)     top5Html += '<span class="rel-score-chip chip-area">전략분야 +' + rel.scoreDetails.area + '</span>';
+      top5Html += '</div>';
+      if (rel.classification.evidences.length > 0) {
+        top5Html += '<div class="rel-item-meta" style="margin-top:4px">' +
+          escapeHtml(rel.classification.evidences[0]) + '</div>';
+      }
       top5Html += '</div>';
       top5Html += '<div class="rel-strength">';
-      top5Html += '<div style="font-weight:700;color:' + color + '">' + pct + '%</div>';
-      top5Html += '<div class="rel-strength-bar"><div class="rel-strength-fill" style="width:' + pct + '%;background:' + color + '"></div></div>';
+      top5Html += '<div style="font-weight:700;color:' + color + '">' + pct + '점</div>';
+      top5Html += '<div class="rel-strength-bar"><div class="rel-strength-fill" style="width:' + Math.min(pct, 100) + '%;background:' + color + '"></div></div>';
       top5Html += '</div></div>';
     });
   }
   document.getElementById('relTop5List').innerHTML = top5Html;
 
-  // Classify relations
-  const preceding = [];
-  const parallel = [];
-  const following = [];
-
+  // ── Classify into groups ───────────────────────────────────────────────────
+  const preceding = [], parallel = [], following = [];
   related.forEach(rel => {
-    if (rel.other.strategic_area_id < task.strategic_area_id ||
-        (rel.other.strategic_area_id === task.strategic_area_id && rel.other.id < task.id)) {
-      preceding.push(rel);
-    } else if (rel.other.strategic_area_id === task.strategic_area_id) {
-      parallel.push(rel);
-    } else {
-      following.push(rel);
-    }
+    if (rel.classification.type === 'preceding') preceding.push(rel);
+    else if (rel.classification.type === 'following') following.push(rel);
+    else parallel.push(rel);
   });
 
-  let sectionsHtml = '';
   const groups = [
-    { items: preceding, label: '선행 관계 (이 과제가 전제로 필요한 과제)', cls: 'preceding' },
-    { items: parallel, label: '병행 관계 (동시 추진 가능한 연관 과제)', cls: 'parallel' },
-    { items: following, label: '후행 관계 (이 과제 완료 후 연계되는 과제)', cls: 'following' }
+    {
+      items: preceding, cls: 'preceding', label: '▲ 선행 과제',
+      desc: '이 과제보다 <strong>먼저 추진·완료</strong>되어야 하는 과제입니다. 기반 인프라·기술·제도·데이터를 제공하여 이 과제의 전제조건이 됩니다. 선행 과제의 지연은 이 과제에 직접 영향을 미칩니다.'
+    },
+    {
+      items: parallel, cls: 'parallel', label: '↔ 병행 과제',
+      desc: '이 과제와 <strong>동시에 추진 가능</strong>하며 상호 시너지를 창출하는 과제입니다. 공통 부처·예산·인프라를 공유하거나 유사 목표를 추구하므로 협업 및 정보 공유가 중요합니다.'
+    },
+    {
+      items: following, cls: 'following', label: '▼ 후행 과제',
+      desc: '이 과제의 성과·산출물을 활용하거나 이 과제 <strong>완료 후 연계 추진</strong>되는 과제입니다. 이 과제의 결과가 후행 과제의 입력 조건이 되므로 적시 완료가 중요합니다.'
+    }
   ];
 
+  let sectionsHtml = '';
   groups.forEach(g => {
     if (g.items.length === 0) return;
     sectionsHtml += '<div class="rel-section">';
-    sectionsHtml += '<div class="rel-section-title ' + g.cls + '">' + g.label + ' (' + g.items.length + '건)</div>';
+    sectionsHtml += '<div class="rel-section-title ' + g.cls + '">' + g.label + ' <span style="font-weight:400;font-size:0.85rem">(' + g.items.length + '건)</span></div>';
+    sectionsHtml += '<div class="rel-section-desc">' + g.desc + '</div>';
+
     g.items.forEach(rel => {
-      const pct = (rel.strength * 100).toFixed(0);
+      const typeClass = rel.classification.type === 'preceding' ? 'prec' :
+                        rel.classification.type === 'following' ? 'foll' : 'para';
+      const otherDL = getTaskEarliestDeadline(rel.other);
+
       sectionsHtml += '<div class="rel-item" onclick="openTaskModal(' + rel.otherId + ')">';
       sectionsHtml += '<div class="rel-item-left">';
-      sectionsHtml += '<div class="rel-item-title">' + escapeHtml(rel.other.number) + ' ' + escapeHtml(rel.other.title) + '</div>';
-      sectionsHtml += '<div class="rel-item-meta">' + escapeHtml(rel.other.policy_axis_name) + ' > ' + escapeHtml(rel.other.strategic_area_name) + ' | ' + rel.reasons.join(', ') + '</div>';
+      sectionsHtml += '<div class="rel-item-title">';
+      sectionsHtml += escapeHtml(rel.other.number) + ' ' + escapeHtml(rel.other.title);
+      if (otherDL) sectionsHtml += '<span class="rel-deadline-badge">' + deadlineLabel(otherDL) + '</span>';
       sectionsHtml += '</div>';
-      sectionsHtml += '<div class="rel-strength"><span style="font-weight:700">' + pct + '%</span></div>';
+      sectionsHtml += '<div class="rel-item-meta">' + escapeHtml(rel.other.policy_axis_name) + ' > ' + escapeHtml(rel.other.strategic_area_name) + '</div>';
+
+      // Score breakdown chips
+      sectionsHtml += '<div class="rel-score-detail">';
+      if (rel.scoreDetails.crossRef) sectionsHtml += '<span class="rel-score-chip chip-cross">직접언급 +' + rel.scoreDetails.crossRef + '</span>';
+      if (rel.scoreDetails.refs)     sectionsHtml += '<span class="rel-score-chip chip-ref">참고자료 +' + rel.scoreDetails.refs + '</span>';
+      if (rel.scoreDetails.keywords) sectionsHtml += '<span class="rel-score-chip chip-kw">키워드 +' + rel.scoreDetails.keywords + '</span>';
+      if (rel.scoreDetails.ministries) sectionsHtml += '<span class="rel-score-chip chip-min">부처 +' + rel.scoreDetails.ministries + '</span>';
+      if (rel.scoreDetails.area)     sectionsHtml += '<span class="rel-score-chip chip-area">전략분야 +' + rel.scoreDetails.area + '</span>';
+      sectionsHtml += '</div>';
+
+      // Relationship rationale
+      if (rel.classification.evidences.length > 0) {
+        sectionsHtml += '<div class="rel-type-reason ' + typeClass + '"><strong>관계 근거:</strong><ul style="margin:4px 0 0 16px;padding:0">';
+        rel.classification.evidences.forEach(ev => {
+          sectionsHtml += '<li>' + escapeHtml(ev) + '</li>';
+        });
+        sectionsHtml += '</ul></div>';
+      }
+
+      sectionsHtml += '</div>';
+      sectionsHtml += '<div class="rel-strength"><span style="font-weight:700">' + rel.score + '점</span></div>';
       sectionsHtml += '</div>';
     });
     sectionsHtml += '</div>';
   });
   document.getElementById('relSections').innerHTML = sectionsHtml;
 
-  // Render SVG network
+  // ── Render SVG network ────────────────────────────────────────────────────
   renderNetwork(taskId, related);
 }
 
@@ -3597,7 +3992,17 @@ function applyGlobalFilters() {
   if (filtered.length === 0) {
     html = '<div class="no-results">\uAC80\uC0C9 \uACB0\uACFC\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4.</div>';
   }
-  document.getElementById('globalTaskList').innerHTML = html;
+  if (STATE.globalViewMode === 'list') {
+    document.getElementById('globalTaskList').style.display = 'none';
+    const lv = document.getElementById('globalRecListView');
+    if (lv) lv.style.display = '';
+    renderGlobalRecListView(filtered);
+  } else {
+    document.getElementById('globalTaskList').style.display = '';
+    const lv = document.getElementById('globalRecListView');
+    if (lv) lv.style.display = 'none';
+    document.getElementById('globalTaskList').innerHTML = html;
+  }
 }
 
 function resetGlobalFilters() {
@@ -3747,6 +4152,61 @@ function init() {
 }
 
 document.addEventListener('DOMContentLoaded', init);
+
+function renderGlobalRecListView(tasks) {
+  const listView = document.getElementById('globalRecListView');
+  if (!listView) return;
+  const rows = [];
+  tasks.forEach(t => {
+    const meta = COOP_TYPES[t._coopType] || COOP_TYPES.other;
+    (t.recommendations || []).forEach(r => {
+      rows.push({ task: t, rec: r, meta: meta });
+    });
+  });
+
+  const countEl = document.getElementById('globalCountInfo');
+  if (countEl) countEl.textContent = '표시: ' + rows.length + '건 권고 / 전체 글로벌 협력 과제 ' + GLOBAL_TASKS.length + '건';
+
+  if (rows.length === 0) {
+    listView.innerHTML = '<li style="text-align:center;padding:40px;color:var(--gray)">표시할 정책권고가 없습니다.</li>';
+    return;
+  }
+
+  let html = '';
+  rows.forEach(function({ task: t, rec: r, meta }) {
+    const riskLevel = classifyDeadline(r.deadline);
+    const borderColor = riskLevel === 'critical' ? '#dc3545' : riskLevel === 'urgent' ? '#fd7e14' : meta.color;
+    const bmKey = t.id + '_' + r.seq;
+    const bmActive = STATE.bookmarks.has(String(bmKey)) ? ' bm-active' : '';
+
+    html += '<li class="rec-list-row" id="rec-li-' + bmKey + '" style="border-left-color:' + borderColor + '">';
+    html += '<div class="rec-list-task-hdr" onclick="openTaskModal(' + t.id + ')">';
+    html += escapeHtml(t.number) + ' ' + escapeHtml(t.title);
+    html += '</div>';
+    html += '<div class="rec-list-meta">';
+    html += '<div class="rec-list-meta-left">';
+    html += '<span><strong>권고 ' + r.seq + '</strong></span>';
+    html += '<span class="badge badge-ministry">' + escapeHtml(r.ministry) + '</span>';
+    if (r.deadline_label) {
+      const dlBadgeClass = riskLevel === 'critical' ? 'badge-overdue' : riskLevel === 'urgent' ? 'badge-urgent-deadline' : 'badge-deadline';
+      html += '<span class="badge ' + dlBadgeClass + '">' + escapeHtml(r.deadline_label) + '</span>';
+    }
+    html += '<span class="badge" style="background:' + meta.color + ';color:white;font-size:0.72rem">' + meta.label + '</span>';
+    html += '</div>';
+    html += '<button class="bookmark-btn' + bmActive + '" title="북마크" onclick="toggleBookmark(' + t.id + ',' + r.seq + ')" aria-label="북마크 토글">&#9733;</button>';
+    html += '</div>';
+    html += '<div class="rec-list-content">' + escapeHtml(r.content) + '</div>';
+    html += '</li>';
+  });
+  listView.innerHTML = html;
+}
+
+function setGlobalViewMode(mode) {
+  STATE.globalViewMode = mode;
+  document.getElementById('btnGlobalCard').classList.toggle('active', mode === 'card');
+  document.getElementById('btnGlobalList').classList.toggle('active', mode === 'list');
+  applyGlobalFilters();
+}
 
 // ============================================================
 // Bookmark Feature
