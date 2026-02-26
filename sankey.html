@@ -525,6 +525,28 @@ window.addEventListener('resize', () => {
   const inp = document.getElementById('searchInput');
   if (inp && inp.value.trim()) searchSankey(inp.value);
 });
+
+// URL ?task=N parameter handler
+(function() {
+  var params = new URLSearchParams(window.location.search);
+  var taskParam = params.get('task');
+  if (!taskParam) return;
+  var decoded = decodeURIComponent(taskParam).trim();
+  var taskId = null;
+  var num = parseInt(decoded, 10);
+  if (!isNaN(num) && num >= 1 && num <= 99) {
+    taskId = num;
+  } else {
+    // match by circled number string (e.g. "①")
+    for (var key in TASK_DETAILS) {
+      if (TASK_DETAILS[key].number === decoded) { taskId = parseInt(key, 10); break; }
+    }
+  }
+  if (taskId !== null) {
+    // Small delay so the panel animation works properly after page render
+    setTimeout(function() { openTaskPanel(taskId); }, 100);
+  }
+})();
 </script>
 </body>
 </html>
