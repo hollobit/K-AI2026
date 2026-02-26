@@ -730,7 +730,10 @@ mark.hl { background: #fff176; padding: 0 1px; border-radius: 2px; font-style: n
 .rel-deadline-badge { font-size: 0.71rem; font-weight: 600; background: #fff3e0; color: #e65100; padding: 1px 6px; border-radius: 4px; margin-left: 6px; vertical-align: middle; }
 .rel-section-desc { font-size: 0.79rem; color: #666; padding: 6px 12px; background: #fafafa; border-left: 3px solid #ddd; margin-bottom: 10px; border-radius: 0 4px 4px 0; line-height: 1.55; }
 
-#network-svg { width: 100%; height: 500px; background: white; border-radius: var(--radius); box-shadow: var(--shadow); }
+#network-svg { width: 100%; height: 500px; background: white; border-radius: var(--radius); box-shadow: var(--shadow); transition: height 0.3s; }
+.risk-alert-banner { background:#fff3cd; border:1px solid #ffc107; border-radius:var(--radius); padding:10px 16px; font-size:0.85rem; color:#856404; display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
+.risk-alert-chip { background:#dc3545; color:white; padding:2px 8px; border-radius:10px; font-size:0.78rem; font-weight:600; }
+.heatmap-cell { transition:background 0.3s; }
 .net-node { cursor: pointer; }
 .net-node circle { transition: r 0.2s; }
 .net-node:hover circle { r: 18; }
@@ -1111,6 +1114,7 @@ mark.hl { background: #fff176; padding: 0 1px; border-radius: 2px; font-style: n
   <div class="section-title">위험 관리 - 실시간 위험도 분석</div>
   <div class="risk-dday-banner" id="riskDdayBanner"></div>
   <div class="risk-kpi-grid" id="riskKpiGrid"></div>
+  <div id="riskAlertBanner" style="margin-bottom:12px"></div>
   <div class="chart-grid" style="margin-bottom:24px">
     <div class="chart-card">
       <h3>위험도별 권고 분포</h3>
@@ -1132,6 +1136,7 @@ mark.hl { background: #fff176; padding: 0 1px; border-radius: 2px; font-style: n
           <th style="text-align:center">관찰 (D-240 이내)</th>
           <th style="text-align:center">여유 (27+)</th>
           <th style="text-align:center">합계</th>
+          <th style="text-align:center">복합 위험도 (평균)</th>
         </tr>
       </thead>
       <tbody id="riskMinistryBody"></tbody>
@@ -1160,6 +1165,9 @@ mark.hl { background: #fff176; padding: 0 1px; border-radius: 2px; font-style: n
       <button id="simViewPair" onclick="switchSimView('pair')" style="padding:6px 14px;border:1px solid var(--primary);border-radius:16px;background:var(--primary);color:white;cursor:pointer;font-size:0.82rem">쌍별 보기</button>
       <button id="simViewTask" onclick="switchSimView('task')" style="padding:6px 14px;border:1px solid var(--border);border-radius:16px;background:white;color:var(--gray);cursor:pointer;font-size:0.82rem">과제별 보기</button>
     </div>
+  </div>
+  <div style="font-size:0.78rem;color:var(--gray);margin-bottom:8px">
+    알고리즘: TF-IDF 코사인 유사도 + 전략분야 보정(0.15) + 부처 보정(0.10)
   </div>
   <div id="simByTaskContainer" style="display:none"></div>
   <div class="sim-count-info" id="simCountInfo"></div>
@@ -1224,8 +1232,14 @@ mark.hl { background: #fff176; padding: 0 1px; border-radius: 2px; font-style: n
     </div>
 
     <div class="chart-card" style="margin-bottom:16px">
-      <h3>연관 과제 네트워크 (Ego Network)</h3>
-      <svg id="network-svg" viewBox="0 0 800 500"></svg>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <h3 style="margin:0">연관 과제 네트워크</h3>
+        <div style="display:flex;gap:6px">
+          <button id="fdBtnEgo" onclick="toggleNetworkMode('ego')" style="padding:5px 12px;border:1px solid var(--primary);border-radius:14px;background:var(--primary);color:white;cursor:pointer;font-size:0.8rem;font-family:var(--font)">에고 네트워크</button>
+          <button id="fdBtnOverview" onclick="toggleNetworkMode('overview')" style="padding:5px 12px;border:1px solid var(--border);border-radius:14px;background:white;color:var(--gray);cursor:pointer;font-size:0.8rem;font-family:var(--font)">전체 조감도 (99개)</button>
+        </div>
+      </div>
+      <svg id="network-svg" viewBox="0 0 800 500" style="touch-action:none"></svg>
     </div>
 
     <div id="relSections"></div>
@@ -1442,6 +1456,9 @@ function getTaskDeadlineStatus(task) {
 // View Switching
 // ============================================================
 function switchView(viewId) {
+  if (STATE.currentView === 'relations' && viewId !== 'relations') {
+    if (FD_ANIMATION) { cancelAnimationFrame(FD_ANIMATION); FD_ANIMATION = null; }
+  }
   STATE.currentView = viewId;
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
   document.querySelectorAll('.nav-tab').forEach(t => {
@@ -2675,6 +2692,101 @@ function toggleRefContent(id, el) {
 // Rendering: Risk Management (Real-time date-based)
 // ============================================================
 const RISK_TODAY = new Date();
+let COMPOSITE_RISK_CACHE = null;
+
+function computeCompositeRisk() {
+  const tasks = DATA.tasks.tasks;
+  const result = {};
+
+  // Deadline subscores
+  const deadlineScoreMap = { overdue: 40, critical: 35, high: 25, medium: 12, low: 4, unknown: 0 };
+
+  // Ministry load: count recs in 25Q4+26Q1+26Q2 per ministry
+  const ministryLoad = {};
+  tasks.forEach(t => {
+    (t.recommendations || []).forEach(r => {
+      const dl = r.deadline || '';
+      if (dl === '25Q4' || dl === '26Q1' || dl === '26Q2') {
+        ministryLoad[r.ministry] = (ministryLoad[r.ministry] || 0) + 1;
+      }
+    });
+  });
+  const maxMinistryLoad = Math.max(1, ...Object.values(ministryLoad));
+
+  // Dependency: how many tasks reference this task (RELATION_EDGES might not be built yet)
+  const depCount = {};
+  if (typeof RELATION_EDGES !== 'undefined' && RELATION_EDGES.length > 0) {
+    RELATION_EDGES.forEach(e => {
+      depCount[e.source] = (depCount[e.source] || 0) + 1;
+      depCount[e.target] = (depCount[e.target] || 0) + 1;
+    });
+  }
+  const maxDep = Math.max(1, ...Object.values(depCount));
+
+  tasks.forEach(t => {
+    // Deadline subscore: use worst (earliest) recommendation deadline
+    let worstRisk = { level: 'unknown' };
+    (t.recommendations || []).forEach(r => {
+      const risk = getRiskLevel(r.deadline);
+      const priority = { overdue: 5, critical: 4, high: 3, medium: 2, low: 1, unknown: 0 };
+      if ((priority[risk.level] || 0) > (priority[worstRisk.level] || 0)) worstRisk = risk;
+    });
+    const deadlineScore = deadlineScoreMap[worstRisk.level] || 0;
+
+    // Ministry overload subscore: max load across ministries of this task
+    const ministries = [...new Set((t.recommendations || []).map(r => r.ministry))];
+    const maxLoad = Math.max(0, ...ministries.map(m => ministryLoad[m] || 0));
+    const overloadScore = Math.round((maxLoad / maxMinistryLoad) * 30);
+
+    // Dependency subscore
+    const dep = depCount[t.id] || 0;
+    const depScore = Math.round((dep / maxDep) * 30);
+
+    const total = Math.min(100, deadlineScore + overloadScore + depScore);
+    let level;
+    if (total >= 75) level = 'critical';
+    else if (total >= 55) level = 'high';
+    else if (total >= 35) level = 'medium';
+    else if (total >= 15) level = 'low';
+    else level = 'safe';
+
+    result[t.id] = { deadlineScore, overloadScore, depScore, total, level, baseRisk: worstRisk };
+  });
+
+  COMPOSITE_RISK_CACHE = result;
+  return result;
+}
+
+function computeMinistryCompositeRisk() {
+  if (!COMPOSITE_RISK_CACHE) computeCompositeRisk();
+  const tasks = DATA.tasks.tasks;
+  const ministry = {};
+  tasks.forEach(t => {
+    const comp = COMPOSITE_RISK_CACHE[t.id];
+    if (!comp) return;
+    const mins = [...new Set((t.recommendations || []).map(r => r.ministry))];
+    mins.forEach(m => {
+      if (!ministry[m]) ministry[m] = { critical: 0, high: 0, medium: 0, low: 0, safe: 0, totalScore: 0, count: 0 };
+      ministry[m][comp.level] = (ministry[m][comp.level] || 0) + 1;
+      ministry[m].totalScore += comp.total;
+      ministry[m].count++;
+    });
+  });
+  return ministry;
+}
+
+function getMinistryAlerts() {
+  const ministry = computeMinistryCompositeRisk();
+  const alerts = [];
+  Object.entries(ministry).forEach(([name, data]) => {
+    const avgScore = data.count > 0 ? data.totalScore / data.count : 0;
+    if (data.critical >= 2 || avgScore >= 60) {
+      alerts.push({ name, critical: data.critical, avgScore: Math.round(avgScore) });
+    }
+  });
+  alerts.sort((a, b) => b.critical - a.critical || b.avgScore - a.avgScore);
+  return alerts;
+}
 
 const DEADLINE_DATES = {
   '25Q4': new Date('2025-12-31'),
@@ -2727,6 +2839,9 @@ function formatDateStr(d) {
 }
 
 function renderRisk() {
+  COMPOSITE_RISK_CACHE = null;
+  computeCompositeRisk();
+  const alerts = getMinistryAlerts();
   const tasks = DATA.tasks.tasks;
 
   // Quarter definitions
@@ -2797,6 +2912,20 @@ function renderRisk() {
   `;
   document.getElementById('riskKpiGrid').innerHTML = kpiHtml;
 
+  // Alert banner
+  let alertHtml = '';
+  if (alerts.length > 0) {
+    alertHtml = '<div class="risk-alert-banner"><strong>⚠️ 고위험 부처 경보:</strong>';
+    alerts.forEach(a => {
+      alertHtml += '<span class="risk-alert-chip">' + escapeHtml(a.name) + ' — 긴급 ' + a.critical + '건 / 평균 ' + a.avgScore + '점</span>';
+    });
+    alertHtml += '</div>';
+  }
+  document.getElementById('riskAlertBanner').innerHTML = alertHtml;
+
+  // Ministry composite risk
+  const ministryComp = computeMinistryCompositeRisk();
+
   // Ministry risk table
   const sortedMinistries = Object.entries(ministryRisk)
     .sort((a, b) => ((b[1].overdue + b[1].critical + b[1].high) - (a[1].overdue + a[1].critical + a[1].high)));
@@ -2805,6 +2934,10 @@ function renderRisk() {
   sortedMinistries.forEach(([name, counts]) => {
     if (counts.total === 0) return;
     const critTotal = counts.overdue + counts.critical;
+    const comp = ministryComp[name];
+    const avgScore = comp && comp.count > 0 ? Math.round(comp.totalScore / comp.count) : 0;
+    const heatBg = avgScore >= 75 ? '#dc3545' : avgScore >= 55 ? '#fd7e14' : avgScore >= 35 ? '#ffc107' : avgScore >= 15 ? '#d4edda' : '#e8f5e9';
+    const heatColor = avgScore >= 55 ? 'white' : '#333';
     tableHtml += '<tr>';
     tableHtml += '<td><strong>' + escapeHtml(name) + '</strong></td>';
     tableHtml += '<td class="num-cell critical">' + (critTotal || '-') + '</td>';
@@ -2812,6 +2945,7 @@ function renderRisk() {
     tableHtml += '<td class="num-cell" style="color:#b8860b">' + (counts.medium || '-') + '</td>';
     tableHtml += '<td class="num-cell" style="color:var(--success)">' + ((counts.low + counts.unknown) || '-') + '</td>';
     tableHtml += '<td class="num-cell" style="font-weight:700">' + counts.total + '</td>';
+    tableHtml += '<td class="num-cell heatmap-cell" style="background:' + heatBg + ';color:' + heatColor + ';font-weight:700">' + (avgScore || '-') + '</td>';
     tableHtml += '</tr>';
   });
   document.getElementById('riskMinistryBody').innerHTML = tableHtml;
@@ -3146,6 +3280,80 @@ function toggleShortcutPanel() {
 // Similarity Analysis
 // ============================================================
 let SIMILARITY_PAIRS = [];
+let IDF_DICT = {};
+let TFIDF_VECS = {};
+
+function extractKeywordsRaw(text) {
+  const stopwords = new Set([
+    '및','위한','통한','등을','위해','관련','지원','추진','강화','확대','구축',
+    '있다','이를','있는','하는','한다','된다','에서','으로','것이','대한','것을','수행',
+    '수립','마련','방안','계획','사업','것으로','이상','따라','대해','부터','까지','내에',
+    '해야','또한','아울러','이에','현재','그리고','하여','통해','포함','등의','기반',
+    'AI','ai','데이터','정책','기술','시스템','서비스','플랫폼','센터','기관','부처',
+    '활용','개발','운영','도입','실시','추진','점검','검토','이행','정비','분야'
+  ]);
+  return text.replace(/[^\w\s가-힣]/g, ' ')
+    .split(/\s+/)
+    .filter(w => w.length >= 2 && /[가-힣]/.test(w) && !stopwords.has(w));
+}
+
+function buildIdfDict() {
+  const tasks = DATA.tasks.tasks;
+  const N = tasks.length;
+  const df = {};
+  TFIDF_VECS = {};
+
+  tasks.forEach(t => {
+    const text = (t.title || '') + ' ' + (t.background || '') + ' ' +
+                 (t.recommendations || []).map(r => r.content || '').join(' ');
+    const words = extractKeywordsRaw(text);
+    const seen = new Set();
+    words.forEach(w => {
+      if (!seen.has(w)) { df[w] = (df[w] || 0) + 1; seen.add(w); }
+    });
+
+    // TF for this task
+    const tf = {};
+    words.forEach(w => { tf[w] = (tf[w] || 0) + 1; });
+    const len = words.length || 1;
+    Object.keys(tf).forEach(w => { tf[w] /= len; });
+    TFIDF_VECS[t.id] = tf; // will be scaled by IDF below
+  });
+
+  // Compute IDF
+  IDF_DICT = {};
+  Object.keys(df).forEach(w => {
+    IDF_DICT[w] = Math.log((N + 1) / (df[w] + 1)) + 1;
+  });
+
+  // Scale TF by IDF
+  tasks.forEach(t => {
+    const vec = TFIDF_VECS[t.id];
+    Object.keys(vec).forEach(w => {
+      vec[w] = vec[w] * (IDF_DICT[w] || 1);
+    });
+  });
+}
+
+function cosineSimilarity(vecA, vecB) {
+  let dot = 0, normA = 0, normB = 0;
+  Object.keys(vecA).forEach(w => {
+    normA += vecA[w] * vecA[w];
+    if (vecB[w]) dot += vecA[w] * vecB[w];
+  });
+  Object.keys(vecB).forEach(w => { normB += vecB[w] * vecB[w]; });
+  if (normA === 0 || normB === 0) return 0;
+  return dot / (Math.sqrt(normA) * Math.sqrt(normB));
+}
+
+function getTopCommonKeywords(vecA, vecB, n) {
+  const common = [];
+  Object.keys(vecA).forEach(w => {
+    if (vecB[w]) common.push({ word: w, score: vecA[w] + vecB[w] });
+  });
+  common.sort((a, b) => b.score - a.score);
+  return common.slice(0, n).map(x => x.word);
+}
 
 function extractKeywords(text) {
   const stopwords = ['및','위한','통한','등을','위해','관련','지원','추진','강화','확대','구축',
@@ -3158,40 +3366,35 @@ function extractKeywords(text) {
 }
 
 function computeSimilarity(taskA, taskB) {
-  const textA = (taskA.title || '') + ' ' + (taskA.background || '');
-  const textB = (taskB.title || '') + ' ' + (taskB.background || '');
-  const wordsA = extractKeywords(textA);
-  const wordsB = extractKeywords(textB);
+  const vecA = TFIDF_VECS[taskA.id] || {};
+  const vecB = TFIDF_VECS[taskB.id] || {};
+  const tfidfSim = cosineSimilarity(vecA, vecB) * 0.75;
 
-  const setA = new Set(wordsA);
-  const setB = new Set(wordsB);
-  const intersection = [...setA].filter(w => setB.has(w));
-  const union = new Set([...setA, ...setB]);
-
-  const keywordSim = union.size > 0 ? intersection.length / union.size : 0;
-
-  const areaSim = taskA.strategic_area_id === taskB.strategic_area_id ? 0.2 : 0;
+  const areaSim = taskA.strategic_area_id === taskB.strategic_area_id ? 0.15 : 0;
 
   const ministriesA = new Set(taskA.recommendations.map(r => r.ministry));
   const ministriesB = new Set(taskB.recommendations.map(r => r.ministry));
   const commonMinistries = [...ministriesA].filter(m => ministriesB.has(m));
-  const ministrySim = commonMinistries.length > 0 ? 0.15 : 0;
+  const ministrySim = commonMinistries.length > 0 ? 0.10 : 0;
+
+  const commonKeywords = getTopCommonKeywords(vecA, vecB, 8);
 
   return {
-    score: Math.min(1, keywordSim + areaSim + ministrySim),
-    commonKeywords: intersection.slice(0, 8),
-    commonMinistries: commonMinistries
+    score: Math.min(1, tfidfSim + areaSim + ministrySim),
+    commonKeywords,
+    commonMinistries
   };
 }
 
 function computeAllSimilarities() {
+  buildIdfDict();
   const tasks = DATA.tasks.tasks;
   SIMILARITY_PAIRS = [];
 
   for (let i = 0; i < tasks.length; i++) {
     for (let j = i + 1; j < tasks.length; j++) {
       const result = computeSimilarity(tasks[i], tasks[j]);
-      if (result.score >= 0.15) {
+      if (result.score >= 0.08) {
         SIMILARITY_PAIRS.push({
           taskA: tasks[i],
           taskB: tasks[j],
@@ -3313,7 +3516,7 @@ function renderSimilarityPairs() {
     const ministriesA = new Set(p.taskA.recommendations.map(function(r){return r.ministry;}));
     const ministriesB = new Set(p.taskB.recommendations.map(function(r){return r.ministry;}));
     const commonMins = p.commonMinistries || [...ministriesA].filter(function(m){return ministriesB.has(m);});
-    const kwSim = Math.max(0, p.score - (sameArea ? 0.2 : 0) - (commonMins.length > 0 ? 0.15 : 0));
+    const tfidfSim = Math.max(0, p.score - (sameArea ? 0.15 : 0) - (commonMins.length > 0 ? 0.10 : 0));
 
     html += '<div class="sim-pair ' + riskClass + '" id="sp-' + idx + '">';
 
@@ -3327,9 +3530,9 @@ function renderSimilarityPairs() {
     // ── 유사도 바 ──
     html += '<div class="sim-score-bar"><div class="sim-score-fill ' + scoreClass + '" style="width:' + pct + '%"></div></div>';
     html += '<div style="font-size:0.8rem;color:var(--gray);margin-bottom:6px">유사도 <strong style="color:var(--dark)">' + pct + '%</strong>';
-    html += ' &nbsp;(키워드 ' + (kwSim * 100).toFixed(0) + '%';
-    if (sameArea) html += ' + 전략분야일치 20%';
-    if (commonMins.length > 0) html += ' + 부처중복 15%';
+    html += ' &nbsp;(TF-IDF 텍스트 유사도 ' + (tfidfSim * 100).toFixed(0) + '%';
+    if (sameArea) html += ' + 전략분야일치 15%';
+    if (commonMins.length > 0) html += ' + 부처중복 10%';
     html += ')</div>';
 
     // ── 유사 이유 태그 ──
@@ -3531,6 +3734,226 @@ function renderSimilarity() {
 // Related Tasks
 // ============================================================
 let RELATION_EDGES = [];
+let FD_NODES = [], FD_EDGES = [], FD_ANIMATION = null, FD_DRAG = null, FD_MODE = 'ego';
+const FD_CONFIG = { repulsion: 3000, spring: 0.03, springLen: 120, gravity: 0.002, damping: 0.85, maxVel: 8, dt: 0.5, minScore: 20 };
+
+function initForceNodes(selectedId, related) {
+  const tasks = DATA.tasks.tasks;
+  const center = tasks.find(t => t.id === selectedId);
+  if (!center) return;
+  const W = (document.getElementById('network-svg').clientWidth || 800);
+  const H = 500;
+  FD_NODES = [{ id: selectedId, task: center, x: W / 2, y: H / 2, vx: 0, vy: 0, isCenter: true }];
+  const maxNodes = Math.min(related.length, 20);
+  related.slice(0, maxNodes).forEach((rel, i) => {
+    const angle = (2 * Math.PI * i) / maxNodes - Math.PI / 2;
+    const r = 150 + Math.random() * 60;
+    FD_NODES.push({ id: rel.otherId, task: rel.other, x: W/2 + r*Math.cos(angle), y: H/2 + r*Math.sin(angle), vx: 0, vy: 0, isCenter: false });
+  });
+  FD_EDGES = related.slice(0, maxNodes).map(rel => ({ source: selectedId, target: rel.otherId, strength: rel.strength }));
+}
+
+function initForceNodesOverview() {
+  const tasks = DATA.tasks.tasks;
+  const W = (document.getElementById('network-svg').clientWidth || 800);
+  const H = 650;
+  FD_NODES = tasks.map((t, i) => {
+    const angle = (2 * Math.PI * i) / tasks.length;
+    const r = Math.min(W, H) * 0.37;
+    return { id: t.id, task: t, x: W/2 + r*Math.cos(angle), y: H/2 + r*Math.sin(angle), vx: 0, vy: 0, isCenter: false };
+  });
+  FD_EDGES = RELATION_EDGES.filter(e => e.score >= FD_CONFIG.minScore)
+    .map(e => ({ source: e.source, target: e.target, strength: e.strength }));
+}
+
+function stepForce(W, H) {
+  const cx = W / 2, cy = H / 2;
+  const nodes = FD_NODES;
+  // Reset forces
+  nodes.forEach(n => { n.fx = 0; n.fy = 0; });
+  // Repulsion O(N²)
+  for (let i = 0; i < nodes.length; i++) {
+    for (let j = i + 1; j < nodes.length; j++) {
+      const dx = nodes[i].x - nodes[j].x;
+      const dy = nodes[i].y - nodes[j].y;
+      const dist2 = dx * dx + dy * dy + 1;
+      const f = FD_CONFIG.repulsion / dist2;
+      const fx = f * dx / Math.sqrt(dist2);
+      const fy = f * dy / Math.sqrt(dist2);
+      nodes[i].fx += fx; nodes[i].fy += fy;
+      nodes[j].fx -= fx; nodes[j].fy -= fy;
+    }
+  }
+  // Spring forces
+  FD_EDGES.forEach(e => {
+    const a = nodes.find(n => n.id === e.source);
+    const b = nodes.find(n => n.id === e.target);
+    if (!a || !b) return;
+    const dx = b.x - a.x, dy = b.y - a.y;
+    const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+    const targetLen = FD_CONFIG.springLen / (0.5 + e.strength);
+    const f = FD_CONFIG.spring * (dist - targetLen);
+    const fx = f * dx / dist, fy = f * dy / dist;
+    a.fx += fx; a.fy += fy;
+    b.fx -= fx; b.fy -= fy;
+  });
+  // Gravity toward center + integrate
+  nodes.forEach(n => {
+    if (n.pinned) return;
+    n.fx += FD_CONFIG.gravity * (cx - n.x);
+    n.fy += FD_CONFIG.gravity * (cy - n.y);
+    n.vx = (n.vx + n.fx * FD_CONFIG.dt) * FD_CONFIG.damping;
+    n.vy = (n.vy + n.fy * FD_CONFIG.dt) * FD_CONFIG.damping;
+    const speed = Math.sqrt(n.vx*n.vx + n.vy*n.vy);
+    if (speed > FD_CONFIG.maxVel) { n.vx *= FD_CONFIG.maxVel/speed; n.vy *= FD_CONFIG.maxVel/speed; }
+    n.x += n.vx; n.y += n.vy;
+    n.x = Math.max(20, Math.min(W-20, n.x));
+    n.y = Math.max(20, Math.min(H-20, n.y));
+  });
+}
+
+function drawForceNetwork(W, H) {
+  const svgEl = document.getElementById('network-svg');
+  svgEl.innerHTML = '';
+
+  // Edges
+  const edgeG = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+  FD_EDGES.forEach(e => {
+    const a = FD_NODES.find(n => n.id === e.source);
+    const b = FD_NODES.find(n => n.id === e.target);
+    if (!a || !b) return;
+    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    line.setAttribute('x1', a.x); line.setAttribute('y1', a.y);
+    line.setAttribute('x2', b.x); line.setAttribute('y2', b.y);
+    line.setAttribute('stroke', e.strength >= 0.4 ? '#003087' : '#bbb');
+    line.setAttribute('stroke-width', Math.max(1, e.strength * 4));
+    line.setAttribute('stroke-opacity', 0.3 + e.strength * 0.5);
+    edgeG.appendChild(line);
+  });
+  svgEl.appendChild(edgeG);
+
+  // Nodes
+  const axisColors = { 1: '#1565c0', 2: '#6a1b9a', 3: '#2e7d32' };
+  const nodeG = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+  FD_NODES.forEach(n => {
+    const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    g.setAttribute('transform', 'translate(' + n.x + ',' + n.y + ')');
+    g.style.cursor = 'pointer';
+
+    const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    const r = n.isCenter ? 22 : (FD_MODE === 'overview' ? 10 : 14);
+    circle.setAttribute('r', r);
+    circle.setAttribute('fill', n.isCenter ? '#003087' : (axisColors[n.task.policy_axis_id] || '#666'));
+    circle.setAttribute('stroke', 'white');
+    circle.setAttribute('stroke-width', '2');
+    g.appendChild(circle);
+
+    const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    label.setAttribute('text-anchor', 'middle');
+    label.setAttribute('dy', '0.35em');
+    label.setAttribute('fill', 'white');
+    label.setAttribute('font-size', n.isCenter ? '11' : (FD_MODE === 'overview' ? '7' : '9'));
+    label.setAttribute('font-weight', '700');
+    label.setAttribute('pointer-events', 'none');
+    label.textContent = n.task.number;
+    g.appendChild(label);
+
+    if (FD_MODE !== 'overview' || n.isCenter) {
+      const title = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      title.setAttribute('text-anchor', 'middle');
+      title.setAttribute('dy', (r + 14) + 'px');
+      title.setAttribute('fill', '#333');
+      title.setAttribute('font-size', '9');
+      title.setAttribute('font-family', "'Noto Sans KR'");
+      title.setAttribute('pointer-events', 'none');
+      const ts = n.task.title.length > 14 ? n.task.title.substring(0, 14) + '…' : n.task.title;
+      title.textContent = ts;
+      g.appendChild(title);
+    }
+
+    // Click
+    g.addEventListener('click', function(ev) { if (!FD_DRAG || !FD_DRAG.moved) openTaskModal(n.id); });
+
+    // Drag
+    g.addEventListener('mousedown', function(ev) {
+      ev.preventDefault();
+      FD_DRAG = { node: n, moved: false };
+      n.pinned = true;
+      const onMove = function(mv) {
+        const rect = svgEl.getBoundingClientRect();
+        const scaleX = (svgEl.viewBox.baseVal.width || W) / rect.width;
+        const scaleY = (svgEl.viewBox.baseVal.height || H) / rect.height;
+        n.x = (mv.clientX - rect.left) * scaleX;
+        n.y = (mv.clientY - rect.top) * scaleY;
+        n.vx = 0; n.vy = 0;
+        FD_DRAG.moved = true;
+      };
+      const onUp = function() {
+        n.pinned = false;
+        document.removeEventListener('mousemove', onMove);
+        document.removeEventListener('mouseup', onUp);
+      };
+      document.addEventListener('mousemove', onMove);
+      document.addEventListener('mouseup', onUp);
+    });
+
+    nodeG.appendChild(g);
+  });
+  svgEl.appendChild(nodeG);
+}
+
+function runForceSimulation(W, H, steps) {
+  for (let i = 0; i < steps; i++) stepForce(W, H);
+}
+
+function startForceAnimation(W, H) {
+  if (FD_ANIMATION) cancelAnimationFrame(FD_ANIMATION);
+  let frame = 0;
+  const loop = function() {
+    stepForce(W, H);
+    drawForceNetwork(W, H);
+    frame++;
+    if (frame < 500) FD_ANIMATION = requestAnimationFrame(loop);
+    else FD_ANIMATION = null;
+  };
+  FD_ANIMATION = requestAnimationFrame(loop);
+}
+
+function toggleNetworkMode(mode) {
+  FD_MODE = mode;
+  const svgEl = document.getElementById('network-svg');
+  const egoBtn = document.getElementById('fdBtnEgo');
+  const overBtn = document.getElementById('fdBtnOverview');
+  if (egoBtn && overBtn) {
+    egoBtn.style.background = mode === 'ego' ? 'var(--primary)' : 'white';
+    egoBtn.style.color = mode === 'ego' ? 'white' : 'var(--gray)';
+    overBtn.style.background = mode === 'overview' ? 'var(--primary)' : 'white';
+    overBtn.style.color = mode === 'overview' ? 'white' : 'var(--gray)';
+  }
+  if (mode === 'overview') {
+    svgEl.style.height = '650px';
+    svgEl.setAttribute('viewBox', '0 0 ' + (svgEl.clientWidth || 800) + ' 650');
+    initForceNodesOverview();
+    const W = svgEl.clientWidth || 800;
+    runForceSimulation(W, 650, 100);
+    startForceAnimation(W, 650);
+  } else {
+    svgEl.style.height = '500px';
+    svgEl.setAttribute('viewBox', '0 0 ' + (svgEl.clientWidth || 800) + ' 500');
+    // Return to current ego selection
+    const taskId = parseInt(document.getElementById('relTaskSelect').value);
+    if (taskId) {
+      const related = RELATION_EDGES.filter(e => e.source === taskId || e.target === taskId)
+        .map(e => ({ otherId: e.source === taskId ? e.target : e.source, other: DATA.tasks.tasks.find(t => t.id === (e.source === taskId ? e.target : e.source)), strength: e.strength, score: e.score }))
+        .filter(r => r.other)
+        .sort((a, b) => b.score - a.score);
+      const W = svgEl.clientWidth || 800;
+      initForceNodes(taskId, related);
+      runForceSimulation(W, 500, 80);
+      startForceAnimation(W, 500);
+    }
+  }
+}
 
 // ── Relation helpers ────────────────────────────────────────────────────────
 function deadlineToNum(q) {
@@ -3887,102 +4310,26 @@ function onRelTaskSelect() {
 }
 
 function renderNetwork(selectedId, related) {
-  const svg = document.getElementById('network-svg');
-  const W = 800, H = 500;
-  svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
-  svg.innerHTML = '';
+  const svgEl = document.getElementById('network-svg');
+  const W = svgEl.clientWidth || 800;
+  const H = 500;
+  svgEl.style.height = '500px';
+  svgEl.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
+  FD_MODE = 'ego';
+  const egoBtn = document.getElementById('fdBtnEgo');
+  const overBtn = document.getElementById('fdBtnOverview');
+  if (egoBtn) { egoBtn.style.background = 'var(--primary)'; egoBtn.style.color = 'white'; }
+  if (overBtn) { overBtn.style.background = 'white'; overBtn.style.color = 'var(--gray)'; }
 
-  const selectedTask = DATA.tasks.tasks.find(t => t.id === selectedId);
-  if (!selectedTask || related.length === 0) {
-    svg.innerHTML = '<text x="400" y="250" text-anchor="middle" fill="#999" font-size="14">연관 과제가 없습니다</text>';
+  if (!related || related.length === 0) {
+    svgEl.innerHTML = '<text x="400" y="250" text-anchor="middle" fill="#999" font-size="14">연관 과제가 없습니다</text>';
     return;
   }
 
-  const nodes = [{ id: selectedId, task: selectedTask, x: W / 2, y: H / 2, isCenter: true }];
-  const maxNodes = Math.min(related.length, 12);
-  const angleStep = (2 * Math.PI) / maxNodes;
-  const radius = Math.min(W, H) * 0.35;
-
-  related.slice(0, maxNodes).forEach((rel, i) => {
-    const angle = angleStep * i - Math.PI / 2;
-    nodes.push({
-      id: rel.otherId,
-      task: rel.other,
-      x: W / 2 + radius * Math.cos(angle),
-      y: H / 2 + radius * Math.sin(angle),
-      isCenter: false,
-      strength: rel.strength
-    });
-  });
-
-  // Draw edges
-  const edgeGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-  related.slice(0, maxNodes).forEach(rel => {
-    const source = nodes.find(n => n.id === selectedId);
-    const target = nodes.find(n => n.id === rel.otherId);
-    if (!source || !target) return;
-    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-    line.setAttribute('x1', source.x);
-    line.setAttribute('y1', source.y);
-    line.setAttribute('x2', target.x);
-    line.setAttribute('y2', target.y);
-    line.setAttribute('stroke', rel.strength >= 0.4 ? '#003087' : '#bbb');
-    line.setAttribute('stroke-width', Math.max(1, rel.strength * 4));
-    line.setAttribute('stroke-opacity', 0.4 + rel.strength * 0.4);
-    edgeGroup.appendChild(line);
-
-    // Edge label
-    const pct = (rel.strength * 100).toFixed(0);
-    const lbl = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-    lbl.setAttribute('x', (source.x + target.x) / 2);
-    lbl.setAttribute('y', (source.y + target.y) / 2 - 4);
-    lbl.setAttribute('text-anchor', 'middle');
-    lbl.setAttribute('class', 'net-label');
-    lbl.textContent = pct + '%';
-    edgeGroup.appendChild(lbl);
-  });
-  svg.appendChild(edgeGroup);
-
-  // Draw nodes
-  const nodeGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-  nodes.forEach(n => {
-    const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-    g.setAttribute('class', 'net-node');
-    g.setAttribute('transform', 'translate(' + n.x + ',' + n.y + ')');
-    g.style.cursor = 'pointer';
-    g.onclick = function() { openTaskModal(n.id); };
-
-    const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-    const axisColors = { 1: '#1565c0', 2: '#6a1b9a', 3: '#2e7d32' };
-    circle.setAttribute('r', n.isCenter ? 22 : 14);
-    circle.setAttribute('fill', n.isCenter ? '#003087' : (axisColors[n.task.policy_axis_id] || '#666'));
-    circle.setAttribute('stroke', 'white');
-    circle.setAttribute('stroke-width', '2');
-    g.appendChild(circle);
-
-    const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-    text.setAttribute('text-anchor', 'middle');
-    text.setAttribute('dy', '0.35em');
-    text.setAttribute('fill', 'white');
-    text.setAttribute('font-size', n.isCenter ? '11' : '9');
-    text.setAttribute('font-weight', '700');
-    text.textContent = n.task.number;
-    g.appendChild(text);
-
-    // Title below node
-    const title = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-    title.setAttribute('text-anchor', 'middle');
-    title.setAttribute('dy', (n.isCenter ? 34 : 26) + 'px');
-    title.setAttribute('fill', '#333');
-    title.setAttribute('font-size', '9');
-    title.setAttribute('font-family', "'Noto Sans KR'");
-    const titleStr = n.task.title.length > 16 ? n.task.title.substring(0, 16) + '...' : n.task.title;
-    title.textContent = titleStr;
-    g.appendChild(title);
-
-    nodeGroup.appendChild(g);
-  });
-  svg.appendChild(nodeGroup);
+  if (FD_ANIMATION) { cancelAnimationFrame(FD_ANIMATION); FD_ANIMATION = null; }
+  initForceNodes(selectedId, related);
+  runForceSimulation(W, H, 80);
+  startForceAnimation(W, H);
 }
 
 function renderRelations() {
