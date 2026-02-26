@@ -1011,6 +1011,26 @@ mark.hl { background: #fff176; padding: 0 1px; border-radius: 2px; font-style: n
     </div>
     <div id="alertItems"></div>
   </div>
+  <div class="chart-card" style="margin-bottom:20px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:8px">
+      <h3 style="margin:0">정책 키워드 워드 클라우드</h3>
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+        <span id="wcModeDesc" style="font-size:0.78rem;color:var(--gray)">단어 클릭 → Sankey 다이어그램에서 키워드 검색</span>
+        <div style="display:flex;border:1px solid var(--border);border-radius:20px;overflow:hidden;font-size:0.8rem">
+          <button id="wcBtnKeyword" onclick="setWcMode('keyword')"
+            style="padding:4px 14px;border:none;background:white;color:var(--gray);cursor:pointer;font-family:var(--font);font-size:0.8rem;transition:background 0.15s">
+            🔍 키워드
+          </button>
+          <button id="wcBtnSankey" onclick="setWcMode('sankey')"
+            style="padding:4px 14px;border:none;background:var(--primary);color:white;cursor:pointer;font-family:var(--font);font-size:0.8rem;transition:background 0.15s">
+            📊 Sankey
+          </button>
+        </div>
+      </div>
+    </div>
+    <svg id="wordCloudSvg" style="width:100%;display:block;border-radius:8px"></svg>
+  </div>
+
   <div class="chart-grid" id="chartGrid">
     <div class="chart-card">
       <h3>정책축별 과제 분포</h3>
@@ -4760,8 +4780,203 @@ function toggleStdListView(catId) {
   }
 }
 
+// ============================================================
+// Word Cloud
+// ============================================================
+let WC_MODE = 'sankey'; // 'sankey' | 'keyword'
+
+function setWcMode(mode) {
+  WC_MODE = mode;
+  const kBtn = document.getElementById('wcBtnKeyword');
+  const sBtn = document.getElementById('wcBtnSankey');
+  const desc = document.getElementById('wcModeDesc');
+  if (mode === 'keyword') {
+    kBtn.style.background = 'var(--primary)'; kBtn.style.color = 'white';
+    sBtn.style.background = 'white';          sBtn.style.color = 'var(--gray)';
+    desc.textContent = '단어 클릭 → 대시보드에서 키워드 검색';
+  } else {
+    sBtn.style.background = 'var(--primary)'; sBtn.style.color = 'white';
+    kBtn.style.background = 'white';          kBtn.style.color = 'var(--gray)';
+    desc.textContent = '단어 클릭 → Sankey 다이어그램에서 키워드 검색';
+  }
+}
+
+const WORDCLOUD_DATA = [
+  {w:'산업',c:250},{w:'플랫폼',c:220},{w:'기술',c:200},{w:'구축',c:170},
+  {w:'생태계',c:160},{w:'기업',c:150},{w:'활용',c:145},{w:'모델',c:140},
+  {w:'서비스',c:135},{w:'파운데이션 모델',c:130},{w:'정책',c:125},
+  {w:'과기정통부',c:120},{w:'체계',c:115},{w:'전략',c:110},{w:'교육',c:105},
+  {w:'혁신',c:100},{w:'정부',c:95},{w:'인재 양성',c:90},{w:'국민',c:88},
+  {w:'글로벌',c:85},{w:'AI 기본사회',c:85},{w:'보안',c:80},{w:'공공',c:78},
+  {w:'산업부',c:73},{w:'인프라',c:70},{w:'공공데이터',c:68},{w:'연구개발',c:68},
+  {w:'행안부',c:66},{w:'학습데이터',c:65},{w:'규제혁신',c:64},{w:'교육부',c:62},
+  {w:'복지부',c:60},{w:'국방',c:58},{w:'국방부',c:57},{w:'실증',c:56},
+  {w:'중기부',c:55},{w:'평가',c:54},{w:'확산',c:53},{w:'도입',c:52},
+  {w:'AI 에이전트',c:51},{w:'피지컬 AI',c:50},{w:'클라우드',c:49},
+  {w:'데이터센터',c:48},{w:'AX',c:47},{w:'AI 융합',c:46},
+  {w:'경쟁력 강화',c:45},{w:'가이드라인',c:45},{w:'윤리',c:45},
+  {w:'안전성',c:43},{w:'정보보호',c:42},{w:'지역',c:41},{w:'테스트베드',c:40},
+  {w:'보건의료',c:39},{w:'제조',c:38},{w:'금융',c:37},{w:'개인정보',c:36},
+  {w:'글로벌 AI',c:35},{w:'AI 전환',c:34},{w:'디지털 전환',c:33},
+  {w:'거버넌스',c:32},{w:'자율주행',c:31},{w:'알고리즘',c:30},{w:'로봇',c:29},
+  {w:'반도체',c:28},{w:'공공서비스',c:27},{w:'기후 변화',c:26},
+  {w:'상호운용성',c:25},{w:'저작물',c:24},{w:'맞춤형',c:23},{w:'일자리',c:22},
+  {w:'창작자',c:21},{w:'무기체계',c:20},{w:'바우처',c:19},{w:'신뢰성',c:18},
+  {w:'네트워크',c:17},{w:'프레임워크',c:16},{w:'샌드박스',c:15},
+  {w:'시범운영',c:14},{w:'오픈소스',c:13},{w:'데이터 활용',c:12},
+  {w:'공론장',c:11},{w:'조달',c:11},{w:'딥페이크',c:10},{w:'표준화',c:10},
+  {w:'투자',c:10},{w:'AI 교육',c:9},{w:'취약계층',c:9},{w:'GPU',c:9},
+  {w:'핵심기술',c:8},{w:'접근성',c:8},{w:'지방정부',c:8},{w:'문화콘텐츠',c:8},
+  {w:'K-컬처',c:7},{w:'소셜벤처',c:7},{w:'온디바이스 AI',c:6},
+  {w:'데이터 스페이스',c:6},{w:'국가AI전략위',c:6},{w:'의료데이터',c:5},
+  {w:'가치평가',c:5},{w:'기술개발',c:4}
+];
+
+function renderWordCloud() {
+  const svgEl = document.getElementById('wordCloudSvg');
+  if (!svgEl) return;
+  const W = svgEl.parentElement.clientWidth || 800;
+  const H = 360;
+
+  const minC = 4, maxC = 250, minF = 11, maxF = 48;
+  const COLORS = [
+    '#003087','#1B5FA4','#0066CC','#2E74C0','#1565c0',
+    '#6a1b9a','#4527a0','#7b1fa2','#2e7d32','#388e3c',
+    '#e65100','#c62828','#b71c1c','#00695c','#006064'
+  ];
+
+  // Measure text widths using off-screen canvas
+  const mc = document.createElement('canvas');
+  const mctx = mc.getContext('2d');
+
+  const items = WORDCLOUD_DATA.map((d, i) => {
+    const fs = Math.round(minF + (d.c - minC) / (maxC - minC) * (maxF - minF));
+    const fw = d.c > 120 ? '700' : d.c > 60 ? '600' : '500';
+    mctx.font = fw + ' ' + fs + 'px "Noto Sans KR",sans-serif';
+    const tw = mctx.measureText(d.w).width;
+    return {
+      word: d.w, count: d.c,
+      fs, fw,
+      w: tw + 10, h: fs * 1.45,
+      color: COLORS[i % COLORS.length],
+      x: 0, y: 0, placed: false
+    };
+  });
+
+  // Sort largest first
+  items.sort((a, b) => b.count - a.count);
+
+  // Archimedean spiral placement with AABB collision
+  const boxes = [];
+  const cx = W / 2, cy = H / 2;
+
+  function hits(x, y, w, h) {
+    const mg = 3;
+    for (const b of boxes) {
+      if (x - mg < b.x + b.w && x + w + mg > b.x &&
+          y - mg < b.y + b.h && y + h + mg > b.y) return true;
+    }
+    return false;
+  }
+
+  items.forEach(item => {
+    const hw = item.w / 2, hh = item.h / 2;
+    let ok = false;
+    for (let t = 0; t < 800 && !ok; t += 0.22) {
+      const r = t * 3.8;
+      for (const sg of [1, -1]) {
+        const px = cx + sg * r * Math.cos(t) - hw;
+        const py = cy + r * Math.sin(t) * 0.58 - hh;
+        if (px < 4 || px + item.w > W - 4) continue;
+        if (py < 4 || py + item.h > H - 4) continue;
+        if (!hits(px, py, item.w, item.h)) {
+          item.x = px; item.y = py; item.placed = true;
+          boxes.push({ x: px, y: py, w: item.w, h: item.h });
+          ok = true; break;
+        }
+      }
+    }
+    // Fallback: random position
+    if (!ok) {
+      item.x = Math.random() * Math.max(0, W - item.w);
+      item.y = Math.random() * Math.max(0, H - item.h);
+      item.placed = true;
+    }
+  });
+
+  // Render SVG
+  svgEl.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
+  svgEl.setAttribute('width', W);
+  svgEl.setAttribute('height', H);
+  svgEl.innerHTML = '';
+
+  // Background
+  const bg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+  bg.setAttribute('width', W); bg.setAttribute('height', H);
+  bg.setAttribute('fill', '#f4f7fb'); bg.setAttribute('rx', '8');
+  svgEl.appendChild(bg);
+
+  items.forEach(item => {
+    if (!item.placed) return;
+    const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    g.style.cursor = 'pointer';
+
+    // Hover background rect
+    const hr = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+    hr.setAttribute('x', item.x); hr.setAttribute('y', item.y);
+    hr.setAttribute('width', item.w); hr.setAttribute('height', item.h);
+    hr.setAttribute('fill', 'transparent'); hr.setAttribute('rx', '4');
+    g.appendChild(hr);
+
+    // Word text
+    const txt = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    txt.setAttribute('x', item.x + item.w / 2);
+    txt.setAttribute('y', item.y + item.h * 0.73);
+    txt.setAttribute('text-anchor', 'middle');
+    txt.setAttribute('font-size', item.fs);
+    txt.setAttribute('font-weight', item.fw);
+    txt.setAttribute('font-family', "'Noto Sans KR',sans-serif");
+    txt.setAttribute('fill', item.color);
+    txt.setAttribute('pointer-events', 'none');
+    txt.textContent = item.word;
+    g.appendChild(txt);
+
+    // Tooltip (dynamic — re-read at hover time)
+    const tip = document.createElementNS('http://www.w3.org/2000/svg', 'title');
+    tip.textContent = item.word + ' (' + item.count + '건)';
+    g.appendChild(tip);
+
+    // Hover effects
+    g.addEventListener('mouseenter', function() {
+      txt.setAttribute('fill', '#e65100');
+      hr.setAttribute('fill', 'rgba(230,81,0,0.08)');
+      txt.setAttribute('font-weight', '700');
+      tip.textContent = item.word + ' (' + item.count + '건) — ' +
+        (WC_MODE === 'keyword' ? '클릭 시 대시보드 키워드 검색' : '클릭 시 Sankey에서 검색');
+    });
+    g.addEventListener('mouseleave', function() {
+      txt.setAttribute('fill', item.color);
+      hr.setAttribute('fill', 'transparent');
+      txt.setAttribute('font-weight', item.fw);
+    });
+
+    // Click — behaviour depends on WC_MODE
+    g.addEventListener('click', function() {
+      if (WC_MODE === 'keyword') {
+        const inp = document.getElementById('globalSearch');
+        if (inp) { inp.value = item.word; globalSearch(); }
+      } else {
+        window.open('sankey.html?q=' + encodeURIComponent(item.word), '_blank');
+      }
+    });
+
+    svgEl.appendChild(g);
+  });
+}
+
 function init() {
   renderOverview();
+  renderWordCloud();
   renderTasks();
   renderMinistries();
   renderTimeline();

@@ -597,6 +597,22 @@ function highlightTaskNode(taskId) {
   }
 }
 
+// URL ?q=keyword parameter handler (from word cloud)
+(function() {
+  var params = new URLSearchParams(window.location.search);
+  var qParam = params.get('q');
+  if (qParam) {
+    setTimeout(function() {
+      var inp = document.getElementById('searchInput');
+      if (inp) {
+        inp.value = qParam;
+        searchSankey(qParam);
+        document.getElementById('searchClear').style.display = '';
+      }
+    }, 400);
+  }
+})();
+
 // URL ?task=N parameter handler
 (function() {
   var params = new URLSearchParams(window.location.search);
