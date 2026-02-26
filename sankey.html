@@ -526,6 +526,77 @@ window.addEventListener('resize', () => {
   if (inp && inp.value.trim()) searchSankey(inp.value);
 });
 
+// Highlight a specific task node and its connected links in the Sankey diagram
+function highlightTaskNode(taskId) {
+  if (!_nodeSelection || !_linkSelection || !_builtNodes) return;
+
+  // Find the node index for this task
+  const nodeIdx = _builtNodes.findIndex(n => n.type === 'task' && n.taskId === taskId);
+  if (nodeIdx === -1) return;
+
+  const matchedIdx = new Set([nodeIdx]);
+
+  // Expand 1 hop: all nodes sharing a link with the matched node
+  const connectedIdx = new Set(matchedIdx);
+  _builtLinks.forEach(l => {
+    const si = typeof l.source === 'object' ? l.source.index : l.source;
+    const ti = typeof l.target === 'object' ? l.target.index : l.target;
+    if (matchedIdx.has(si) || matchedIdx.has(ti)) {
+      connectedIdx.add(si);
+      connectedIdx.add(ti);
+    }
+  });
+
+  // Links: 3-tier highlight (same scheme as search)
+  _linkSelection.each(function(d) {
+    const si = d.source.index;
+    const ti = d.target.index;
+    const isDirect  = matchedIdx.has(si) || matchedIdx.has(ti);
+    const isPathway = !isDirect && connectedIdx.has(si) && connectedIdx.has(ti);
+    const el = d3.select(this);
+    if (isDirect) {
+      el.attr('stroke-opacity', 0.88)
+        .attr('stroke-width', Math.max(4, d.width * 2.0))
+        .attr('stroke', '#ffe87c');
+    } else if (isPathway) {
+      const srcNode = _builtNodes[si];
+      el.attr('stroke-opacity', 0.42)
+        .attr('stroke-width', Math.max(1.5, d.width))
+        .attr('stroke', nodeColor(srcNode));
+    } else {
+      const srcNode = _builtNodes[si];
+      el.attr('stroke-opacity', 0.03)
+        .attr('stroke-width', Math.max(1, d.width))
+        .attr('stroke', nodeColor(srcNode));
+    }
+  });
+
+  // Nodes: highlight matched + connected, dim the rest
+  _nodeSelection.each(function(d) {
+    const isMatched = matchedIdx.has(d.index);
+    const isConn    = connectedIdx.has(d.index);
+    d3.select(this).select('rect')
+      .attr('opacity', isMatched ? 1 : (isConn ? 0.7 : 0.08))
+      .attr('stroke-width', isMatched ? 2.5 : 1)
+      .attr('stroke', isMatched ? '#ffe87c' : nodeColor(d, 0.7));
+    d3.select(this).select('text')
+      .attr('opacity', isMatched ? 1 : (isConn ? 0.6 : 0.06))
+      .attr('font-weight', isMatched ? 700 : (d.type === 'axis' ? 600 : (d.type === 'task' ? 600 : 400)))
+      .attr('fill', isMatched ? '#ffe87c' : (d.type === 'task' ? '#ffe87c' : '#c8ddf0'));
+  });
+
+  // Scroll the page so the highlighted task node is vertically centered
+  let taskNodeEl = null;
+  _nodeSelection.each(function(d) {
+    if (d.index === nodeIdx) taskNodeEl = this;
+  });
+  if (taskNodeEl) {
+    const rect = taskNodeEl.getBoundingClientRect();
+    const targetY = window.scrollY + rect.top + rect.height / 2 - window.innerHeight / 2;
+    window.scrollTo({ top: Math.max(0, targetY), behavior: 'smooth' });
+  }
+}
+
 // URL ?task=N parameter handler
 (function() {
   var params = new URLSearchParams(window.location.search);
@@ -543,8 +614,10 @@ window.addEventListener('resize', () => {
     }
   }
   if (taskId !== null) {
-    // Small delay so the panel animation works properly after page render
-    setTimeout(function() { openTaskPanel(taskId); }, 100);
+    setTimeout(function() {
+      openTaskPanel(taskId);
+      highlightTaskNode(taskId);
+    }, 100);
   }
 })();
 </script>
