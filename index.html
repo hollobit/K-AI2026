@@ -731,6 +731,14 @@ mark.hl { background: #fff176; padding: 0 1px; border-radius: 2px; font-style: n
 .rel-section-desc { font-size: 0.79rem; color: #666; padding: 6px 12px; background: #fafafa; border-left: 3px solid #ddd; margin-bottom: 10px; border-radius: 0 4px 4px 0; line-height: 1.55; }
 
 #network-svg { width: 100%; height: 500px; background: white; border-radius: var(--radius); box-shadow: var(--shadow); transition: height 0.3s; }
+#wcTooltip { position:fixed; pointer-events:none; z-index:9999; background:#1a2a3a; color:white;
+  padding:7px 12px; border-radius:8px; font-size:0.82rem; font-family:var(--font);
+  box-shadow:0 4px 14px rgba(0,0,0,0.25); white-space:nowrap; opacity:0;
+  transition:opacity 0.12s; line-height:1.5; }
+#wcTooltip.visible { opacity:1; }
+#wcTooltip .wct-word { font-weight:700; font-size:0.9rem; margin-bottom:2px; }
+#wcTooltip .wct-count { color:#7ec8e3; font-size:0.8rem; }
+#wcTooltip .wct-hint { color:#a0b4c4; font-size:0.74rem; margin-top:3px; }
 .risk-alert-banner { background:#fff3cd; border:1px solid #ffc107; border-radius:var(--radius); padding:10px 16px; font-size:0.85rem; color:#856404; display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
 .risk-alert-chip { background:#dc3545; color:white; padding:2px 8px; border-radius:10px; font-size:0.78rem; font-weight:600; }
 .heatmap-cell { transition:background 0.3s; }
@@ -4941,23 +4949,33 @@ function renderWordCloud() {
     txt.textContent = item.word;
     g.appendChild(txt);
 
-    // Tooltip (dynamic — re-read at hover time)
-    const tip = document.createElementNS('http://www.w3.org/2000/svg', 'title');
-    tip.textContent = item.word + ' (' + item.count + '건)';
-    g.appendChild(tip);
-
-    // Hover effects
+    // Hover effects + custom tooltip
+    const tooltip = document.getElementById('wcTooltip');
     g.addEventListener('mouseenter', function() {
       txt.setAttribute('fill', '#e65100');
       hr.setAttribute('fill', 'rgba(230,81,0,0.08)');
       txt.setAttribute('font-weight', '700');
-      tip.textContent = item.word + ' (' + item.count + '건) — ' +
-        (WC_MODE === 'keyword' ? '클릭 시 대시보드 키워드 검색' : '클릭 시 Sankey에서 검색');
+      document.getElementById('wcTipWord').textContent = item.word;
+      document.getElementById('wcTipCount').textContent = '등장 횟수: ' + item.count + '건';
+      document.getElementById('wcTipHint').textContent =
+        WC_MODE === 'keyword' ? '클릭 → 대시보드 키워드 검색' : '클릭 → Sankey 다이어그램 검색';
+      tooltip.classList.add('visible');
+    });
+    g.addEventListener('mousemove', function(ev) {
+      const offset = 14;
+      let left = ev.clientX + offset;
+      let top  = ev.clientY + offset;
+      // Keep tooltip inside viewport
+      if (left + 220 > window.innerWidth)  left = ev.clientX - 220 - offset;
+      if (top  + 80  > window.innerHeight) top  = ev.clientY - 80  - offset;
+      tooltip.style.left = left + 'px';
+      tooltip.style.top  = top  + 'px';
     });
     g.addEventListener('mouseleave', function() {
       txt.setAttribute('fill', item.color);
       hr.setAttribute('fill', 'transparent');
       txt.setAttribute('font-weight', item.fw);
+      tooltip.classList.remove('visible');
     });
 
     // Click — behaviour depends on WC_MODE
@@ -5252,5 +5270,10 @@ function renderBookmarkPanel() {
   </div>
 </div>
 
+<div id="wcTooltip">
+  <div class="wct-word" id="wcTipWord"></div>
+  <div class="wct-count" id="wcTipCount"></div>
+  <div class="wct-hint" id="wcTipHint"></div>
+</div>
 </body>
 </html>
