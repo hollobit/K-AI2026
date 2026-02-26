@@ -28,7 +28,7 @@ svg text{font-family:'Noto Sans KR',sans-serif}
 .node rect{cursor:pointer}
 .node rect:hover{filter:brightness(1.3)}
 .node.highlighted rect{filter:brightness(1.4);stroke-width:2px!important}
-.link{fill:none;stroke-opacity:0.22;transition:stroke-opacity .15s}
+.link{fill:none;stroke-opacity:0.22;transition:stroke-opacity .2s,stroke-width .2s}
 .link:hover{stroke-opacity:0.6}
 .link.highlighted{stroke-opacity:0.55}
 .col-label{font-size:12px;fill:#8eb4d4;font-weight:600}
@@ -95,6 +95,18 @@ svg text{font-family:'Noto Sans KR',sans-serif}
   z-index:199;pointer-events:none;transition:background .28s;
 }
 #panelOverlay.visible{background:rgba(0,0,0,0.35);pointer-events:auto}
+/* Search bar */
+#searchBar{background:#12243a;padding:10px 24px;border-bottom:1px solid #1e3a55;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+#searchBar .sb-label{font-size:0.82rem;color:#6a93b8;white-space:nowrap;font-weight:600;flex-shrink:0}
+#searchInput{flex:1;min-width:220px;background:#0d1b2a;border:1px solid #2a4a6a;border-radius:6px;color:#c8ddf0;padding:8px 12px;font-size:0.88rem;font-family:inherit;outline:none;transition:border-color .15s}
+#searchInput:focus{border-color:#1B5FA4;box-shadow:0 0 0 2px rgba(27,95,164,0.25)}
+#searchInput::placeholder{color:#3a5a7a}
+#searchClear{background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.18);color:#8eb4d4;padding:7px 12px;border-radius:6px;cursor:pointer;font-size:0.82rem;font-family:inherit;white-space:nowrap;transition:background .15s}
+#searchClear:hover{background:rgba(255,255,255,0.16);color:#fff}
+#searchBadge{font-size:0.8rem;color:#5a8ab0;white-space:nowrap}
+#searchBadge .mc{color:#ffe87c;font-weight:700}
+#searchBadge .no-match{color:#e06060}
+.sb-hint{font-size:0.75rem;color:#3a5a7a}
 </style>
 </head>
 <body>
@@ -120,6 +132,13 @@ svg text{font-family:'Noto Sans KR',sans-serif}
   <span><b>321</b> 정책권고</span>
   <span><b>31</b> 부처·기관</span>
   <span><b>165</b> 과제-부처 연결</span>
+</div>
+<div id="searchBar">
+  <span class="sb-label">🔍 검색</span>
+  <input type="text" id="searchInput" placeholder="과제·분야·부처·키워드 검색 — 공백·쉼표로 AND 검색 가능" oninput="debounceSearch()" onkeydown="if(event.key==='Escape')clearSearch()">
+  <button id="searchClear" onclick="clearSearch()" style="display:none">✕ 초기화</button>
+  <span id="searchBadge"></span>
+  <span class="sb-hint">매칭된 노드와 연결선만 강조 표시됩니다</span>
 </div>
 <div id="chart-wrap"><svg id="sankey"></svg></div>
 <div class="tooltip" id="tt"></div>
@@ -225,6 +244,148 @@ function goTo(node) {
   } else if (node.type === 'ministry') {
     window.open(DASHBOARD + '#ministry_' + encodeURIComponent(node.name), '_blank');
   }
+}
+
+// Search state
+let _nodeSelection = null;
+let _linkSelection = null;
+let _builtNodes = null;
+let _builtLinks = null;
+let _searchTimer = null;
+
+function nodeMatchesKeywords(node, keywords) {
+  const name = (node.name || '').toLowerCase();
+  const fullTitle = (node.fullTitle || '').toLowerCase();
+  return keywords.every(kw => {
+    if (name.includes(kw) || fullTitle.includes(kw)) return true;
+    if (node.type === 'task' && TASK_DETAILS[String(node.taskId)]) {
+      const td = TASK_DETAILS[String(node.taskId)];
+      if (td.background && td.background.toLowerCase().includes(kw)) return true;
+      for (const r of td.recommendations) {
+        if ((r.content || '').toLowerCase().includes(kw)) return true;
+        if ((r.ministry || '').toLowerCase().includes(kw)) return true;
+        if ((r.deadline_label || '').toLowerCase().includes(kw)) return true;
+      }
+    }
+    return false;
+  });
+}
+
+function searchSankey(query) {
+  if (!_nodeSelection || !_linkSelection || !_builtNodes) return;
+  const q = (query || '').trim();
+  const clearBtn = document.getElementById('searchClear');
+  const badge = document.getElementById('searchBadge');
+
+  if (!q) {
+    // Reset nodes
+    _nodeSelection.each(function(d) {
+      d3.select(this).select('rect').attr('opacity', 1).attr('stroke-width', 1).attr('stroke', nodeColor(d, 0.7));
+      d3.select(this).select('text').attr('opacity', 1)
+        .attr('font-weight', d.type === 'axis' ? 600 : (d.type === 'task' ? 600 : 400))
+        .attr('fill', d.type === 'task' ? '#ffe87c' : '#c8ddf0');
+    });
+    // Reset links
+    _linkSelection.each(function(d) {
+      const srcNode = _builtNodes[d.source.index !== undefined ? d.source.index : d.source];
+      d3.select(this)
+        .attr('stroke-opacity', 0.22)
+        .attr('stroke-width', Math.max(1, d.width))
+        .attr('stroke', nodeColor(srcNode));
+    });
+    if (clearBtn) clearBtn.style.display = 'none';
+    if (badge) badge.innerHTML = '';
+    return;
+  }
+
+  const keywords = q.toLowerCase().split(/[\s,]+/).filter(k => k.length > 0);
+
+  // Find directly matching nodes
+  const matchedIdx = new Set();
+  _builtNodes.forEach((n, i) => {
+    if (nodeMatchesKeywords(n, keywords)) matchedIdx.add(i);
+  });
+
+  // Expand 1 hop: include all nodes connected to matched nodes
+  const connectedIdx = new Set(matchedIdx);
+  _builtLinks.forEach(l => {
+    const si = typeof l.source === 'object' ? l.source.index : l.source;
+    const ti = typeof l.target === 'object' ? l.target.index : l.target;
+    if (matchedIdx.has(si) || matchedIdx.has(ti)) {
+      connectedIdx.add(si);
+      connectedIdx.add(ti);
+    }
+  });
+
+  // Categorise each link
+  // - DIRECT: at least one endpoint is a matched node
+  // - PATHWAY: both endpoints in connectedIdx but neither is matched
+  // - INACTIVE: otherwise
+  _linkSelection.each(function(d) {
+    const si = d.source.index;
+    const ti = d.target.index;
+    const srcMatched = matchedIdx.has(si);
+    const tgtMatched = matchedIdx.has(ti);
+    const isDirect  = srcMatched || tgtMatched;
+    const isPathway = !isDirect && connectedIdx.has(si) && connectedIdx.has(ti);
+    const el = d3.select(this);
+    if (isDirect) {
+      // Bright highlight: thick, high opacity, warm colour
+      el.attr('stroke-opacity', 0.88)
+        .attr('stroke-width', Math.max(4, d.width * 2.0))
+        .attr('stroke', '#ffe87c');
+    } else if (isPathway) {
+      // Pathway: moderate, keep axis colour
+      const srcNode = _builtNodes[si];
+      el.attr('stroke-opacity', 0.42)
+        .attr('stroke-width', Math.max(1.5, d.width))
+        .attr('stroke', nodeColor(srcNode));
+    } else {
+      // Inactive: nearly invisible
+      const srcNode = _builtNodes[si];
+      el.attr('stroke-opacity', 0.03)
+        .attr('stroke-width', Math.max(1, d.width))
+        .attr('stroke', nodeColor(srcNode));
+    }
+  });
+
+  // Apply node visuals
+  _nodeSelection.each(function(d) {
+    const isMatched = matchedIdx.has(d.index);
+    const isConn = connectedIdx.has(d.index);
+    d3.select(this).select('rect')
+      .attr('opacity', isMatched ? 1 : (isConn ? 0.7 : 0.08))
+      .attr('stroke-width', isMatched ? 2.5 : 1)
+      .attr('stroke', isMatched ? '#ffe87c' : nodeColor(d, 0.7));
+    d3.select(this).select('text')
+      .attr('opacity', isMatched ? 1 : (isConn ? 0.6 : 0.06))
+      .attr('font-weight', isMatched ? 700 : (d.type === 'axis' ? 600 : (d.type === 'task' ? 600 : 400)))
+      .attr('fill', isMatched ? '#ffe87c' : (d.type === 'task' ? '#ffe87c' : '#c8ddf0'));
+  });
+
+  // Update badge
+  const taskCount = [...matchedIdx].filter(i => _builtNodes[i] && _builtNodes[i].type === 'task').length;
+  const totalCount = matchedIdx.size;
+  if (clearBtn) clearBtn.style.display = '';
+  if (badge) {
+    if (totalCount === 0) {
+      badge.innerHTML = '<span class="no-match">결과 없음</span>';
+    } else {
+      badge.innerHTML = '매칭: <span class="mc">' + taskCount + '</span>개 과제 포함 <span class="mc">' + totalCount + '</span>개 노드 — <span style="color:#ffe87c;font-size:0.75rem">■</span> 직접 연결선 <span style="color:#4a9aca;font-size:0.75rem">■</span> 경로 연결선';
+    }
+  }
+}
+
+function clearSearch() {
+  const inp = document.getElementById('searchInput');
+  if (inp) inp.value = '';
+  searchSankey('');
+}
+
+function debounceSearch() {
+  if (_searchTimer) clearTimeout(_searchTimer);
+  const inp = document.getElementById('searchInput');
+  _searchTimer = setTimeout(() => searchSankey(inp ? inp.value : ''), 250);
 }
 
 function buildSankey() {
@@ -348,12 +509,21 @@ function buildSankey() {
       const maxLen = d.type === 'axis' ? 16 : 14;
       return d.name.length > maxLen ? d.name.slice(0, maxLen) + '…' : d.name;
     });
+
+  // Save selections for search
+  _nodeSelection = node;
+  _linkSelection = link;
+  _builtNodes = nodes;
+  _builtLinks = links;
 }
 
 buildSankey();
 window.addEventListener('resize', () => {
   d3.select('#sankey').selectAll('*').remove();
   buildSankey();
+  // Re-apply current search after rebuild
+  const inp = document.getElementById('searchInput');
+  if (inp && inp.value.trim()) searchSankey(inp.value);
 });
 </script>
 </body>
