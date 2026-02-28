@@ -1125,9 +1125,31 @@ mark.hl { background: #fff176; padding: 0 1px; border-radius: 2px; font-style: n
 <!-- View 4: Timeline -->
 <div class="view" id="view-timeline" role="tabpanel" aria-label="추진기한 타임라인">
   <div class="section-title">추진기한별 분기 타임라인</div>
-  <div class="chart-card" style="margin-bottom:24px">
+  <div class="chart-card" style="margin-bottom:20px">
     <h3>분기별 정책권고 수</h3>
-    <canvas id="chartTimelineDetail" style="max-height:250px" aria-label="분기별 정책권고 수 차트"></canvas>
+    <div style="position:relative;height:80px">
+      <canvas id="chartTimelineDetail" aria-label="분기별 정책권고 수 차트"></canvas>
+    </div>
+  </div>
+  <div class="filter-panel" aria-label="타임라인 필터">
+    <div class="filter-row">
+      <select id="tlFilterAxis" onchange="renderTimeline()" aria-label="정책축 필터">
+        <option value="">전체 정책축</option>
+      </select>
+      <select id="tlFilterArea" onchange="renderTimeline()" aria-label="전략분야 필터">
+        <option value="">전체 전략분야</option>
+      </select>
+      <select id="tlFilterMinistry" onchange="renderTimeline()" aria-label="부처 필터">
+        <option value="">전체 부처</option>
+      </select>
+      <input type="text" id="tlFilterKeyword" placeholder="과제명·권고내용 키워드..." oninput="renderTimeline()" aria-label="키워드 필터">
+      <button class="secondary" onclick="resetTimelineFilters()">초기화</button>
+      <div style="display:flex;border:1px solid var(--border);border-radius:6px;overflow:hidden;margin-left:auto">
+        <button id="tlBtnFull"    onclick="setTlView('full')"    style="padding:5px 11px;border:none;cursor:pointer;font-size:0.82rem;background:var(--primary);color:white;font-weight:700;font-family:inherit">전체 내용</button>
+        <button id="tlBtnTitle"   onclick="setTlView('title')"   style="padding:5px 11px;border:none;border-left:1px solid var(--border);cursor:pointer;font-size:0.82rem;background:white;color:var(--gray);font-weight:400;font-family:inherit">과제 제목만</button>
+      </div>
+    </div>
+    <div id="tlResultCount" style="font-size:0.82rem;color:var(--gray);margin-top:4px;min-height:1.2em"></div>
   </div>
   <div class="timeline-grid" id="timelineGrid"></div>
 </div>
@@ -1595,6 +1617,10 @@ function switchView(viewId) {
     }
     renderReferences(refInput ? refInput.value.trim().toLowerCase() : '');
   }
+  // 타임라인 탭: 차트 초기화 (view 표시 후 캔버스가 visible 상태에서 생성)
+  if (viewId === 'timeline') {
+    setTimeout(function() { renderTimeline(); }, 50);
+  }
   // 글로벌 비교 탭 초기화
   if ((viewId === 'globalcomp' || viewId === 'global') && !window._globalInitDone) {
     window._globalInitDone = true;
@@ -2036,7 +2062,7 @@ function resetFilters() {
 // ============================================================
 // Enhanced Task Modal with Navigation
 // ============================================================
-function openTaskModal(taskId) {
+function openTaskModal(taskId, recSeq) {
   const task = DATA.tasks.tasks.find(t => t.id === taskId);
   if (!task) return;
 
@@ -2154,6 +2180,19 @@ function openTaskModal(taskId) {
 
   // Focus trap setup
   setupFocusTrap();
+
+  // 특정 권고사항으로 스크롤
+  if (recSeq != null) {
+    setTimeout(function() {
+      const el = document.getElementById('rec-li-' + taskId + '_' + recSeq);
+      if (el) {
+        el.scrollIntoView({ block: 'center' });
+        el.style.transition = 'background 0.4s';
+        el.style.background = '#fff9c4';
+        setTimeout(function() { el.style.background = ''; }, 1400);
+      }
+    }, 60);
+  }
 }
 
 function navigateTask(direction) {
@@ -2736,12 +2775,105 @@ function selectMinistry(name) {
 // ============================================================
 // Rendering: Timeline (Enhanced with today marker)
 // ============================================================
+var _tlFiltersInited = false;
+var _tlChart = null;
+var _tlViewMode = 'full'; // 'full' | 'title'
+
+function setTlView(mode) {
+  _tlViewMode = mode;
+  const btnFull  = document.getElementById('tlBtnFull');
+  const btnTitle = document.getElementById('tlBtnTitle');
+  if (btnFull && btnTitle) {
+    btnFull.style.background  = mode === 'full'  ? 'var(--primary)' : 'white';
+    btnFull.style.color       = mode === 'full'  ? 'white' : 'var(--gray)';
+    btnFull.style.fontWeight  = mode === 'full'  ? '700' : '400';
+    btnTitle.style.background = mode === 'title' ? 'var(--primary)' : 'white';
+    btnTitle.style.color      = mode === 'title' ? 'white' : 'var(--gray)';
+    btnTitle.style.fontWeight = mode === 'title' ? '700' : '400';
+  }
+  renderTimeline();
+}
+
+function _initTimelineFilters() {
+  if (_tlFiltersInited) return;
+  _tlFiltersInited = true;
+
+  const axes = [...new Map(DATA.tasks.tasks.map(t => [t.policy_axis_id, t.policy_axis_name])).entries()]
+    .sort((a, b) => a[0] - b[0]);
+  const axSel = document.getElementById('tlFilterAxis');
+  if (axSel) axes.forEach(([id, name]) => axSel.add(new Option(name, String(id))));
+
+  const areas = [...new Map(DATA.tasks.tasks.map(t => [t.strategic_area_id, t.strategic_area_name])).entries()]
+    .sort((a, b) => a[0] - b[0]);
+  const arSel = document.getElementById('tlFilterArea');
+  if (arSel) areas.forEach(([id, name]) => arSel.add(new Option(name, String(id))));
+
+  const ministries = [...new Set(
+    DATA.tasks.tasks.flatMap(t => t.recommendations.map(r => r.ministry).filter(Boolean))
+  )].sort();
+  const minSel = document.getElementById('tlFilterMinistry');
+  if (minSel) ministries.forEach(m => minSel.add(new Option(m, m)));
+}
+
+function resetTimelineFilters() {
+  ['tlFilterAxis', 'tlFilterArea', 'tlFilterMinistry'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.value = '';
+  });
+  const kw = document.getElementById('tlFilterKeyword'); if (kw) kw.value = '';
+  renderTimeline();
+}
+
+function hlTlTask(el) {
+  unhlTlTask();
+  const tid = el.dataset.taskid;
+  if (!tid) return;
+  const hue = (parseInt(tid, 10) * 53) % 360;
+  const bg     = 'hsl(' + hue + ',62%,91%)';
+  const outline = 'hsl(' + hue + ',52%,62%)';
+  document.querySelectorAll('#timelineGrid .timeline-item[data-taskid="' + tid + '"]').forEach(function(item) {
+    item.style.backgroundColor = bg;
+    item.style.outline = '2px solid ' + outline;
+    item.style.outlineOffset = '-1px';
+    item.style.zIndex = '1';
+  });
+}
+
+function unhlTlTask() {
+  document.querySelectorAll('#timelineGrid .timeline-item[data-taskid]').forEach(function(item) {
+    item.style.backgroundColor = '';
+    item.style.outline = '';
+    item.style.outlineOffset = '';
+    item.style.zIndex = '';
+  });
+}
+
 function renderTimeline() {
+  _initTimelineFilters();
+
+  const axisVal    = document.getElementById('tlFilterAxis')?.value    || '';
+  const areaVal    = document.getElementById('tlFilterArea')?.value    || '';
+  const ministryVal= document.getElementById('tlFilterMinistry')?.value|| '';
+  const kwVal      = (document.getElementById('tlFilterKeyword')?.value|| '').trim().toLowerCase();
+  const kwList     = kwVal ? parseKeywords(kwVal) : [];
+
   const quarters = { '26Q1': [], '26Q2': [], '26Q3': [], '26Q4': [], '27+': [] };
+  let totalCount = 0;
 
   DATA.tasks.tasks.forEach(t => {
+    if (axisVal && String(t.policy_axis_id) !== axisVal) return;
+    if (areaVal && String(t.strategic_area_id) !== areaVal) return;
+
     t.recommendations.forEach(r => {
       if (!r.deadline) return;
+      if (ministryVal && r.ministry !== ministryVal) return;
+      if (kwList.length > 0) {
+        const matchTask = kwList.some(k => k === String(t.id));
+        if (!matchTask) {
+          const hay = (t.title + ' ' + (r.content || '')).toLowerCase();
+          if (!kwList.every(k => hay.includes(k))) return;
+        }
+      }
+
       const dl = r.deadline.toUpperCase();
       let qKey = '27+';
       if (dl === '25Q4' || dl === '26Q1') qKey = '26Q1';
@@ -2753,21 +2885,72 @@ function renderTimeline() {
         taskId: t.id,
         taskNumber: t.number,
         taskTitle: t.title,
+        areaName: t.strategic_area_name,
         ministry: r.ministry,
+        recSeq: r.seq,
         content: r.content,
         deadline: r.deadline,
         deadlineLabel: r.deadline_label,
         riskLevel: classifyDeadline(r.deadline)
       });
+      totalCount++;
     });
   });
+
+  const hasFilter = axisVal || areaVal || ministryVal || kwVal;
+  const totalAll = DATA.tasks.tasks.reduce((s, t) => s + t.recommendations.filter(r => r.deadline).length, 0);
+
+  const countEl = document.getElementById('tlResultCount');
+  if (countEl) {
+    countEl.textContent = hasFilter
+      ? '필터 결과: 권고사항 ' + totalCount + '건 / 전체 ' + totalAll + '건'
+      : '';
+  }
+
+  // 차트 업데이트 (캔버스가 visible일 때만 생성/업데이트)
+  const qKeys = ['26Q1', '26Q2', '26Q3', '26Q4', '27+'];
+  const qLabels = ['2026 1분기', '2026 2분기', '2026 3분기', '2026 4분기', '2027년 이후'];
+  const qData = qKeys.map(k => quarters[k].length);
+  const tlCanvas = document.getElementById('chartTimelineDetail');
+  if (tlCanvas && tlCanvas.offsetParent !== null) {
+    if (!_tlChart) {
+      _tlChart = new Chart(tlCanvas, {
+        type: 'bar',
+        data: {
+          labels: qLabels,
+          datasets: [{ label: '정책권고 수', data: qData,
+            backgroundColor: ['#e65100', '#c62828', '#ad1457', '#6a1b9a', '#6c757d'],
+            borderRadius: 6 }]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: { callbacks: { label: ctx => {
+              const total = _tlChart.data.datasets[0].data.reduce((s,v)=>s+v,0);
+              const pct = total > 0 ? Math.round(ctx.parsed.y / total * 100) : 0;
+              return ctx.parsed.y + '건 (' + pct + '%)';
+            }}}
+          },
+          scales: {
+            y: { beginAtZero: true, title: { display: true, text: '권고 수' } },
+            x: { ticks: { font: { family: "'Noto Sans KR'" } } }
+          },
+          animation: { duration: 400 }
+        }
+      });
+    } else {
+      _tlChart.data.datasets[0].data = qData;
+      _tlChart.update('none');
+    }
+  }
 
   const colConfig = [
     { key: '26Q1', label: "2026 1분기", cls: 'q1', current: true },
     { key: '26Q2', label: "2026 2분기", cls: 'q2', current: false },
     { key: '26Q3', label: "2026 3분기", cls: 'q3', current: false },
     { key: '26Q4', label: "2026 4분기", cls: 'q4', current: false },
-    { key: '27+', label: "2027년 이후", cls: 'future', current: false }
+    { key: '27+',  label: "2027년 이후", cls: 'future', current: false }
   ];
 
   let html = '';
@@ -2776,19 +2959,33 @@ function renderTimeline() {
     const currentClass = col.current ? ' current-quarter' : '';
     html += '<div class="timeline-col ' + col.cls + currentClass + '">';
     html += '<h3><span>' + col.label + '</span><span class="tl-count">' + items.length + '건</span></h3>';
-
-    if (col.current) {
-      html += '<div class="timeline-today-marker">현재: 2026-02-25</div>';
-    }
+    if (col.current) html += '<div class="timeline-today-marker">현재: 2026-02-25</div>';
 
     if (items.length === 0) {
       html += '<div class="timeline-empty">해당 분기 권고 없음</div>';
     } else {
       items.forEach(item => {
-        const itemClass = item.riskLevel === 'critical' ? ' overdue' : item.riskLevel === 'urgent' ? ' urgent' : '';
-        html += '<div class="timeline-item' + itemClass + '" onclick="openTaskModal(' + item.taskId + ')" tabindex="0" role="button">';
-        html += '<span class="tl-ministry">' + escapeHtml(item.ministry) + '</span> ';
-        html += escapeHtml(truncate(item.taskTitle, 40));
+        const risk = item.riskLevel;
+        const itemClass = risk === 'overdue' ? ' overdue' : (risk === 'critical' || risk === 'urgent') ? ' urgent' : '';
+        const recSnip = item.content ? truncate(item.content, 55) : '';
+        const riskBadge = risk === 'overdue'
+          ? '<span style="font-size:0.66rem;background:#c62828;color:white;border-radius:3px;padding:1px 4px;vertical-align:middle">기한초과</span>'
+          : risk === 'critical'
+          ? '<span style="font-size:0.66rem;background:#e65100;color:white;border-radius:3px;padding:1px 4px;vertical-align:middle">기한임박</span>'
+          : risk === 'urgent'
+          ? '<span style="font-size:0.66rem;background:#f57f17;color:white;border-radius:3px;padding:1px 4px;vertical-align:middle">임박</span>'
+          : '';
+
+        const titleOnly = _tlViewMode === 'title';
+        html += '<div class="timeline-item' + itemClass + '" data-taskid="' + item.taskId + '" onmouseover="hlTlTask(this)" onmouseleave="unhlTlTask()" onclick="openTaskModal(' + item.taskId + ',' + item.recSeq + ')" tabindex="0" role="button" style="padding:' + (titleOnly ? '6px 10px' : '8px 10px') + ';cursor:pointer">';
+        html += '<div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap;margin-bottom:3px">';
+        html += '<span class="tl-ministry">' + escapeHtml(item.ministry) + '</span>';
+        html += '<span style="font-size:0.7rem;color:var(--gray)">과제 ' + escapeHtml(String(item.taskNumber)) + ' · 권고 ' + escapeHtml(String(item.recSeq)) + '</span>';
+        if (riskBadge) html += riskBadge;
+        html += '</div>';
+        html += '<div style="font-size:0.82rem;font-weight:600;color:var(--dark);line-height:1.35' + (titleOnly ? '' : ';margin-bottom:3px') + '">' + escapeHtml(truncate(item.taskTitle, titleOnly ? 45 : 38)) + '</div>';
+        if (!titleOnly && recSnip) html += '<div style="font-size:0.75rem;color:#666;line-height:1.4">' + escapeHtml(recSnip) + '</div>';
+        if (!titleOnly && item.areaName) html += '<div style="font-size:0.68rem;color:var(--gray);margin-top:3px;opacity:0.8">' + escapeHtml(item.areaName) + '</div>';
         html += '</div>';
       });
     }
@@ -3393,31 +3590,7 @@ function initCharts() {
     }
   });
 
-  // Timeline detail chart
-  new Chart(document.getElementById('chartTimelineDetail'), {
-    type: 'bar',
-    data: {
-      labels: tlData.map(q => q.label),
-      datasets: [{
-        label: '정책권고 수',
-        data: tlData.map(q => q.count),
-        backgroundColor: ['#e65100', '#c62828', '#ad1457', '#6a1b9a', '#6c757d'],
-        borderRadius: 6
-      }]
-    },
-    options: {
-      responsive: true,
-      plugins: {
-        legend: { display: false },
-        tooltip: { callbacks: { label: ctx => ctx.parsed.y + '건 (' + tlData[ctx.dataIndex].pct + '%)' } }
-      },
-      scales: {
-        y: { beginAtZero: true, title: { display: true, text: '권고 수' } },
-        x: { ticks: { font: { family: "'Noto Sans KR'" } } }
-      },
-      animation: { duration: 800 }
-    }
-  });
+  // _tlChart는 renderTimeline() 최초 호출 시 lazy 초기화됨
 }
 
 // ============================================================
@@ -5192,11 +5365,34 @@ document.addEventListener('DOMContentLoaded', function() {
     return DATA.tasks.tasks.find(function(x) { return x.number === decoded; });
   }
 
-  // Query parameter handler: ?task=N | ?axis=N | ?area=N
+  // Query parameter handler: ?view=X | ?task=N | ?axis=N | ?area=N
   var params = new URLSearchParams(window.location.search);
+  var viewParam = params.get('view');
   var taskParam = params.get('task');
+  var keywordParam = params.get('keyword');
   var axisParam = params.get('axis');
   var areaParam = params.get('area');
+
+  if (viewParam) {
+    switchView(viewParam);
+    if (viewParam === 'timeline' && (taskParam || keywordParam)) {
+      // 필터 적용: 기존 차트 destroy 후 필터 데이터로 재생성
+      setTimeout(function() {
+        var kwEl = document.getElementById('tlFilterKeyword');
+        if (kwEl) {
+          if (taskParam) {
+            var found = findTaskByParam(taskParam);
+            kwEl.value = found ? String(found.id) : taskParam;
+          } else if (keywordParam) {
+            kwEl.value = decodeURIComponent(keywordParam);
+          }
+        }
+        if (_tlChart) { _tlChart.destroy(); _tlChart = null; }
+        renderTimeline();
+      }, 200);
+    }
+    return;
+  }
 
   if (taskParam) {
     var found = findTaskByParam(taskParam);
