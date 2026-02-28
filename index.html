@@ -349,22 +349,23 @@ mark.highlight {
 
 /* Timeline */
 .timeline-grid {
-  display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 16px;
+  display: grid; grid-template-columns: repeat(6, 1fr);
+  gap: 10px;
 }
 .timeline-col {
-  background: white; border-radius: var(--radius); padding: 16px;
-  box-shadow: var(--shadow);
+  background: white; border-radius: var(--radius); padding: 10px;
+  box-shadow: var(--shadow); min-width: 0;
 }
 .timeline-col h3 {
-  font-size: 0.95rem; font-weight: 700; color: white;
-  padding: 10px 12px; border-radius: 6px; margin-bottom: 12px;
+  font-size: 0.82rem; font-weight: 700; color: white;
+  padding: 7px 8px; border-radius: 6px; margin-bottom: 8px;
   text-align: center; display: flex; justify-content: space-between; align-items: center;
 }
 .timeline-col h3 .tl-count {
   background: rgba(255,255,255,0.25); padding: 2px 8px; border-radius: 10px;
   font-size: 0.78rem;
 }
+.timeline-col.tl-none h3 { background: #546e7a; }
 .timeline-col.q1 h3 { background: #e65100; }
 .timeline-col.q2 h3 { background: #c62828; }
 .timeline-col.q3 h3 { background: #ad1457; }
@@ -2856,7 +2857,7 @@ function renderTimeline() {
   const kwVal      = (document.getElementById('tlFilterKeyword')?.value|| '').trim().toLowerCase();
   const kwList     = kwVal ? parseKeywords(kwVal) : [];
 
-  const quarters = { '26Q1': [], '26Q2': [], '26Q3': [], '26Q4': [], '27+': [] };
+  const quarters = { 'none': [], '26Q1': [], '26Q2': [], '26Q3': [], '26Q4': [], '27+': [] };
   let totalCount = 0;
 
   DATA.tasks.tasks.forEach(t => {
@@ -2864,7 +2865,6 @@ function renderTimeline() {
     if (areaVal && String(t.strategic_area_id) !== areaVal) return;
 
     t.recommendations.forEach(r => {
-      if (!r.deadline) return;
       if (ministryVal && r.ministry !== ministryVal) return;
       if (kwList.length > 0) {
         const matchTask = kwList.some(k => k === String(t.id));
@@ -2874,12 +2874,15 @@ function renderTimeline() {
         }
       }
 
-      const dl = r.deadline.toUpperCase();
-      let qKey = '27+';
-      if (dl === '25Q4' || dl === '26Q1') qKey = '26Q1';
-      else if (dl === '26Q2') qKey = '26Q2';
-      else if (dl === '26Q3') qKey = '26Q3';
-      else if (dl === '26Q4') qKey = '26Q4';
+      let qKey = 'none';
+      if (r.deadline) {
+        const dl = r.deadline.toUpperCase();
+        if (dl === '25Q4' || dl === '26Q1') qKey = '26Q1';
+        else if (dl === '26Q2') qKey = '26Q2';
+        else if (dl === '26Q3') qKey = '26Q3';
+        else if (dl === '26Q4') qKey = '26Q4';
+        else qKey = '27+';
+      }
 
       quarters[qKey].push({
         taskId: t.id,
@@ -2891,14 +2894,14 @@ function renderTimeline() {
         content: r.content,
         deadline: r.deadline,
         deadlineLabel: r.deadline_label,
-        riskLevel: classifyDeadline(r.deadline)
+        riskLevel: r.deadline ? classifyDeadline(r.deadline) : 'safe'
       });
       totalCount++;
     });
   });
 
   const hasFilter = axisVal || areaVal || ministryVal || kwVal;
-  const totalAll = DATA.tasks.tasks.reduce((s, t) => s + t.recommendations.filter(r => r.deadline).length, 0);
+  const totalAll = DATA.tasks.tasks.reduce((s, t) => s + t.recommendations.length, 0);
 
   const countEl = document.getElementById('tlResultCount');
   if (countEl) {
@@ -2908,8 +2911,8 @@ function renderTimeline() {
   }
 
   // 차트 업데이트 (캔버스가 visible일 때만 생성/업데이트)
-  const qKeys = ['26Q1', '26Q2', '26Q3', '26Q4', '27+'];
-  const qLabels = ['2026 1분기', '2026 2분기', '2026 3분기', '2026 4분기', '2027년 이후'];
+  const qKeys = ['none', '26Q1', '26Q2', '26Q3', '26Q4', '27+'];
+  const qLabels = ['기한 미정', '2026 1분기', '2026 2분기', '2026 3분기', '2026 4분기', '2027년 이후'];
   const qData = qKeys.map(k => quarters[k].length);
   const tlCanvas = document.getElementById('chartTimelineDetail');
   if (tlCanvas && tlCanvas.offsetParent !== null) {
@@ -2919,7 +2922,7 @@ function renderTimeline() {
         data: {
           labels: qLabels,
           datasets: [{ label: '정책권고 수', data: qData,
-            backgroundColor: ['#e65100', '#c62828', '#ad1457', '#6a1b9a', '#6c757d'],
+            backgroundColor: ['#546e7a', '#e65100', '#c62828', '#ad1457', '#6a1b9a', '#6c757d'],
             borderRadius: 6 }]
         },
         options: {
@@ -2946,6 +2949,7 @@ function renderTimeline() {
   }
 
   const colConfig = [
+    { key: 'none', label: "기한 미정", cls: 'tl-none', current: false },
     { key: '26Q1', label: "2026 1분기", cls: 'q1', current: true },
     { key: '26Q2', label: "2026 2분기", cls: 'q2', current: false },
     { key: '26Q3', label: "2026 3분기", cls: 'q3', current: false },
@@ -2962,7 +2966,7 @@ function renderTimeline() {
     if (col.current) html += '<div class="timeline-today-marker">현재: 2026-02-25</div>';
 
     if (items.length === 0) {
-      html += '<div class="timeline-empty">해당 분기 권고 없음</div>';
+      html += '<div class="timeline-empty">' + (col.key === 'none' ? '기한 미정 권고 없음' : '해당 분기 권고 없음') + '</div>';
     } else {
       items.forEach(item => {
         const risk = item.riskLevel;
