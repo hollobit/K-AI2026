@@ -574,7 +574,8 @@ mark.hl { background: #fff176; padding: 0 1px; border-radius: 2px; font-style: n
 .risk-item.safe-border { border-left: 4px solid #28a745; }
 .risk-item .ri-title { font-weight: 700; font-size: 0.92rem; color: var(--dark); }
 .risk-item .ri-meta { font-size: 0.8rem; color: var(--gray); margin-top: 4px; display: flex; gap: 12px; flex-wrap: wrap; }
-.risk-item .ri-content { font-size: 0.85rem; color: #555; margin-top: 6px; line-height: 1.5; }
+.risk-item .ri-content { font-size: 0.85rem; color: #555; margin-top: 6px; line-height: 1.5; cursor: pointer; padding: 4px 6px; border-radius: 4px; transition: background 0.15s; }
+.risk-item .ri-content:hover { background: #f0f4ff; color: var(--accent); }
 
 /* Keyboard shortcut help */
 .shortcut-help {
@@ -3335,6 +3336,7 @@ function renderRisk() {
         taskId: t.id, taskNumber: t.number, taskTitle: t.title,
         taskAreaName: t.strategic_area_name,
         ministry: r.ministry, content: r.content,
+        recSeq: r.seq,
         deadline: r.deadline, deadlineLabel: r.deadline_label || '',
         risk: risk
       };
@@ -3469,7 +3471,7 @@ function renderRisk() {
         sectionsHtml += '</div>';
 
         group.recs.slice(0, 2).forEach(r => {
-          sectionsHtml += '<div class="ri-content">' + escapeHtml(r.content.substring(0, 120)) + (r.content.length > 120 ? '...' : '') + '</div>';
+          sectionsHtml += '<div class="ri-content" onclick="event.stopPropagation();openTaskModal(' + taskId + ',' + r.recSeq + ')" title="\uD074\uB9AD\uD558\uBA74 \uD574\uB2F9 \uAD8C\uACE0\uC0AC\uD56D\uC73C\uB85C \uC774\uB3D9">' + escapeHtml(r.content.substring(0, 120)) + (r.content.length > 120 ? '...' : '') + '</div>';
         });
         if (group.recs.length > 2) {
           sectionsHtml += '<div style="font-size:0.8rem;color:var(--accent);margin-top:4px">... \uC678 ' + (group.recs.length - 2) + '\uAC74 \uB354\uBCF4\uAE30</div>';
