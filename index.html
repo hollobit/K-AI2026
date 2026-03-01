@@ -385,6 +385,8 @@ mark.highlight {
 .timeline-item:hover { background: #e3f2fd; }
 .timeline-item.overdue { border-left: 3px solid #dc3545; background: #fff5f5; }
 .timeline-item.urgent { border-left: 3px solid #fd7e14; background: #fff8f0; }
+.timeline-item.bm-highlighted { background: #fffbeb; border-left: 3px solid #f59e0b; box-shadow: 0 0 0 1px rgba(245,158,11,0.25); }
+.timeline-item.bm-highlighted:hover { background: #fef3c7; }
 .timeline-item .tl-ministry { font-weight: 600; color: var(--primary); }
 .timeline-empty { color: var(--gray); font-size: 0.85rem; text-align: center; padding: 20px; }
 
@@ -808,6 +810,16 @@ mark.hl { background: #fff176; padding: 0 1px; border-radius: 2px; font-style: n
 }
 .bookmark-btn:hover { color: #f59e0b; transform: scale(1.2); }
 .bookmark-btn.bm-active { color: #f59e0b; }
+.rec-item.bm-highlighted {
+  background: #fffbeb; border-left-color: #f59e0b;
+  box-shadow: 0 0 0 1px rgba(245,158,11,0.25);
+}
+.rec-item.bm-highlighted:hover { background: #fef3c7; }
+.rec-list-row.bm-highlighted {
+  background: #fffbeb; border-left-color: #f59e0b;
+  box-shadow: var(--shadow), 0 0 0 1px rgba(245,158,11,0.25);
+}
+.rec-list-row.bm-highlighted:hover { background: #fef3c7; }
 .bm-header-btn {
   background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.35);
   color: white; padding: 6px 14px; border-radius: 20px; cursor: pointer;
@@ -1574,6 +1586,45 @@ function classifyDeadline(deadline) {
   return 'safe';
 }
 
+// 권고사항 content에서 모든 분기 기한을 추출 (순서 유지, 중복 제거, 시간순 정렬)
+const DL_ORDER = ['25Q4','26Q1','26Q2','26Q3','26Q4','27Q1','27Q2','27Q3','27Q4','28Q1','28Q2','28Q3','28Q4','29Q4','30Q1','30Q4'];
+function extractDeadlines(rec) {
+  const content = rec.content || '';
+  const primary = rec.deadline || '';
+  const pat = /[''](\d{2})년\s*(\d)분기/g;
+  const seen = new Set();
+  const result = [];
+  let m;
+  while ((m = pat.exec(content)) !== null) {
+    const code = m[1] + 'Q' + m[2];
+    const label = "'" + m[1] + '년 ' + m[2] + '분기';
+    if (!seen.has(code)) { seen.add(code); result.push({ deadline: code, deadline_label: label }); }
+  }
+  // primary가 content에 없으면 rec의 원본 label로 추가
+  if (primary && !seen.has(primary)) {
+    result.push({ deadline: primary, deadline_label: rec.deadline_label || primary });
+  }
+  result.sort(function(a, b) {
+    var ai = DL_ORDER.indexOf(a.deadline), bi = DL_ORDER.indexOf(b.deadline);
+    return (ai < 0 ? 999 : ai) - (bi < 0 ? 999 : bi);
+  });
+  return result;
+}
+
+// 권고사항의 모든 기한을 배지 HTML로 반환 (primary=색상 코딩, 추가기한=연한 스타일)
+function renderDeadlineBadges(rec) {
+  if (!rec.deadline && !rec.deadline_label) return '';
+  const deadlines = extractDeadlines(rec);
+  if (!deadlines.length) return rec.deadline_label ? '<span class="badge badge-deadline">' + escapeHtml(rec.deadline_label) + '</span>' : '';
+  const primary = rec.deadline || '';
+  return deadlines.map(function(dl) {
+    const lvl = classifyDeadline(dl.deadline);
+    const cls = (lvl === 'overdue' || lvl === 'critical') ? 'badge-overdue' : lvl === 'urgent' ? 'badge-urgent-deadline' : 'badge-deadline';
+    const extra = dl.deadline !== primary ? ' style="opacity:0.72;font-size:0.78em"' : '';
+    return '<span class="badge ' + cls + '"' + extra + '>' + escapeHtml(dl.deadline_label) + '</span>';
+  }).join(' ');
+}
+
 function getTaskDeadlineStatus(task) {
   let worst = 'safe';
   const priority = { overdue: 4, critical: 3, urgent: 2, caution: 1, safe: 0, none: 0 };
@@ -2119,16 +2170,13 @@ function openTaskModal(taskId, recSeq) {
                           riskLevel === 'urgent' ? 'border-left-color:#fd7e14' : '';
       const bmKey = taskId + '_' + r.seq;
       const bmActive = STATE.bookmarks.has(String(bmKey)) ? ' bm-active' : '';
-      html += '<li class="rec-item" style="' + borderStyle + '" id="rec-li-' + bmKey + '">';
+      const bmHl = STATE.bookmarks.has(String(bmKey)) ? ' bm-highlighted' : '';
+      html += '<li class="rec-item' + bmHl + '" style="' + borderStyle + '" id="rec-li-' + bmKey + '">';
       html += '<div class="rec-meta" style="justify-content:space-between">';
       html += '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">';
       html += '<span><strong>권고 ' + r.seq + '</strong></span>';
       html += '<span class="badge badge-ministry">' + escapeHtml(r.ministry) + '</span>';
-      if (r.deadline_label) {
-        const dlBadgeClass = (riskLevel === 'overdue' || riskLevel === 'critical') ? 'badge-overdue' :
-                             riskLevel === 'urgent' ? 'badge-urgent-deadline' : 'badge-deadline';
-        html += '<span class="badge ' + dlBadgeClass + '">' + escapeHtml(r.deadline_label) + '</span>';
-      }
+      html += renderDeadlineBadges(r);
       html += '<span class="status-badge status-progress">' + escapeHtml(r.status || '진행중') + '</span>';
       html += '</div>';
       html += '<button class="bookmark-btn' + bmActive + '" title="북마크" onclick="event.stopPropagation();toggleBookmark(' + taskId + ',' + r.seq + ')" aria-label="북마크 토글">&#9733;</button>';
@@ -2182,12 +2230,15 @@ function openTaskModal(taskId, recSeq) {
   // Focus trap setup
   setupFocusTrap();
 
-  // 특정 권고사항으로 스크롤
+  // 특정 권고사항으로 스크롤 (모달 내부 요소만 탐색)
   if (recSeq != null) {
     setTimeout(function() {
-      const el = document.getElementById('rec-li-' + taskId + '_' + recSeq);
-      if (el) {
-        el.scrollIntoView({ block: 'center' });
+      const modalEl = document.getElementById('modal');
+      const el = modalEl && modalEl.querySelector('[id="rec-li-' + taskId + '_' + recSeq + '"]');
+      if (el && modalEl) {
+        const elTop = el.getBoundingClientRect().top;
+        const modalTop = modalEl.getBoundingClientRect().top;
+        modalEl.scrollTop += elTop - modalTop - modalEl.clientHeight / 2 + el.clientHeight / 2;
         el.style.transition = 'background 0.4s';
         el.style.background = '#fff9c4';
         setTimeout(function() { el.style.background = ''; }, 1400);
@@ -2448,8 +2499,9 @@ function renderRecListView(tasks) {
     const borderColor = riskLevel === 'critical' ? '#dc3545' : riskLevel === 'urgent' ? '#fd7e14' : 'var(--primary-light)';
     const bmKey = t.id + '_' + r.seq;
     const bmActive = STATE.bookmarks.has(String(bmKey)) ? ' bm-active' : '';
+    const bmHl = STATE.bookmarks.has(String(bmKey)) ? ' bm-highlighted' : '';
 
-    html += '<li class="rec-list-row" id="rec-li-' + bmKey + '" style="border-left-color:' + borderColor + '">';
+    html += '<li class="rec-list-row' + bmHl + '" id="rec-li-' + bmKey + '" style="border-left-color:' + borderColor + '">';
     // Task header link
     html += '<div class="rec-list-task-hdr" onclick="openTaskModal(' + t.id + ')">';
     html += escapeHtml(t.number) + ' ' + escapeHtml(t.title);
@@ -2459,10 +2511,7 @@ function renderRecListView(tasks) {
     html += '<div class="rec-list-meta-left">';
     html += '<span><strong>권고 ' + r.seq + '</strong></span>';
     html += '<span class="badge badge-ministry">' + escapeHtml(r.ministry) + '</span>';
-    if (r.deadline_label) {
-      const dlBadgeClass = (riskLevel === 'overdue' || riskLevel === 'critical') ? 'badge-overdue' : riskLevel === 'urgent' ? 'badge-urgent-deadline' : 'badge-deadline';
-      html += '<span class="badge ' + dlBadgeClass + '">' + escapeHtml(r.deadline_label) + '</span>';
-    }
+    html += renderDeadlineBadges(r);
     html += '<span class="badge badge-axis' + t.policy_axis_id + '">' + escapeHtml(t.policy_axis_name) + '</span>';
     html += '</div>';
     html += '<button class="bookmark-btn' + bmActive + '" title="북마크" onclick="toggleBookmark(' + t.id + ',' + r.seq + ')" aria-label="북마크 토글">&#9733;</button>';
@@ -2697,10 +2746,21 @@ function showCoAgency(name) {
   DATA.tasks.tasks.forEach(t => {
     (t.recommendations || []).forEach(r => {
       if ((r.content || '').includes(name)) {
-        html += '<li class="rec-item">';
-        html += '<div class="rec-meta"><span><strong>' + escapeHtml(t.number) + ' ' + escapeHtml(t.title) + '</strong></span></div>';
-        html += '<div class="rec-meta"><span class="badge badge-ministry">' + escapeHtml(r.ministry) + '</span>';
-        if (r.deadline_label) html += ' <span class="badge badge-deadline">' + escapeHtml(r.deadline_label) + '</span>';
+        const riskLevel = classifyDeadline(r.deadline);
+        const borderStyle = (riskLevel === 'overdue' || riskLevel === 'critical') ? 'border-left-color:#dc3545' :
+                            riskLevel === 'urgent' ? 'border-left-color:#fd7e14' : '';
+        const bmKey = t.id + '_' + r.seq;
+        const bmActive = STATE.bookmarks.has(String(bmKey)) ? ' bm-active' : '';
+        const bmHl = STATE.bookmarks.has(String(bmKey)) ? ' bm-highlighted' : '';
+        html += '<li class="rec-item' + bmHl + '" id="rec-li-' + bmKey + '" style="' + borderStyle + '">';
+        html += '<div class="rec-meta" style="justify-content:space-between">';
+        html += '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">';
+        html += '<span style="font-weight:600;white-space:nowrap">과제 ' + escapeHtml(t.number) + (r.seq ? ' · 권고 ' + r.seq : '') + '</span>';
+        html += '<span style="color:var(--gray);font-size:0.88em">' + escapeHtml(t.title) + '</span>';
+        html += '<span class="badge badge-ministry">' + escapeHtml(r.ministry) + '</span>';
+        html += renderDeadlineBadges(r);
+        html += '</div>';
+        html += '<button class="bookmark-btn' + bmActive + '" title="북마크" onclick="event.stopPropagation();toggleBookmark(' + t.id + ',' + r.seq + ')" aria-label="북마크 토글">&#9733;</button>';
         html += '</div>';
         html += '<div class="rec-content" onclick="openTaskModal(' + t.id + (r.seq ? ',' + r.seq : '') + ')" style="cursor:pointer">' + escapeHtml(r.content) + '</div>';
         html += '</li>';
@@ -2746,16 +2806,18 @@ function selectMinistry(name) {
     const borderStyle = (riskLevel === 'overdue' || riskLevel === 'critical') ? 'border-left-color:#dc3545' :
                         riskLevel === 'urgent' ? 'border-left-color:#fd7e14' : '';
     const minTask = DATA.tasks.tasks.find(t => t.id === a.task_id);
-    const minRec = minTask && minTask.recommendations.find(r => r.content === a.content);
+    const minRec = _findRecByContent(minTask, a.content);
     const minSeq = minRec ? minRec.seq : 0;
-    html += '<li class="rec-item" onclick="openTaskModal(' + a.task_id + (minSeq ? ',' + minSeq : '') + ')" style="cursor:pointer;' + borderStyle + '" tabindex="0" role="button">';
     const minBmKey = a.task_id + '_' + minSeq;
     const minBmActive = minSeq && STATE.bookmarks.has(String(minBmKey)) ? ' bm-active' : '';
+    const minBmHl = minSeq && STATE.bookmarks.has(String(minBmKey)) ? ' bm-highlighted' : '';
+    html += '<li class="rec-item' + minBmHl + '" id="rec-li-' + minBmKey + '" onclick="openTaskModal(' + a.task_id + (minSeq ? ',' + minSeq : '') + ')" style="cursor:pointer;' + borderStyle + '" tabindex="0" role="button">';
     html += '<div class="rec-meta" style="justify-content:space-between">';
     html += '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">';
-    html += '<span><strong>' + (i + 1) + '.</strong></span>';
-    const tNum = taskNumMap[a.task_id] ? escapeHtml(taskNumMap[a.task_id]) + ' ' : '';
-    html += '<span>과제 ' + tNum + escapeHtml(a.task_title) + '</span>';
+    const tNum = taskNumMap[a.task_id] ? escapeHtml(taskNumMap[a.task_id]) : '';
+    const seqLabel = minSeq ? ' · 권고 ' + minSeq : '';
+    html += '<span style="font-weight:600;white-space:nowrap">과제 ' + tNum + seqLabel + '</span>';
+    html += '<span style="color:var(--gray);font-size:0.88em">' + escapeHtml(a.task_title) + '</span>';
     if (a.deadline_label) {
       const dlBadgeClass = (riskLevel === 'overdue' || riskLevel === 'critical') ? 'badge-overdue' : riskLevel === 'urgent' ? 'badge-urgent-deadline' : 'badge-deadline';
       html += '<span class="badge ' + dlBadgeClass + '">' + escapeHtml(a.deadline_label) + '</span>';
@@ -2981,7 +3043,9 @@ function renderTimeline() {
           : '';
 
         const titleOnly = _tlViewMode === 'title';
-        html += '<div class="timeline-item' + itemClass + '" data-taskid="' + item.taskId + '" onmouseover="hlTlTask(this)" onmouseleave="unhlTlTask()" onclick="openTaskModal(' + item.taskId + ',' + item.recSeq + ')" tabindex="0" role="button" style="padding:' + (titleOnly ? '6px 10px' : '8px 10px') + ';cursor:pointer">';
+        const tlBmKey = item.taskId + '_' + item.recSeq;
+        const tlBmHl = STATE.bookmarks.has(String(tlBmKey)) ? ' bm-highlighted' : '';
+        html += '<div class="timeline-item' + itemClass + tlBmHl + '" id="rec-li-' + tlBmKey + '" data-taskid="' + item.taskId + '" onmouseover="hlTlTask(this)" onmouseleave="unhlTlTask()" onclick="openTaskModal(' + item.taskId + ',' + item.recSeq + ')" tabindex="0" role="button" style="padding:' + (titleOnly ? '6px 10px' : '8px 10px') + ';cursor:pointer">';
         html += '<div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap;margin-bottom:3px">';
         html += '<span class="tl-ministry">' + escapeHtml(item.ministry) + '</span>';
         html += '<span style="font-size:0.7rem;color:var(--gray)">과제 ' + escapeHtml(String(item.taskNumber)) + ' · 권고 ' + escapeHtml(String(item.recSeq)) + '</span>';
@@ -4978,7 +5042,7 @@ function applyGlobalFilters() {
         html += '<div style="font-size:0.78rem;color:var(--gray);margin-bottom:4px">';
         html += '<strong>권고 ' + r.seq + '</strong> &middot; ';
         html += '<span class="badge badge-ministry">' + escapeHtml(r.ministry) + '</span>';
-        if (r.deadline_label) html += ' <span class="badge badge-deadline">' + escapeHtml(r.deadline_label) + '</span>';
+        html += renderDeadlineBadges(r);
         html += '</div>';
         html += '<div style="line-height:1.5;color:var(--dark);font-size:0.85rem">' + escapeHtml(r.content) + '</div>';
         html += '</div>';
@@ -5122,14 +5186,21 @@ function renderStandards() {
         '</div>' +
         '<div style="display:none" id="std-list-' + catId + '">' +
           allRecs.map(function(r) {
-            return '<div style="padding:10px;background:#f8f9fa;border-radius:6px;border-left:3px solid ' + ti.color + ';margin-bottom:6px">' +
-              '<div style="font-size:0.78rem;color:#666;margin-bottom:4px">' +
-                '<strong>권고 ' + r.seq + '</strong> &middot; ' +
-                '<span class="badge badge-ministry">' + escapeHtml(r.ministry) + '</span>' +
-                (r.deadline_label ? ' <span class="badge badge-deadline">' + escapeHtml(r.deadline_label) + '</span>' : '') +
-                ' &middot; <span onclick="openTaskModal(' + r.taskId + ')" style="cursor:pointer;color:var(--accent)">' + escapeHtml(r.taskNumber) + '</span>' +
+            var bmKey = r.taskId + '_' + r.seq;
+            var bmActive = STATE.bookmarks.has(String(bmKey)) ? ' bm-active' : '';
+            var bmHl = STATE.bookmarks.has(String(bmKey)) ? ' bm-highlighted' : '';
+            var riskLevel = classifyDeadline(r.deadline);
+            var borderColor = (riskLevel === 'overdue' || riskLevel === 'critical') ? '#dc3545' : riskLevel === 'urgent' ? '#fd7e14' : ti.color;
+            return '<div class="rec-list-row' + bmHl + '" id="rec-li-' + bmKey + '" style="border-left-color:' + borderColor + '">' +
+              '<div class="rec-list-meta">' +
+                '<div class="rec-list-meta-left">' +
+                  '<span style="font-weight:600;cursor:pointer;color:var(--accent)" onclick="openTaskModal(' + r.taskId + ',' + r.seq + ')">과제 ' + escapeHtml(r.taskNumber) + ' · 권고 ' + r.seq + '</span>' +
+                  '<span class="badge badge-ministry">' + escapeHtml(r.ministry) + '</span>' +
+                  renderDeadlineBadges(r) +
+                '</div>' +
+                '<button class="bookmark-btn' + bmActive + '" title="북마크" onclick="toggleBookmark(' + r.taskId + ',' + r.seq + ')" aria-label="북마크 토글">&#9733;</button>' +
               '</div>' +
-              '<div style="font-size:0.85rem;line-height:1.5">' + escapeHtml(r.content) + '</div>' +
+              '<div class="rec-list-content" style="font-size:0.85rem">' + escapeHtml(r.content) + '</div>' +
             '</div>';
           }).join('') +
         '</div>' +
@@ -5375,6 +5446,7 @@ function init() {
   // Charts are lazy-loaded on first overview visit
   STATE.chartsInitialized = true;
   initCharts();
+  updateBookmarkBadge();
 }
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -5504,8 +5576,9 @@ function renderGlobalRecListView(tasks) {
     const borderColor = riskLevel === 'critical' ? '#dc3545' : riskLevel === 'urgent' ? '#fd7e14' : meta.color;
     const bmKey = t.id + '_' + r.seq;
     const bmActive = STATE.bookmarks.has(String(bmKey)) ? ' bm-active' : '';
+    const bmHl = STATE.bookmarks.has(String(bmKey)) ? ' bm-highlighted' : '';
 
-    html += '<li class="rec-list-row" id="rec-li-' + bmKey + '" style="border-left-color:' + borderColor + '">';
+    html += '<li class="rec-list-row' + bmHl + '" id="rec-li-' + bmKey + '" style="border-left-color:' + borderColor + '">';
     html += '<div class="rec-list-task-hdr" onclick="openTaskModal(' + t.id + ')">';
     html += escapeHtml(t.number) + ' ' + escapeHtml(t.title);
     html += '</div>';
@@ -5513,10 +5586,7 @@ function renderGlobalRecListView(tasks) {
     html += '<div class="rec-list-meta-left">';
     html += '<span><strong>권고 ' + r.seq + '</strong></span>';
     html += '<span class="badge badge-ministry">' + escapeHtml(r.ministry) + '</span>';
-    if (r.deadline_label) {
-      const dlBadgeClass = (riskLevel === 'overdue' || riskLevel === 'critical') ? 'badge-overdue' : riskLevel === 'urgent' ? 'badge-urgent-deadline' : 'badge-deadline';
-      html += '<span class="badge ' + dlBadgeClass + '">' + escapeHtml(r.deadline_label) + '</span>';
-    }
+    html += renderDeadlineBadges(r);
     html += '<span class="badge" style="background:' + meta.color + ';color:white;font-size:0.72rem">' + meta.label + '</span>';
     html += '</div>';
     html += '<button class="bookmark-btn' + bmActive + '" title="북마크" onclick="toggleBookmark(' + t.id + ',' + r.seq + ')" aria-label="북마크 토글">&#9733;</button>';
@@ -5537,6 +5607,24 @@ function setGlobalViewMode(mode) {
 // ============================================================
 // Bookmark Feature
 // ============================================================
+
+// Normalize content for matching: strip PDF page markers and unify quote chars
+function _normalizeRecContent(s) {
+  return (s || '').replace(/\n\n\n-\s*\d+\s*-\n?/g, '')
+                  .replace(/[\u2018\u2019\u201a\u201b\uff07]/g, "'");
+}
+// Find matching rec in task by normalized content prefix (handles page-marker & quote diffs)
+function _findRecByContent(task, actionContent) {
+  if (!task) return null;
+  const recs = task.recommendations || [];
+  const exact = recs.find(r => r.content === actionContent);
+  if (exact) return exact;
+  const cleaned = _normalizeRecContent(actionContent);
+  if (cleaned.length < 20) return null;
+  const prefix = cleaned.slice(0, 40);
+  return recs.find(r => _normalizeRecContent(r.content).startsWith(prefix)) || null;
+}
+
 function toggleBookmark(taskId, recSeq) {
   const key = String(taskId) + '_' + String(recSeq);
   if (STATE.bookmarks.has(key)) {
@@ -5546,9 +5634,11 @@ function toggleBookmark(taskId, recSeq) {
   }
   saveBookmarks();
   updateBookmarkBadge();
-  // Update all bookmark buttons for this key currently in DOM
-  document.querySelectorAll('[id="rec-li-' + key + '"] .bookmark-btn').forEach(btn => {
-    btn.classList.toggle('bm-active', STATE.bookmarks.has(key));
+  // Update all bookmark buttons and item highlight for this key currently in DOM
+  document.querySelectorAll('[id="rec-li-' + key + '"]').forEach(el => {
+    el.classList.toggle('bm-highlighted', STATE.bookmarks.has(key));
+    const btn = el.querySelector('.bookmark-btn');
+    if (btn) btn.classList.toggle('bm-active', STATE.bookmarks.has(key));
   });
   if (document.getElementById('bmPanel').classList.contains('open')) {
     renderBookmarkPanel();
@@ -5636,6 +5726,84 @@ function renderBookmarkPanel() {
     });
   });
   listEl.innerHTML = html;
+}
+
+function printBookmarks() {
+  if (STATE.bookmarks.size === 0) { alert('북마크된 정책권고가 없습니다.'); return; }
+
+  const today = new Date().toLocaleDateString('ko-KR', {year:'numeric', month:'long', day:'numeric'});
+
+  // Build items grouped by task
+  const taskMap = {};
+  STATE.bookmarks.forEach(key => {
+    const [tid, seq] = key.split('_').map(Number);
+    if (!taskMap[tid]) taskMap[tid] = [];
+    taskMap[tid].push(seq);
+  });
+
+  let itemsHtml = '';
+  let totalCount = 0;
+  Object.entries(taskMap).sort((a,b) => Number(a[0]) - Number(b[0])).forEach(([tidStr, seqs]) => {
+    const tid = Number(tidStr);
+    const task = DATA.tasks.tasks.find(t => t.id === tid);
+    if (!task) return;
+    seqs.sort((a,b) => a - b).forEach(seq => {
+      const rec = task.recommendations.find(r => r.seq === seq);
+      if (!rec) return;
+      totalCount++;
+      const riskLevel = classifyDeadline(rec.deadline);
+      const borderColor = (riskLevel === 'overdue' || riskLevel === 'critical') ? '#dc3545' : riskLevel === 'urgent' ? '#fd7e14' : '#1B5FA4';
+      const deadlineText = rec.deadline_label ? rec.deadline_label : '기한 미정';
+      const dlStyle = (riskLevel === 'overdue' || riskLevel === 'critical')
+        ? 'background:#fde8e8;color:#b91c1c;border:1px solid #f5c6c6'
+        : riskLevel === 'urgent'
+          ? 'background:#fff3e0;color:#c05900;border:1px solid #ffcc80'
+          : riskLevel === 'caution'
+            ? 'background:#fffde7;color:#7a6000;border:1px solid #ffe082'
+            : rec.deadline_label
+              ? 'background:#e8f5e9;color:#2e7d32;border:1px solid #a5d6a7'
+              : 'background:#f0f0f0;color:#666;border:1px solid #ccc';
+      itemsHtml +=
+        '<div class="bm-print-item" style="border-left-color:' + borderColor + '">' +
+          '<div class="bm-print-task">' +
+            escapeHtml(task.number) + ' ' + escapeHtml(task.title) +
+            '<span class="bm-print-axis">' + escapeHtml(task.policy_axis_name || '') + ' · ' + escapeHtml(task.strategic_area_name || '') + '</span>' +
+          '</div>' +
+          '<div class="bm-print-meta">' +
+            '<span class="bm-print-seq">권고 ' + seq + '</span>' +
+            '<span class="bm-print-ministry">' + escapeHtml(rec.ministry || '') + '</span>' +
+            '<span class="bm-print-deadline" style="' + dlStyle + '">' + escapeHtml(deadlineText) + '</span>' +
+          '</div>' +
+          '<div class="bm-print-content">' + escapeHtml(rec.content) + '</div>' +
+        '</div>';
+    });
+  });
+
+  const html = '<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8">' +
+    '<title>북마크 목록 — 대한민국 AI 행동계획</title>' +
+    '<style>' +
+      'body{font-family:"Noto Sans KR","Apple SD Gothic Neo",sans-serif;padding:28px 36px;color:#1a1a2e;line-height:1.6;font-size:13px}' +
+      'h1{font-size:1.3rem;color:#003087;border-bottom:2.5px solid #003087;padding-bottom:8px;margin-bottom:4px}' +
+      '.print-meta{font-size:0.82rem;color:#666;margin-bottom:24px}' +
+      '.bm-print-item{padding:12px 14px;margin-bottom:14px;border-left:4px solid #1B5FA4;border-radius:0 6px 6px 0;background:#f8f9fa;page-break-inside:avoid}' +
+      '.bm-print-task{font-size:0.92rem;font-weight:700;color:#003087;margin-bottom:5px}' +
+      '.bm-print-axis{font-weight:400;font-size:0.78rem;color:#666;margin-left:8px}' +
+      '.bm-print-meta{display:flex;gap:10px;font-size:0.78rem;color:#555;margin-bottom:6px;flex-wrap:wrap}' +
+      '.bm-print-seq{font-weight:700;color:#1a1a2e}' +
+      '.bm-print-ministry{background:#e8f4fd;color:#1B5FA4;padding:1px 7px;border-radius:10px;font-weight:600}' +
+      '.bm-print-deadline{background:#e8f5e9;color:#2e7d32;padding:1px 7px;border-radius:10px}' +
+      '.bm-print-content{font-size:0.86rem;line-height:1.65;color:#222;white-space:pre-wrap}' +
+      '@media print{body{padding:14px 18px}@page{margin:15mm}}' +
+    '</style></head><body>' +
+    '<h1>★ 북마크 정책권고 목록</h1>' +
+    '<div class="print-meta">대한민국 AI 행동계획 2026 &nbsp;|&nbsp; 총 ' + totalCount + '건 &nbsp;|&nbsp; 출력일: ' + today + '</div>' +
+    itemsHtml +
+    '<script>window.onload=function(){window.print();}<\/script>' +
+    '</body></html>';
+
+  const w = window.open('', '_blank', 'width=820,height=900');
+  w.document.write(html);
+  w.document.close();
 }
 
 // ===== 글로벌 AI 정책 동향 데이터 (NIA 2025-10호) =====
@@ -6189,7 +6357,10 @@ function openMappingCompare(saId, kr, globalCat, desc) {
   </div>
   <div class="bm-panel-tools">
     <span id="bmCount" style="color:var(--gray)">0건</span>
-    <button class="secondary" style="font-size:0.78rem;padding:4px 10px" onclick="clearAllBookmarks()">전체 삭제</button>
+    <div style="display:flex;gap:6px">
+      <button class="secondary" style="font-size:0.78rem;padding:4px 10px" onclick="printBookmarks()" title="북마크 목록 인쇄">&#128438; 인쇄</button>
+      <button class="secondary" style="font-size:0.78rem;padding:4px 10px" onclick="clearAllBookmarks()">전체 삭제</button>
+    </div>
   </div>
   <div class="bm-panel-body" id="bmList">
     <div style="text-align:center;color:var(--gray);padding:40px 0;font-size:0.9rem">
