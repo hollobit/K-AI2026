@@ -26,14 +26,303 @@
   --shadow: 0 2px 8px rgba(0,0,0,0.1);
   --radius: 8px;
   --font: 'Noto Sans KR', sans-serif;
+  --text: #343a40;
+  --text-muted: #6c757d;
+  --table-hover: #f0f4ff;
+  --input-bg: #ffffff;
+  --header-gradient-start: #003087;
+  --header-gradient-end: #1B5FA4;
+}
+[data-theme="dark"] {
+  --primary: #4a9eff;
+  --primary-light: #3d8ce6;
+  --primary-lighter: #5ba8ff;
+  --accent: #5ba8ff;
+  --success: #4caf50;
+  --warning: #ffb74d;
+  --danger: #ef5350;
+  --info: #4dd0e1;
+  --gray: #9e9e9e;
+  --light: #2a2d35;
+  --dark: #e0e0e0;
+  --bg: #1a1d23;
+  --card-bg: #23272e;
+  --border: #3a3f4a;
+  --shadow: 0 2px 8px rgba(0,0,0,0.3);
+  --text: #e0e0e0;
+  --text-muted: #9e9e9e;
+  --table-hover: #2a3040;
+  --input-bg: #2a2d35;
+  --header-gradient-start: #0d1b2a;
+  --header-gradient-end: #1b2838;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: var(--font); background: var(--bg); color: var(--dark); line-height: 1.6; }
+body { font-family: var(--font); background: var(--bg); color: var(--text, var(--dark)); line-height: 1.6; transition: background 0.3s, color 0.3s; }
+[data-theme="dark"] .task-card,
+[data-theme="dark"] .ministry-card,
+[data-theme="dark"] .chart-card,
+[data-theme="dark"] .kpi-card,
+[data-theme="dark"] .risk-kpi,
+[data-theme="dark"] .risk-item,
+[data-theme="dark"] .sim-pair,
+[data-theme="dark"] .rel-item,
+[data-theme="dark"] .ref-card,
+[data-theme="dark"] .filter-panel,
+[data-theme="dark"] .rec-item,
+[data-theme="dark"] .rec-list-row,
+[data-theme="dark"] .rel-info-card,
+[data-theme="dark"] .rel-top5,
+[data-theme="dark"] .sim-controls,
+[data-theme="dark"] .rel-controls,
+[data-theme="dark"] .overload-card,
+[data-theme="dark"] .risk-table-wrap,
+[data-theme="dark"] .coop-section,
+[data-theme="dark"] .highlight-panel,
+[data-theme="dark"] .global-filter-panel,
+[data-theme="dark"] .risk-dday-banner,
+[data-theme="dark"] .ref-search-bar,
+[data-theme="dark"] .ref-search-results-box { background: var(--card-bg); color: var(--text); }
+[data-theme="dark"] .nav-tabs { background: var(--card-bg); border-color: var(--border); }
+[data-theme="dark"] .nav-tab { color: var(--text-muted); }
+[data-theme="dark"] .nav-tab:hover { background: rgba(74,158,255,0.1); }
+[data-theme="dark"] .summary-table td,
+[data-theme="dark"] .risk-table td { border-color: var(--border); color: var(--text); }
+[data-theme="dark"] .summary-table tr:hover td,
+[data-theme="dark"] .risk-table tr:hover td { background: var(--table-hover); }
+[data-theme="dark"] .modal { background: var(--card-bg); color: var(--text); }
+[data-theme="dark"] .modal-overlay { background: rgba(0,0,0,0.75); }
+[data-theme="dark"] input, [data-theme="dark"] select { background: var(--input-bg); color: var(--text); border-color: var(--border); }
+[data-theme="dark"] .search-hint,
+[data-theme="dark"] .recent-searches { background: var(--card-bg); border-color: var(--border); }
+[data-theme="dark"] .search-hint-item:hover { background: rgba(74,158,255,0.1); }
+[data-theme="dark"] .timeline-col { background: var(--card-bg); }
+[data-theme="dark"] .timeline-item { background: var(--light); color: var(--text); }
+[data-theme="dark"] .timeline-item:hover { background: rgba(74,158,255,0.1); }
+[data-theme="dark"] .alert-panel { background: #3d3520; border-color: #5a4d2e; }
+[data-theme="dark"] .alert-panel h4 { color: #ffcc56; }
+[data-theme="dark"] .fn-item { background: var(--light); color: var(--text); }
+[data-theme="dark"] .bm-panel { background: var(--card-bg); }
+[data-theme="dark"] .bm-item { background: var(--light); }
+[data-theme="dark"] .shortcut-panel { background: var(--card-bg); }
+[data-theme="dark"] mark.highlight { background: #665d1e; color: #ffe082; }
+[data-theme="dark"] .badge { opacity: 0.9; }
+[data-theme="dark"] .export-menu { background: var(--card-bg); border-color: var(--border); }
+[data-theme="dark"] .export-menu-item { color: var(--text); }
+[data-theme="dark"] .export-menu-item:hover { background: var(--light); }
+[data-theme="dark"] ::-webkit-scrollbar-track { background: #2a2d35; }
+[data-theme="dark"] ::-webkit-scrollbar-thumb { background: #4a4f5a; }
+[data-theme="dark"] ::-webkit-scrollbar-thumb:hover { background: #5a5f6a; }
+
+/* Scroll progress bar */
+.scroll-progress { position: fixed; top: 0; left: 0; height: 3px; background: linear-gradient(90deg, var(--accent), var(--success)); z-index: 9999; width: 0%; transition: width 0.1s; }
+
+/* Theme toggle */
+.theme-toggle {
+  background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.35);
+  color: white; width: 34px; height: 34px; border-radius: 50%; cursor: pointer;
+  font-size: 1.1rem; display: flex; align-items: center; justify-content: center;
+  transition: background 0.2s, transform 0.2s; flex-shrink: 0;
+}
+.theme-toggle:hover { background: rgba(255,255,255,0.28); transform: scale(1.1); }
+
+/* Alert notification banner */
+.notif-banner {
+  background: linear-gradient(90deg, #dc3545, #e74c3c); color: white;
+  padding: 10px 20px; font-size: 0.85rem; display: flex; align-items: center;
+  justify-content: space-between; gap: 12px; flex-wrap: wrap;
+  animation: slideDown 0.4s ease-out;
+}
+.notif-banner.warning-banner { background: linear-gradient(90deg, #fd7e14, #e8890c); }
+.notif-banner.info-banner { background: linear-gradient(90deg, var(--primary), var(--accent)); }
+.notif-banner-items { display: flex; gap: 16px; flex-wrap: wrap; align-items: center; }
+.notif-banner-item { display: flex; align-items: center; gap: 6px; font-weight: 500; cursor: pointer; }
+.notif-banner-item:hover { text-decoration: underline; }
+.notif-banner-close { background: rgba(255,255,255,0.2); border: none; color: white; width: 24px; height: 24px; border-radius: 50%; cursor: pointer; font-size: 0.9rem; flex-shrink: 0; }
+.notif-banner-close:hover { background: rgba(255,255,255,0.4); }
+@keyframes slideDown { from { transform: translateY(-100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+/* View transition animation */
+.view { opacity: 0; transform: translateY(8px); transition: opacity 0.3s ease, transform 0.3s ease; }
+.view.active { opacity: 1; transform: translateY(0); }
+
+/* KPI count-up animation */
+.kpi-card .value { transition: color 0.3s; }
+@keyframes countUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+.kpi-card { animation: countUp 0.5s ease-out both; }
+.kpi-card:nth-child(2) { animation-delay: 0.05s; }
+.kpi-card:nth-child(3) { animation-delay: 0.1s; }
+.kpi-card:nth-child(4) { animation-delay: 0.15s; }
+.kpi-card:nth-child(5) { animation-delay: 0.2s; }
+.kpi-card:nth-child(6) { animation-delay: 0.25s; }
+.kpi-card:nth-child(7) { animation-delay: 0.3s; }
+.kpi-card:nth-child(8) { animation-delay: 0.35s; }
+
+/* Progress tracker widget */
+.progress-tracker-widget { background: var(--card-bg); border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow); margin-bottom: 20px; }
+.progress-tracker-widget h3 { font-size: 1rem; font-weight: 700; color: var(--text, var(--dark)); margin-bottom: 12px; }
+.progress-gauge { display: flex; align-items: center; gap: 16px; margin-bottom: 12px; }
+.progress-gauge .gauge-bar { flex: 1; height: 20px; background: #e9ecef; border-radius: 10px; overflow: hidden; position: relative; }
+.progress-gauge .gauge-fill { height: 100%; border-radius: 10px; transition: width 0.6s ease; background: linear-gradient(90deg, var(--success), #2ecc71); position: relative; }
+.progress-gauge .gauge-pct { font-size: 1.2rem; font-weight: 900; color: var(--success); min-width: 60px; text-align: right; }
+.progress-mini-bars { display: flex; gap: 6px; flex-wrap: wrap; }
+.progress-mini { display: flex; align-items: center; gap: 4px; font-size: 0.78rem; color: var(--text-muted, var(--gray)); }
+.progress-mini .dot { width: 10px; height: 10px; border-radius: 50%; }
+
+/* Export button */
+.export-btn {
+  background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.35);
+  color: white; padding: 6px 14px; border-radius: 20px; cursor: pointer;
+  font-size: 0.82rem; font-family: var(--font); display: flex; align-items: center;
+  gap: 5px; transition: background 0.2s; white-space: nowrap;
+}
+.export-btn:hover { background: rgba(255,255,255,0.28); }
+.export-menu {
+  position: fixed; top: auto; right: auto; background: var(--card-bg); border: 1px solid var(--border);
+  border-radius: var(--radius); box-shadow: 0 4px 16px rgba(0,0,0,0.15); z-index: 9990;
+  display: none; min-width: 180px; overflow: hidden;
+}
+.export-menu.visible { display: block; }
+.export-menu-item {
+  padding: 10px 16px; cursor: pointer; font-size: 0.85rem; color: var(--text, var(--dark));
+  transition: background 0.15s; display: flex; align-items: center; gap: 8px;
+}
+.export-menu-item:hover { background: var(--light); }
+
+/* Radar chart container */
+.radar-chart-wrap { background: var(--card-bg); border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow); margin-bottom: 20px; }
+.radar-chart-wrap h3 { font-size: 1rem; font-weight: 700; margin-bottom: 12px; }
+
+/* Mobile bottom nav */
+@media (max-width: 768px) {
+  .mobile-bottom-nav {
+    position: fixed; bottom: 0; left: 0; right: 0; background: var(--card-bg);
+    border-top: 1px solid var(--border); display: flex; z-index: 500;
+    box-shadow: 0 -2px 8px rgba(0,0,0,0.1); padding: 4px 0 env(safe-area-inset-bottom, 4px);
+  }
+  .mobile-bottom-nav .mob-tab {
+    flex: 1; text-align: center; padding: 8px 2px; font-size: 0.68rem; color: var(--text-muted, var(--gray));
+    cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 2px;
+    transition: color 0.2s;
+  }
+  .mobile-bottom-nav .mob-tab .mob-icon { font-size: 1.2rem; }
+  .mobile-bottom-nav .mob-tab.active { color: var(--primary); font-weight: 700; }
+  .nav-tabs { display: none !important; }
+  body { padding-bottom: 64px; }
+}
+
+/* Tablet breakpoint */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .kpi-grid { grid-template-columns: repeat(3, 1fr); }
+  .task-grid { grid-template-columns: repeat(2, 1fr); }
+  .chart-grid { grid-template-columns: 1fr 1fr; }
+  .nav-tab { padding: 12px 14px; font-size: 0.82rem; }
+  .mobile-bottom-nav { display: none; }
+}
+@media (min-width: 1025px) { .mobile-bottom-nav { display: none; } }
+
+/* Workload analysis */
+.workload-card { background: var(--card-bg); border-radius: var(--radius); padding: 16px; box-shadow: var(--shadow); margin-bottom: 12px; border-left: 4px solid var(--warning); }
+.workload-card.high-load { border-left-color: var(--danger); }
+.workload-card .wl-name { font-weight: 700; font-size: 1rem; }
+.workload-card .wl-score { font-size: 1.5rem; font-weight: 900; }
+.workload-card .wl-detail { font-size: 0.82rem; color: var(--text-muted, var(--gray)); margin-top: 4px; }
+.workload-bar { height: 8px; background: #e9ecef; border-radius: 4px; overflow: hidden; margin-top: 6px; }
+.workload-fill { height: 100%; border-radius: 4px; transition: width 0.4s; }
+
+/* Gantt-style timeline */
+.gantt-container { background: var(--card-bg); border-radius: var(--radius); padding: 16px; box-shadow: var(--shadow); overflow-x: auto; margin-bottom: 20px; }
+.gantt-row { display: flex; align-items: center; border-bottom: 1px solid var(--border); padding: 4px 0; min-height: 32px; }
+.gantt-label { width: 340px; flex-shrink: 0; font-size: 0.78rem; font-weight: 600; padding-right: 8px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gantt-track { flex: 1; position: relative; height: 22px; }
+.gantt-bar { position: absolute; height: 18px; border-radius: 4px; top: 2px; transition: width 0.3s; cursor: pointer; font-size: 0.68rem; color: white; display: flex; align-items: center; padding: 0 6px; overflow: hidden; white-space: nowrap; }
+.gantt-bar:hover { filter: brightness(1.15); z-index: 1; }
+.gantt-header { display: flex; border-bottom: 2px solid var(--border); padding: 6px 0; font-size: 0.75rem; font-weight: 700; color: var(--text-muted, var(--gray)); }
+.gantt-header-label { width: 340px; flex-shrink: 0; }
+.gantt-header-months { flex: 1; display: flex; }
+.gantt-header-months span { flex: 1; text-align: center; }
+
+/* D3: Guide Tour */
+.tour-overlay { position: fixed; inset: 0; z-index: 8000; pointer-events: none; }
+.tour-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 7999; }
+.tour-highlight { position: absolute; z-index: 8001; box-shadow: 0 0 0 4000px rgba(0,0,0,0.55); border-radius: 8px; pointer-events: none; transition: all 0.4s ease; }
+.tour-tooltip { position: absolute; z-index: 8002; background: var(--card-bg, white); border-radius: 12px; padding: 20px; box-shadow: 0 8px 32px rgba(0,0,0,0.25); max-width: 360px; pointer-events: auto; animation: tourFadeIn 0.3s ease; }
+.tour-tooltip h4 { font-size: 1rem; font-weight: 700; color: var(--primary); margin-bottom: 8px; }
+.tour-tooltip p { font-size: 0.85rem; color: var(--text, #333); line-height: 1.6; margin-bottom: 14px; }
+.tour-tooltip .tour-step-indicator { font-size: 0.75rem; color: var(--text-muted, var(--gray)); margin-bottom: 10px; }
+.tour-tooltip .tour-btns { display: flex; gap: 8px; justify-content: flex-end; }
+.tour-tooltip .tour-btn { padding: 6px 16px; border-radius: 6px; border: 1px solid var(--border); background: var(--card-bg, white); cursor: pointer; font-family: var(--font); font-size: 0.82rem; transition: all 0.15s; }
+.tour-tooltip .tour-btn:hover { background: var(--light); }
+.tour-tooltip .tour-btn-primary { background: var(--primary); color: white; border-color: var(--primary); }
+.tour-tooltip .tour-btn-primary:hover { opacity: 0.9; }
+@keyframes tourFadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+/* D4: Compare Mode */
+.compare-panel { position: fixed; inset: 0; z-index: 3000; background: rgba(0,0,0,0.6); display: none; justify-content: center; align-items: flex-start; padding: 20px; overflow-y: auto; }
+.compare-panel.open { display: flex; }
+.compare-container { background: var(--card-bg, white); border-radius: 12px; width: 100%; max-width: 1200px; max-height: 90vh; overflow-y: auto; margin: auto; }
+.compare-header { padding: 16px 20px; background: var(--primary); color: white; border-radius: 12px 12px 0 0; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 1; }
+.compare-header h3 { font-size: 1.05rem; font-weight: 700; }
+.compare-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0; }
+.compare-col { padding: 16px; border-right: 1px solid var(--border); }
+.compare-col:last-child { border-right: none; }
+.compare-col h4 { font-size: 0.95rem; font-weight: 700; color: var(--primary); margin-bottom: 12px; padding-bottom: 8px; border-bottom: 2px solid var(--primary); }
+.compare-field { margin-bottom: 12px; }
+.compare-field-label { font-size: 0.75rem; font-weight: 600; color: var(--text-muted, var(--gray)); text-transform: uppercase; margin-bottom: 4px; }
+.compare-field-value { font-size: 0.85rem; line-height: 1.6; }
+.compare-diff { background: #fff3cd; padding: 2px 4px; border-radius: 3px; }
+@media (max-width: 768px) { .compare-grid { grid-template-columns: 1fr; } }
+
+/* C3: Gap Analysis */
+.gap-analysis-card { background: var(--card-bg, white); border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow); margin-bottom: 16px; }
+.gap-bar { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.gap-label { width: 120px; font-size: 0.82rem; font-weight: 600; flex-shrink: 0; }
+.gap-track { flex: 1; height: 24px; background: #e9ecef; border-radius: 4px; overflow: hidden; display: flex; }
+.gap-fill-kr { height: 100%; background: #1565c0; transition: width 0.4s; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; color: white; font-weight: 600; }
+.gap-fill-gl { height: 100%; background: #2e7d32; transition: width 0.4s; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; color: white; font-weight: 600; }
+.gap-legend { display: flex; gap: 16px; font-size: 0.78rem; margin-bottom: 12px; }
+.gap-legend span { display: flex; align-items: center; gap: 4px; }
+.gap-legend .dot-kr { width: 10px; height: 10px; background: #1565c0; border-radius: 50%; }
+.gap-legend .dot-gl { width: 10px; height: 10px; background: #2e7d32; border-radius: 50%; }
+
+/* C5: Compliance Score */
+.compliance-widget { background: var(--card-bg, white); border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow); margin-bottom: 20px; }
+.compliance-ring { width: 120px; height: 120px; position: relative; display: inline-block; }
+.compliance-ring svg { transform: rotate(-90deg); }
+.compliance-ring-text { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: 900; }
+.compliance-detail-row { display: flex; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px solid var(--border); font-size: 0.82rem; }
+.compliance-detail-row:last-child { border-bottom: none; }
+.compliance-check { color: var(--success); font-weight: 700; }
+.compliance-warn { color: var(--warning); font-weight: 700; }
+.compliance-miss { color: var(--danger); font-weight: 700; }
+
+/* A2: Customization */
+.customize-panel { position: fixed; top: 0; right: -400px; width: 380px; height: 100vh; background: var(--card-bg, white); box-shadow: -4px 0 24px rgba(0,0,0,0.18); z-index: 1300; transition: right 0.3s; display: flex; flex-direction: column; }
+.customize-panel.open { right: 0; }
+.customize-panel-header { padding: 16px 20px; background: var(--primary); color: white; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+.customize-section { padding: 16px; border-bottom: 1px solid var(--border); }
+.customize-section h4 { font-size: 0.9rem; font-weight: 700; margin-bottom: 10px; color: var(--text, var(--dark)); }
+.customize-option { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; font-size: 0.85rem; }
+.customize-toggle { width: 44px; height: 24px; background: #ccc; border-radius: 12px; position: relative; cursor: pointer; transition: background 0.2s; }
+.customize-toggle.active { background: var(--success); }
+.customize-toggle::after { content: ''; position: absolute; top: 2px; left: 2px; width: 20px; height: 20px; background: white; border-radius: 50%; transition: transform 0.2s; }
+.customize-toggle.active::after { transform: translateX(20px); }
+
+/* B2: Risk Trend */
+.risk-trend-card { background: var(--card-bg, white); border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow); margin-bottom: 16px; }
+
+/* B3: Network Graph Enhancement */
+.net-minimap { position: absolute; bottom: 8px; right: 8px; width: 140px; height: 90px; background: rgba(255,255,255,0.9); border: 1px solid var(--border); border-radius: 6px; overflow: hidden; z-index: 10; }
+.net-minimap-view { position: absolute; border: 2px solid var(--primary); background: rgba(0,102,204,0.1); }
+.net-zoom-controls { position: absolute; top: 8px; right: 8px; display: flex; flex-direction: column; gap: 4px; z-index: 10; }
+.net-zoom-btn { width: 30px; height: 30px; border: 1px solid var(--border); border-radius: 6px; background: var(--card-bg, white); cursor: pointer; font-size: 1rem; display: flex; align-items: center; justify-content: center; box-shadow: 0 1px 4px rgba(0,0,0,0.1); }
+.net-zoom-btn:hover { background: var(--light); }
+.net-cluster-legend { display: flex; gap: 8px; flex-wrap: wrap; font-size: 0.78rem; padding: 8px 0; }
+.net-cluster-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 3px; vertical-align: middle; }
 
 /* Header */
 .header {
-  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+  background: linear-gradient(135deg, var(--header-gradient-start, var(--primary)) 0%, var(--header-gradient-end, var(--primary-light)) 100%);
   color: white; padding: 20px 24px;
 }
 .header h1 { font-size: 1.6rem; font-weight: 700; }
@@ -957,6 +1246,21 @@ mark.hl { background: #fff176; padding: 0 1px; border-radius: 2px; font-style: n
 </head>
 <body>
 
+<!-- Export dropdown (body-level for z-index) -->
+<div class="export-menu" id="exportMenu">
+  <div class="export-menu-item" onclick="exportCSV()">📊 CSV (과제 목록)</div>
+  <div class="export-menu-item" onclick="exportRiskCSV()">⚠️ CSV (위험 현황)</div>
+  <div class="export-menu-item" onclick="exportGlobalCSV()">🌍 CSV (글로벌 사례)</div>
+  <div class="export-menu-item" onclick="exportMarkdown()">📝 Markdown (AI행동계획)</div>
+  <div class="export-menu-item" onclick="exportBookmarksJSON()">⭐ JSON (북마크)</div>
+</div>
+
+<!-- Scroll progress bar -->
+<div class="scroll-progress" id="scrollProgress"></div>
+
+<!-- Notification banner -->
+<div id="notifBanner" style="display:none"></div>
+
 <!-- Skip link for accessibility -->
 <a href="#main-content" class="skip-link" aria-label="본문으로 바로가기">본문으로 바로가기</a>
 
@@ -982,6 +1286,13 @@ mark.hl { background: #fff176; padding: 0 1px; border-radius: 2px; font-style: n
         <svg viewBox="0 0 16 16" width="13" height="13" fill="currentColor" aria-hidden="true"><path d="M5 3h6a1 1 0 011 1v8a1 1 0 01-1 1H5a1 1 0 01-1-1V4a1 1 0 011-1zm0 1v8h6V4H5z"/><path d="M7 6h2v1H7zm0 2h2v1H7zm-1-4h4v1H6z"/></svg>
         AI기본법 연계
       </a>
+      <button class="export-btn" id="exportBtn" onclick="toggleExportMenu()" aria-label="내보내기">
+        <svg viewBox="0 0 16 16" width="13" height="13" fill="currentColor"><path d="M8 1l4 4h-3v5H7V5H4l4-4zM2 12h12v2H2v-2z"/></svg>
+        내보내기
+      </button>
+      <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" aria-label="다크/라이트 모드 전환" title="다크/라이트 모드 전환">🌙</button>
+      <button class="theme-toggle" onclick="openCustomizePanel()" aria-label="대시보드 설정" title="대시보드 설정">⚙️</button>
+      <button class="theme-toggle" onclick="startTour()" aria-label="가이드 투어 시작" title="가이드 투어">❓</button>
     </span>
   </div>
   <div class="search-bar" role="search" aria-label="전역 검색">
@@ -1026,6 +1337,18 @@ mark.hl { background: #fff176; padding: 0 1px; border-radius: 2px; font-style: n
   <div style="background:#fff8e1;border:1px solid #ffe082;border-left:4px solid #f59e0b;border-radius:6px;padding:12px 16px;margin-bottom:20px;font-size:0.88rem;color:#5a4000;line-height:1.6">
     <strong>&#x26A0;&#xFE0F; 안내</strong>: 이 페이지는 행동계획에 대한 이해를 돕기 위해 개인이 만든 분석용 페이지일 뿐 공식 페이지가 아닙니다. 분석 결과는 공개된 PDF 문서를 기초로 한 내용이라 hallucination이 있을 수 있습니다.
 
+  </div>
+  <!-- Progress Tracker Widget -->
+  <div class="progress-tracker-widget" id="progressWidget" style="display:none">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <h3 style="margin:0">📊 이행 진척률</h3>
+      <button onclick="openProgressEditor()" style="padding:4px 12px;border:1px solid var(--border);border-radius:16px;background:var(--card-bg);cursor:pointer;font-size:0.78rem;font-family:var(--font);color:var(--text-muted,var(--gray))">✏️ 진척 입력</button>
+    </div>
+    <div class="progress-gauge">
+      <div class="gauge-bar"><div class="gauge-fill" id="progressFill" style="width:0%"></div></div>
+      <div class="gauge-pct" id="progressPct">0%</div>
+    </div>
+    <div class="progress-mini-bars" id="progressMiniSummary"></div>
   </div>
   <div class="kpi-grid" id="kpiGrid"></div>
   <div class="alert-panel" id="alertPanel" style="display:none">
@@ -1077,6 +1400,19 @@ mark.hl { background: #fff176; padding: 0 1px; border-radius: 2px; font-style: n
     </div>
   </div>
 
+  <div class="chart-grid">
+    <div class="compliance-widget" id="complianceWidget">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <h3 style="margin:0;font-size:1rem;font-weight:700">⚖️ AI기본법 컴플라이언스 스코어</h3>
+        <a href="aiact.html?view=compliance" target="_blank" style="font-size:0.78rem;color:var(--accent)">상세 보기 →</a>
+      </div>
+      <div style="display:flex;gap:20px;align-items:center" id="complianceContent"></div>
+    </div>
+    <div class="gap-analysis-card" id="gapAnalysisCard">
+      <h3 style="font-size:1rem;font-weight:700;margin-bottom:12px">🌍 한국 vs 글로벌 정책 갭 분석</h3>
+      <div id="gapAnalysisContent"></div>
+    </div>
+  </div>
   <div class="section-title">정책축별 구조 개요</div>
   <div id="axisOverview"></div>
 </div>
@@ -1112,6 +1448,7 @@ mark.hl { background: #fff176; padding: 0 1px; border-radius: 2px; font-style: n
     <div class="view-toggle" role="group" aria-label="보기 방식">
       <button class="view-toggle-btn active" id="btnCardView" onclick="setTaskViewMode('card')" title="과제 카드 보기">&#9638; 카드뷰</button>
       <button class="view-toggle-btn" id="btnListView" onclick="setTaskViewMode('list')" title="정책권고 목록 보기">&#9776; 권고 목록</button>
+      <button class="view-toggle-btn" id="btnCompareView" onclick="openCompareSelector()" title="과제 비교">⚖️ 비교</button>
     </div>
   </div>
   <div class="task-grid" id="taskGrid"></div>
@@ -1130,6 +1467,13 @@ mark.hl { background: #fff176; padding: 0 1px; border-radius: 2px; font-style: n
     <button onclick="sortMinistries('name')" data-sort="name">가나다순</button>
   </div>
   <div class="ministry-grid" id="ministryGrid"></div>
+  <div class="radar-chart-wrap" style="margin-top:16px">
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:12px">
+      <h3 style="margin:0">부처별 행동계획 비교 레이더</h3>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center" id="radarMinistrySelector"></div>
+    </div>
+    <canvas id="chartMinistryRadar" style="max-height:360px" aria-label="부처별 역량 비교 레이더 차트"></canvas>
+  </div>
   <div class="ministry-detail" id="ministryDetail" style="display:none">
     <div class="ministry-detail-header" id="ministryDetailHeader"></div>
     <ul class="rec-list" id="ministryRecList"></ul>
@@ -1165,7 +1509,12 @@ mark.hl { background: #fff176; padding: 0 1px; border-radius: 2px; font-style: n
     </div>
     <div id="tlResultCount" style="font-size:0.82rem;color:var(--gray);margin-top:4px;min-height:1.2em"></div>
   </div>
+  <div style="display:flex;gap:6px;margin-bottom:12px">
+    <button id="tlViewGrid" onclick="setTlViewMode('grid')" style="padding:6px 14px;border:1px solid var(--primary);border-radius:16px;background:var(--primary);color:white;cursor:pointer;font-size:0.82rem;font-family:var(--font)">📊 분기별 보기</button>
+    <button id="tlViewGantt" onclick="setTlViewMode('gantt')" style="padding:6px 14px;border:1px solid var(--border);border-radius:16px;background:white;color:var(--gray);cursor:pointer;font-size:0.82rem;font-family:var(--font)">📅 Gantt 보기</button>
+  </div>
   <div class="timeline-grid" id="timelineGrid"></div>
+  <div class="gantt-container" id="ganttContainer" style="display:none"></div>
 </div>
 
 <!-- View 5: References -->
@@ -1195,6 +1544,13 @@ mark.hl { background: #fff176; padding: 0 1px; border-radius: 2px; font-style: n
       <canvas id="chartRiskDday" style="max-height:300px" aria-label="분기별 D-Day 차트"></canvas>
     </div>
   </div>
+  <div class="risk-trend-card" id="riskTrendCard">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <h3 style="margin:0;font-size:1rem;font-weight:700">📈 위험도 추이 시뮬레이션</h3>
+      <span style="font-size:0.78rem;color:var(--text-muted,var(--gray))">오늘 기준 향후 12개월 D-Day 변화</span>
+    </div>
+    <canvas id="chartRiskTrend" style="max-height:280px" aria-label="위험도 추이 시뮬레이션 차트"></canvas>
+  </div>
   <div class="section-title">부처별 위험 현황</div>
   <div class="risk-table-wrap">
     <table class="risk-table" id="riskMinistryTable" aria-label="부처별 위험 현황 테이블">
@@ -1213,6 +1569,8 @@ mark.hl { background: #fff176; padding: 0 1px; border-radius: 2px; font-style: n
     </table>
   </div>
   <div id="riskSections"></div>
+  <div id="workloadAnalysis"></div>
+  <div id="policySimulator"></div>
 </div>
 
 </main>
@@ -1309,7 +1667,16 @@ mark.hl { background: #fff176; padding: 0 1px; border-radius: 2px; font-style: n
           <button id="fdBtnOverview" onclick="toggleNetworkMode('overview')" style="padding:5px 12px;border:1px solid var(--border);border-radius:14px;background:white;color:var(--gray);cursor:pointer;font-size:0.8rem;font-family:var(--font)">전체 조감도 (99개)</button>
         </div>
       </div>
-      <svg id="network-svg" viewBox="0 0 800 500" style="touch-action:none"></svg>
+      <div style="position:relative">
+        <svg id="network-svg" viewBox="0 0 800 500" style="touch-action:none"></svg>
+        <div class="net-zoom-controls">
+          <button class="net-zoom-btn" onclick="zoomNetwork(1.2)" title="확대">+</button>
+          <button class="net-zoom-btn" onclick="zoomNetwork(0.8)" title="축소">−</button>
+          <button class="net-zoom-btn" onclick="resetNetworkZoom()" title="초기화" style="font-size:0.7rem">⟲</button>
+        </div>
+        <div class="net-minimap" id="netMinimap"></div>
+      </div>
+      <div class="net-cluster-legend" id="netClusterLegend"></div>
     </div>
 
     <div id="relSections"></div>
@@ -1410,7 +1777,7 @@ mark.hl { background: #fff176; padding: 0 1px; border-radius: 2px; font-style: n
   <div class="kpi-grid" id="standards-kpi"></div>
   <div style="margin-top:16px;background:#e3f2fd;border:1px solid #1565c0;border-radius:8px;padding:16px;margin-bottom:16px">
     <h3 style="color:#1565c0;margin-bottom:12px">★ 전략분야 5: AI 규제혁신 (전체)</h3>
-    <div id="standards-area5" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px"></div>
+    <div id="standards-area5"></div>
   </div>
   <div id="standards-type-sections"></div>
 </div>
@@ -2262,6 +2629,8 @@ function closeModal() {
   document.getElementById('modalOverlay').classList.remove('open');
   document.body.style.overflow = '';
   STATE.selectedTask = null;
+  var nav = document.getElementById('modalNav');
+  if (nav) nav.style.display = '';
 }
 
 function closeModalOutside(e) {
@@ -3062,6 +3431,13 @@ function renderTimeline() {
   });
 
   document.getElementById('timelineGrid').innerHTML = html;
+
+  // Gantt 보기가 활성 상태이면 필터 적용하여 갱신
+  var ganttEl = document.getElementById('ganttContainer');
+  if (ganttEl && ganttEl.style.display !== 'none') {
+    renderGanttView();
+  }
+  updateURL();
 }
 
 // ============================================================
@@ -5080,19 +5456,31 @@ function resetGlobalFilters() {
 // ============================================================
 // Rendering: Standards (표준화 현황)
 // ============================================================
-// 표준화 핵심 키워드 (명확히 표준/규격/인증과 직결되는 용어만)
+// 표준화 핵심 키워드 (표준/규격/인증 + 안전/보안/거버넌스/로드맵 포함)
 const STANDARD_CORE_KW = [
   '표준화', '국제표준', '기술표준', '표준안', '표준 개발', '표준 제정', '표준규격', '표준체계',
   'KS', 'ISO', 'ITU', 'IEEE',
   '규격', '안전기준', '기술기준', '보안기준',
-  '인증제도', '인증체계', '인증기관', '적합성평가', '적합성 평가'
+  '인증제도', '인증체계', '인증기관', '적합성평가', '적합성 평가',
+  '상호인증', '상호운용성', '상호통용성', '상호호환성', '상호운용', '상호통용', '상호호환',
+  '가이드라인', '지침',
+  '안전 관리', '안전성 확보', '안전연구소', '보안 체계', '보안 인증', '보안 강화',
+  '사이버 보안', '사이버보안', '개인정보 보호', '프라이버시', '신뢰 확보', '신뢰 구축',
+  '윤리 기준', '윤리 원칙', '윤리 규범', '투명성 확보', '고영향', '영향평가',
+  '거버넌스', '위원회', '컨트롤타워', '추진 체계', '추진체계',
+  '법 제도', '법제도', '규제 체계', '규제 프레임', '규제 샌드박스', '제도 정비', '제도 개선', '제도 마련',
+  '법령 정비', '법령 개정', '시행령', '입법',
+  '로드맵', '이행 계획', '이행계획', '이행 방안', '이행방안', '추진 계획', '추진계획',
+  '실행 계획', '실행계획', '단계별 추진', '중장기 계획', '중장기 전략', '마스터플랜'
 ];
 const STANDARD_TYPES = {
-  technical:   { label: '📐 기술 표준·규격', color: '#1a237e' },
-  safety:      { label: '🛡 안전·보안 기준', color: '#1b5e20' },
+  technical:    { label: '📐 기술 표준·규격', color: '#1a237e' },
+  safety:       { label: '🛡 안전·보안', color: '#1b5e20' },
   certification:{ label: '🔬 인증·적합성 체계', color: '#4a148c' },
-  guideline:   { label: '📋 가이드라인·지침', color: '#e65100' },
-  other:       { label: '📌 기타 표준화', color: '#546e7a' }
+  guideline:    { label: '📋 가이드라인·지침', color: '#e65100' },
+  governance:   { label: '🏛 거버넌스·제도', color: '#0d47a1' },
+  roadmap:      { label: '🗺 로드맵·추진계획', color: '#6a1b9a' },
+  other:        { label: '📌 기타 표준화', color: '#546e7a' }
 };
 
 // 표준화 관련 과제 판별: 핵심 키워드 1회 이상 OR 가이드라인 제목 포함/권고사항 2회 이상
@@ -5110,16 +5498,17 @@ function isStandardTask(task) {
 // 표준화 관련 권고사항 판별
 function isStandardRec(rec) {
   const c = rec.content || '';
-  return STANDARD_CORE_KW.some(function(k) { return c.includes(k); }) ||
-         c.includes('가이드라인') || c.includes('지침');
+  return STANDARD_CORE_KW.some(function(k) { return c.includes(k); });
 }
 
 function classifyStandardType(task) {
   const text = [task.title, ...(task.recommendations || []).map(r => r.content || '')].join(' ');
-  if (/인증제도|인증체계|인증기관|적합성/.test(text)) return 'certification';
+  if (/인증제도|인증체계|인증기관|적합성|상호인증|상호운용|상호통용|상호호환/.test(text)) return 'certification';
   if (/KS|ISO|ITU|IEEE|국제표준|기술표준|표준화|표준안|표준규격|표준 개발|표준 제정|표준체계/.test(text)) return 'technical';
-  if (/안전기준|보안기준|기술기준/.test(text)) return 'safety';
+  if (/안전.{0,2}(기준|관리|확보|평가|가이드)|보안.{0,2}(기준|체계|인증|강화)|사이버.{0,2}보안|개인정보.{0,2}보호|프라이버시|신뢰.{0,2}(확보|구축)|윤리.{0,2}(기준|원칙|규범)|투명성.{0,2}(확보|의무)|고영향|영향평가|안전연구소/.test(text)) return 'safety';
   if (/가이드라인|지침/.test(text)) return 'guideline';
+  if (/거버넌스|위원회|컨트롤타워|추진.{0,2}체계|법.{0,2}제도|규제.{0,2}(체계|프레임|샌드박스)|제도.{0,2}(정비|개선|마련)|법령.{0,2}(정비|개정)|시행령|입법/.test(text)) return 'governance';
+  if (/로드맵|이행.{0,2}(계획|방안)|추진.{0,2}(계획|일정|전략)|실행.{0,2}(계획|방안)|단계별.{0,2}(추진|계획)|중장기.{0,2}(계획|전략)|마스터플랜/.test(text)) return 'roadmap';
   return 'other';
 }
 
@@ -5143,22 +5532,53 @@ function renderStandards() {
       '<div class="kpi-card" style="border-top-color:#1a237e"><div class="value" style="color:#1a237e">' + totalStd + '</div><div class="label">표준화 관련 과제</div></div>',
       '<div class="kpi-card" style="border-top-color:#1565c0"><div class="value" style="color:#1565c0">' + area5Tasks.length + '</div><div class="label">AI 규제·법제</div></div>',
       '<div class="kpi-card" style="border-top-color:#1a237e"><div class="value" style="color:#1a237e">' + (byType.technical || []).length + '</div><div class="label">기술 표준</div></div>',
-      '<div class="kpi-card" style="border-top-color:#1b5e20"><div class="value" style="color:#1b5e20">' + (byType.safety || []).length + '</div><div class="label">안전·보안 기준</div></div>',
+      '<div class="kpi-card" style="border-top-color:#1b5e20"><div class="value" style="color:#1b5e20">' + (byType.safety || []).length + '</div><div class="label">안전·보안</div></div>',
+      '<div class="kpi-card" style="border-top-color:#0d47a1"><div class="value" style="color:#0d47a1">' + (byType.governance || []).length + '</div><div class="label">거버넌스·제도</div></div>',
+      '<div class="kpi-card" style="border-top-color:#6a1b9a"><div class="value" style="color:#6a1b9a">' + (byType.roadmap || []).length + '</div><div class="label">로드맵·추진계획</div></div>',
       '<div class="kpi-card" style="border-top-color:#e65100"><div class="value" style="color:#e65100">' + (byType.guideline || []).length + '</div><div class="label">가이드라인</div></div>',
       '<div class="kpi-card" style="border-top-color:#4a148c"><div class="value" style="color:#4a148c">' + (byType.certification || []).length + '</div><div class="label">인증·적합성</div></div>'
     ].join('');
   }
 
-  // Strategic area 5 highlight
+  // Strategic area 5 highlight — with recommendation list toggle
   const a5 = document.getElementById('standards-area5');
   if (a5) {
-    a5.innerHTML = area5Tasks.map(t =>
-      '<div onclick="openTaskModal(' + t.id + ')" style="cursor:pointer;padding:12px;background:white;border-radius:6px;border-left:3px solid #1565c0">' +
-        '<div style="font-size:0.75rem;color:#666">○' + t.id + '</div>' +
-        '<div style="font-weight:600;font-size:0.88rem;margin:4px 0">' + escapeHtml(t.title) + '</div>' +
-        '<div style="font-size:0.78rem;color:#666">' + [...new Set((t.recommendations || []).map(r => r.ministry).filter(Boolean))].slice(0, 3).join(', ') + '</div>' +
-      '</div>'
-    ).join('');
+    const a5Color = '#1565c0';
+    const a5Recs = area5Tasks.flatMap(t => (t.recommendations || []).map(r => Object.assign({}, r, {taskId: t.id, taskNumber: t.number, taskTitle: t.title})));
+    var a5Html = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">' +
+      '<button data-catid="area5" data-listview="false" onclick="toggleStdListView(\'area5\')" style="font-size:0.78rem;padding:3px 10px;border:1px solid ' + a5Color + ';border-radius:12px;background:white;color:' + a5Color + ';cursor:pointer">&#128203; 권고 목록 보기</button>' +
+      '<span style="background:' + a5Color + ';color:white;padding:2px 10px;border-radius:12px;font-size:0.85rem">' + area5Tasks.length + '개 과제 · ' + a5Recs.length + '개 권고</span>' +
+    '</div>';
+    a5Html += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px" id="std-cards-area5">' +
+      area5Tasks.map(t =>
+        '<div onclick="openTaskModal(' + t.id + ')" style="cursor:pointer;padding:12px;background:white;border-radius:6px;border-left:3px solid ' + a5Color + '">' +
+          '<div style="font-size:0.75rem;color:#666">○' + t.id + '</div>' +
+          '<div style="font-weight:600;font-size:0.88rem;margin:4px 0">' + escapeHtml(t.title) + '</div>' +
+          '<div style="font-size:0.78rem;color:#666">' + [...new Set((t.recommendations || []).map(r => r.ministry).filter(Boolean))].slice(0, 3).join(', ') + '</div>' +
+        '</div>'
+      ).join('') +
+    '</div>';
+    a5Html += '<div style="display:none" id="std-list-area5">' +
+      a5Recs.map(function(r) {
+        var bmKey = r.taskId + '_' + r.seq;
+        var bmActive = STATE.bookmarks.has(String(bmKey)) ? ' bm-active' : '';
+        var bmHl = STATE.bookmarks.has(String(bmKey)) ? ' bm-highlighted' : '';
+        var riskLevel = classifyDeadline(r.deadline);
+        var borderColor = (riskLevel === 'overdue' || riskLevel === 'critical') ? '#dc3545' : riskLevel === 'urgent' ? '#fd7e14' : a5Color;
+        return '<div class="rec-list-row' + bmHl + '" id="rec-li-' + bmKey + '" style="border-left-color:' + borderColor + '">' +
+          '<div class="rec-list-meta">' +
+            '<div class="rec-list-meta-left">' +
+              '<span style="font-weight:600;cursor:pointer;color:var(--accent)" onclick="openTaskModal(' + r.taskId + ',' + r.seq + ')">과제 ' + escapeHtml(r.taskNumber) + ' · 권고 ' + r.seq + '</span>' +
+              '<span class="badge badge-ministry">' + escapeHtml(r.ministry) + '</span>' +
+              renderDeadlineBadges(r) +
+            '</div>' +
+            '<button class="bookmark-btn' + bmActive + '" title="북마크" onclick="toggleBookmark(' + r.taskId + ',' + r.seq + ')" aria-label="북마크 토글">&#9733;</button>' +
+          '</div>' +
+          '<div class="rec-list-content" style="font-size:0.85rem">' + escapeHtml(r.content) + '</div>' +
+        '</div>';
+      }).join('') +
+    '</div>';
+    a5.innerHTML = a5Html;
   }
 
   // Type sections with accordions (area5 제외 표준화 관련 과제)
@@ -5174,7 +5594,7 @@ function renderStandards() {
         '<span>' + ti.label + '</span>' +
         '<span style="display:flex;gap:8px;align-items:center">' +
           '<button data-catid="' + catId + '" data-listview="false" onclick="event.preventDefault();toggleStdListView(this.dataset.catid)" style="font-size:0.78rem;padding:3px 10px;border:1px solid ' + ti.color + ';border-radius:12px;background:white;color:' + ti.color + ';cursor:pointer">&#128203; 권고 목록 보기</button>' +
-          '<span style="background:' + ti.color + ';color:white;padding:2px 10px;border-radius:12px;font-size:0.85rem">' + items.length + '개</span>' +
+          '<span style="background:' + ti.color + ';color:white;padding:2px 10px;border-radius:12px;font-size:0.85rem">' + items.length + '개 과제 · ' + allRecs.length + '개 권고</span>' +
         '</span>' +
       '</summary>' +
       '<div style="padding:12px" id="std-catbody-' + catId + '">' +
@@ -5473,10 +5893,26 @@ document.addEventListener('DOMContentLoaded', function() {
   var axisParam = params.get('axis');
   var areaParam = params.get('area');
 
-  if (viewParam) {
+  var ministryParam = params.get('ministry');
+  var sortParam = params.get('sort');
+
+  if (viewParam === 'gantt') {
+    switchView('timeline');
+    setTimeout(function() {
+      // 필터 파라미터 적용
+      if (axisParam) { var el = document.getElementById('tlFilterAxis'); if (el) el.value = axisParam; }
+      if (areaParam) { var el = document.getElementById('tlFilterArea'); if (el) el.value = areaParam; }
+      if (ministryParam) { var el = document.getElementById('tlFilterMinistry'); if (el) el.value = decodeURIComponent(ministryParam); }
+      if (keywordParam) { var el = document.getElementById('tlFilterKeyword'); if (el) el.value = decodeURIComponent(keywordParam); }
+      if (sortParam === 'task') _ganttSort = 'task';
+      if (_tlChart) { _tlChart.destroy(); _tlChart = null; }
+      renderTimeline();
+      setTlViewMode('gantt');
+      _urlReady = true;
+    }, 100);
+  } else if (viewParam) {
     switchView(viewParam);
     if (viewParam === 'timeline' && (taskParam || keywordParam)) {
-      // 필터 적용: 기존 차트 destroy 후 필터 데이터로 재생성
       setTimeout(function() {
         var kwEl = document.getElementById('tlFilterKeyword');
         if (kwEl) {
@@ -5489,21 +5925,19 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         if (_tlChart) { _tlChart.destroy(); _tlChart = null; }
         renderTimeline();
+        _urlReady = true;
       }, 200);
+    } else {
+      _urlReady = true;
     }
-    return;
-  }
-
-  if (taskParam) {
+  } else if (taskParam) {
     var found = findTaskByParam(taskParam);
     if (found) {
       switchView('tasks');
       setTimeout(function() { openTaskModal(found.id); }, 300);
     }
-    return;
-  }
-
-  if (axisParam) {
+    _urlReady = true;
+  } else if (axisParam) {
     switchView('tasks');
     setTimeout(function() {
       var sel = document.getElementById('filterAxis');
@@ -5511,10 +5945,8 @@ document.addEventListener('DOMContentLoaded', function() {
       var fp = document.querySelector('.filter-panel');
       if (fp) fp.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }, 200);
-    return;
-  }
-
-  if (areaParam) {
+    _urlReady = true;
+  } else if (areaParam) {
     switchView('tasks');
     setTimeout(function() {
       var sel = document.getElementById('filterArea');
@@ -5522,34 +5954,35 @@ document.addEventListener('DOMContentLoaded', function() {
       var fp = document.querySelector('.filter-panel');
       if (fp) fp.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }, 200);
-    return;
-  }
-
-  // Hash handler (legacy deep links)
-  var hash = window.location.hash;
-  if (hash) {
-    var h = hash.slice(1);
-    if (h === 'overview') {
-      switchView('overview');
-    } else if (h.startsWith('tasks_area_')) {
-      var areaId = parseInt(h.replace('tasks_area_',''), 10);
-      switchView('tasks');
-      setTimeout(function() {
-        var sel = document.getElementById('filterArea');
-        if (sel) { sel.value = String(areaId); applyFilters(); }
-      }, 200);
-    } else if (h.startsWith('task_')) {
-      var taskId = parseInt(h.replace('task_',''), 10);
-      switchView('tasks');
-      setTimeout(function() {
-        var t = DATA.tasks.tasks.find(function(x){ return x.id === taskId; });
-        if (t) openTaskModal(t.id);
-      }, 300);
-    } else if (h.startsWith('ministry_')) {
-      var mName = decodeURIComponent(h.replace('ministry_',''));
-      switchView('ministries');
-      setTimeout(function() { selectMinistry(mName); }, 300);
+    _urlReady = true;
+  } else {
+    // Hash handler (legacy deep links)
+    var hash = window.location.hash;
+    if (hash) {
+      var h = hash.slice(1);
+      if (h === 'overview') {
+        switchView('overview');
+      } else if (h.startsWith('tasks_area_')) {
+        var areaId = parseInt(h.replace('tasks_area_',''), 10);
+        switchView('tasks');
+        setTimeout(function() {
+          var sel = document.getElementById('filterArea');
+          if (sel) { sel.value = String(areaId); applyFilters(); }
+        }, 200);
+      } else if (h.startsWith('task_')) {
+        var taskId = parseInt(h.replace('task_',''), 10);
+        switchView('tasks');
+        setTimeout(function() {
+          var t = DATA.tasks.tasks.find(function(x){ return x.id === taskId; });
+          if (t) openTaskModal(t.id);
+        }, 300);
+      } else if (h.startsWith('ministry_')) {
+        var mName = decodeURIComponent(h.replace('ministry_',''));
+        switchView('ministries');
+        setTimeout(function() { selectMinistry(mName); }, 300);
+      }
     }
+    _urlReady = true;
   }
 });
 
@@ -6345,8 +6778,1467 @@ function openMappingCompare(saId, kr, globalCat, desc) {
   document.getElementById('gcModalOverlay').style.display = 'flex';
 }
 
+// ============================================================
+// A1: Dark Mode Toggle
+// ============================================================
+function toggleTheme() {
+  var html = document.documentElement;
+  var isDark = html.getAttribute('data-theme') === 'dark';
+  html.setAttribute('data-theme', isDark ? 'light' : 'dark');
+  localStorage.setItem('theme', isDark ? 'light' : 'dark');
+  document.getElementById('themeToggle').textContent = isDark ? '🌙' : '☀️';
+  // Re-render charts with updated colors
+  if (STATE.chartsInitialized) {
+    try {
+      Chart.helpers.each(Chart.instances, function(c) {
+        if (c && c.options) {
+          var textColor = isDark ? '#e0e0e0' : '#343a40';
+          var gridColor = isDark ? '#3a3f4a' : '#e5e5e5';
+          if (c.options.scales) {
+            Object.values(c.options.scales).forEach(function(s) {
+              if (s.ticks) s.ticks.color = textColor;
+              if (s.grid) s.grid.color = gridColor;
+            });
+          }
+          if (c.options.plugins && c.options.plugins.legend && c.options.plugins.legend.labels) {
+            c.options.plugins.legend.labels.color = textColor;
+          }
+          c.update('none');
+        }
+      });
+    } catch(e) {}
+  }
+}
+function initTheme() {
+  var saved = localStorage.getItem('theme');
+  var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  var theme = saved || (prefersDark ? 'dark' : 'light');
+  document.documentElement.setAttribute('data-theme', theme);
+  var btn = document.getElementById('themeToggle');
+  if (btn) btn.textContent = theme === 'dark' ? '☀️' : '🌙';
+}
+
+// ============================================================
+// D5: Notification Banner
+// ============================================================
+function renderNotifBanner() {
+  if (sessionStorage.getItem('notifDismissed')) return;
+  var today = new Date();
+  var d7items = [], critCount = 0, overdueCount = 0;
+  DATA.tasks.tasks.forEach(function(t) {
+    t.recommendations.forEach(function(r) {
+      var dl = classifyDeadline(r.deadline);
+      if (dl === 'overdue') overdueCount++;
+      if (dl === 'critical') critCount++;
+    });
+  });
+  if (overdueCount === 0 && critCount === 0) return;
+  var banner = document.getElementById('notifBanner');
+  var html = '<div class="notif-banner ' + (overdueCount > 0 ? '' : 'warning-banner') + '">';
+  html += '<div class="notif-banner-items">';
+  if (overdueCount > 0) html += '<span class="notif-banner-item" onclick="switchView(\'risk\')">🔴 기한 초과 과제: <strong>' + overdueCount + '건</strong></span>';
+  if (critCount > 0) html += '<span class="notif-banner-item" onclick="switchView(\'risk\')">🟠 긴급 과제 (D-34 이내): <strong>' + critCount + '건</strong></span>';
+  // Progress summary
+  var prog = getProgressSummary();
+  if (prog.total > 0) html += '<span class="notif-banner-item">📊 이행 진척: <strong>' + prog.pct + '%</strong> (' + prog.completed + '/' + prog.total + ')</span>';
+  html += '</div>';
+  html += '<button class="notif-banner-close" onclick="dismissNotif()" aria-label="알림 닫기">&times;</button>';
+  html += '</div>';
+  banner.innerHTML = html;
+  banner.style.display = 'block';
+}
+function dismissNotif() {
+  document.getElementById('notifBanner').style.display = 'none';
+  sessionStorage.setItem('notifDismissed', '1');
+}
+
+// ============================================================
+// Scroll Progress Bar
+// ============================================================
+function updateScrollProgress() {
+  var scrollTop = window.scrollY || document.documentElement.scrollTop;
+  var docHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+  var pct = docHeight > 0 ? (scrollTop / docHeight * 100) : 0;
+  var bar = document.getElementById('scrollProgress');
+  if (bar) bar.style.width = pct + '%';
+}
+window.addEventListener('scroll', updateScrollProgress, { passive: true });
+
+// ============================================================
+// D2: URL Deep Linking
+// ============================================================
+var _urlReady = false; // init 완료 후 true
+function updateURL() {
+  if (!_urlReady) return;
+  var params = new URLSearchParams();
+  if (STATE.currentView && STATE.currentView !== 'overview') {
+    params.set('view', STATE.currentView);
+  }
+  // Capture filter state for tasks view
+  if (STATE.currentView === 'tasks') {
+    var fa = document.getElementById('filterAxis');
+    var far = document.getElementById('filterArea');
+    var fm = document.getElementById('filterMinistry');
+    var fd = document.getElementById('filterDeadline');
+    var fk = document.getElementById('filterKeyword');
+    if (fa && fa.value) params.set('axis', fa.value);
+    if (far && far.value) params.set('area', far.value);
+    if (fm && fm.value) params.set('ministry', fm.value);
+    if (fd && fd.value) params.set('deadline', fd.value);
+    if (fk && fk.value) params.set('keyword', fk.value);
+  }
+  if (STATE.currentView === 'timeline') {
+    // Gantt 보기 활성 여부
+    var ganttEl = document.getElementById('ganttContainer');
+    if (ganttEl && ganttEl.style.display !== 'none') {
+      params.set('view', 'gantt');
+      if (_ganttSort && _ganttSort !== 'deadline') params.set('sort', _ganttSort);
+    }
+    // 타임라인 필터 상태
+    var tlAxis = document.getElementById('tlFilterAxis');
+    var tlArea = document.getElementById('tlFilterArea');
+    var tlMin = document.getElementById('tlFilterMinistry');
+    var tlKw = document.getElementById('tlFilterKeyword');
+    if (tlAxis && tlAxis.value) params.set('axis', tlAxis.value);
+    if (tlArea && tlArea.value) params.set('area', tlArea.value);
+    if (tlMin && tlMin.value) params.set('ministry', tlMin.value);
+    if (tlKw && tlKw.value) params.set('keyword', tlKw.value);
+  }
+  if (STATE.currentView === 'similarity') {
+    var st = document.getElementById('simThreshold');
+    if (st) params.set('simThreshold', st.value);
+  }
+  var newUrl = params.toString() ? '?' + params.toString() : window.location.pathname;
+  history.replaceState(null, '', newUrl);
+}
+
+// Enhanced URL parameter handler — call after init
+function applyURLParams() {
+  var params = new URLSearchParams(window.location.search);
+  // Apply filter params for tasks view
+  var ministry = params.get('ministry');
+  var deadline = params.get('deadline');
+  var keyword = params.get('keyword');
+  var simTh = params.get('simThreshold');
+  if (ministry) {
+    var fm = document.getElementById('filterMinistry');
+    if (fm) fm.value = ministry;
+  }
+  if (deadline) {
+    var fd = document.getElementById('filterDeadline');
+    if (fd) fd.value = deadline;
+  }
+  if (keyword) {
+    var fk = document.getElementById('filterKeyword');
+    if (fk) fk.value = keyword;
+  }
+  if (ministry || deadline || keyword) {
+    applyFilters();
+  }
+  if (simTh) {
+    var st = document.getElementById('simThreshold');
+    if (st) { st.value = simTh; updateSimThreshold(simTh); }
+  }
+}
+
+// Patch switchView to update URL
+var _origSwitchView = switchView;
+switchView = function(viewId) {
+  _origSwitchView(viewId);
+  updateURL();
+  updateMobileNav(viewId);
+};
+
+// Patch applyFilters to update URL
+var _origApplyFilters = typeof applyFilters === 'function' ? applyFilters : null;
+if (_origApplyFilters) {
+  var _realApplyFilters = _origApplyFilters;
+  // Note: applyFilters is hoisted, so we patch it after DOMContentLoaded
+}
+
+window.addEventListener('popstate', function() {
+  var params = new URLSearchParams(window.location.search);
+  var view = params.get('view') || 'overview';
+  _origSwitchView(view);
+});
+
+// ============================================================
+// D1: Export Functions
+// ============================================================
+function toggleExportMenu() {
+  var menu = document.getElementById('exportMenu');
+  var isOpen = menu.classList.contains('visible');
+  if (isOpen) { menu.classList.remove('visible'); return; }
+  // Position menu below the button
+  var btn = document.getElementById('exportBtn');
+  var rect = btn.getBoundingClientRect();
+  menu.style.top = (rect.bottom + 4) + 'px';
+  menu.style.right = (window.innerWidth - rect.right) + 'px';
+  menu.classList.add('visible');
+  // Close on outside click
+  setTimeout(function() {
+    document.addEventListener('click', function closeExport(e) {
+      if (!e.target.closest('.export-btn') && !e.target.closest('.export-menu')) {
+        menu.classList.remove('visible');
+        document.removeEventListener('click', closeExport);
+      }
+    });
+  }, 10);
+}
+
+function exportCSV() {
+  var rows = [['과제번호','과제명','정책축','전략분야','주관부처','추진기한','상태']];
+  DATA.tasks.tasks.forEach(function(t) {
+    t.recommendations.forEach(function(r) {
+      rows.push([t.id, '"'+t.title.replace(/"/g,'""')+'"', t.policy_axis_name, t.strategic_area_name,
+        r.ministry, r.deadline_label||r.deadline||'', r.status||'']);
+    });
+  });
+  downloadCSV(rows, 'ai_action_plan_tasks.csv');
+  document.getElementById('exportMenu').classList.remove('visible');
+}
+function exportRiskCSV() {
+  var rows = [['과제번호','과제명','주관부처','추진기한','위험도','D-Day']];
+  DATA.tasks.tasks.forEach(function(t) {
+    t.recommendations.forEach(function(r) {
+      var level = classifyDeadline(r.deadline);
+      var dd = getDeadlineDate(r.deadline);
+      var daysLeft = dd ? Math.ceil((dd - new Date()) / 86400000) : '';
+      rows.push([t.id, '"'+t.title.replace(/"/g,'""')+'"', r.ministry, r.deadline_label||r.deadline||'', level, daysLeft]);
+    });
+  });
+  downloadCSV(rows, 'ai_action_plan_risk.csv');
+  document.getElementById('exportMenu').classList.remove('visible');
+}
+function exportGlobalCSV() {
+  if (typeof GLOBAL_CASES_DATA === 'undefined' || !GLOBAL_CASES_DATA.length) { alert('글로벌 사례 데이터가 없습니다.'); return; }
+  var rows = [['ID','국가','분류','제목','요약','키워드']];
+  GLOBAL_CASES_DATA.forEach(function(c) {
+    rows.push([c.id, c.country, c.category, '"'+(c.title||'').replace(/"/g,'""')+'"',
+      '"'+(c.summary||'').replace(/"/g,'""')+'"', '"'+(c.keywords||[]).join(', ')+'"']);
+  });
+  downloadCSV(rows, 'global_ai_cases.csv');
+  document.getElementById('exportMenu').classList.remove('visible');
+}
+function exportMarkdown() {
+  var tasks = DATA.tasks.tasks;
+  var md = '# 대한민국 AI 행동계획 2026\n\n';
+  md += '> 99개 실천과제 / ' + DATA.tasks.meta.parsed_recommendations + '개 정책권고 종합\n\n';
+  md += '---\n\n';
+  var curAxis = '', curArea = '';
+  tasks.forEach(function(t) {
+    if (t.policy_axis_name !== curAxis) {
+      curAxis = t.policy_axis_name;
+      md += '## ' + curAxis + '\n\n';
+    }
+    if (t.strategic_area_name !== curArea) {
+      curArea = t.strategic_area_name;
+      md += '### ' + curArea + '\n\n';
+    }
+    md += '#### ' + t.number + ' ' + t.title + '\n\n';
+    if (t.background) md += t.background.trim() + '\n\n';
+    if (t.recommendations.length > 0) {
+      md += '| # | 주관부처 | 추진기한 | 정책권고 |\n';
+      md += '|---|---------|---------|--------|\n';
+      t.recommendations.forEach(function(r) {
+        var content = (r.content || '').replace(/\|/g, '∣').replace(/\n/g, ' ').trim();
+        if (content.length > 200) content = content.slice(0, 200) + '…';
+        md += '| ' + r.seq + ' | ' + (r.ministry || '') + ' | ' + (r.deadline_label || r.deadline || '') + ' | ' + content + ' |\n';
+      });
+      md += '\n';
+    }
+  });
+  var blob = new Blob([md], {type: 'text/markdown;charset=utf-8'});
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'ai_action_plan_2026.md';
+  a.click();
+  URL.revokeObjectURL(a.href);
+  document.getElementById('exportMenu').classList.remove('visible');
+}
+function exportBookmarksJSON() {
+  var bmKeys = STATE.bookmarks ? [...STATE.bookmarks] : [];
+  if (bmKeys.length === 0) { alert('북마크된 항목이 없습니다.'); document.getElementById('exportMenu').classList.remove('visible'); return; }
+  var items = [];
+  bmKeys.forEach(function(key) {
+    var parts = key.split('_');
+    var taskId = parseInt(parts[0], 10);
+    var recSeq = parseInt(parts[1], 10);
+    var task = DATA.tasks.tasks.find(function(t) { return t.id === taskId; });
+    if (!task) return;
+    var rec = task.recommendations.find(function(r) { return r.seq === recSeq; });
+    items.push({
+      bookmark_key: key,
+      task_id: taskId,
+      task_title: task.title,
+      policy_axis: task.policy_axis_name,
+      strategic_area: task.strategic_area_name,
+      recommendation_seq: recSeq,
+      ministry: rec ? rec.ministry : '',
+      deadline: rec ? (rec.deadline_label || rec.deadline || '') : '',
+      content: rec ? rec.content : ''
+    });
+  });
+  var blob = new Blob([JSON.stringify({ bookmarks: items, exported_at: new Date().toISOString(), count: items.length }, null, 2)], {type:'application/json'});
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'ai_action_plan_bookmarks.json';
+  a.click();
+  URL.revokeObjectURL(a.href);
+  document.getElementById('exportMenu').classList.remove('visible');
+}
+function downloadCSV(rows, filename) {
+  var BOM = '\uFEFF';
+  var csv = BOM + rows.map(function(r) { return r.join(','); }).join('\n');
+  var blob = new Blob([csv], {type:'text/csv;charset=utf-8'});
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+function getDeadlineDate(dl) {
+  if (!dl) return null;
+  var m = dl.match(/(\d{2})Q(\d)/);
+  if (!m) return null;
+  var y = 2000 + parseInt(m[1]);
+  var q = parseInt(m[2]);
+  var month = q * 3;
+  return new Date(y, month, 0);
+}
+
+// ============================================================
+// C4: Progress Tracker
+// ============================================================
+function getProgressData() {
+  var saved = localStorage.getItem('taskProgress');
+  return saved ? JSON.parse(saved) : {};
+}
+function saveProgressData(data) {
+  localStorage.setItem('taskProgress', JSON.stringify(data));
+}
+function getProgressSummary() {
+  var data = getProgressData();
+  var total = DATA.tasks.tasks.length;
+  var completed = 0, inProgress = 0;
+  DATA.tasks.tasks.forEach(function(t) {
+    var s = data[t.id] || 'pending';
+    if (s === 'completed') completed++;
+    else if (s === 'in_progress') inProgress++;
+  });
+  var pct = total > 0 ? Math.round((completed / total) * 100) : 0;
+  return { total: total, completed: completed, inProgress: inProgress, pending: total - completed - inProgress, pct: pct };
+}
+function renderProgressWidget() {
+  var s = getProgressSummary();
+  var widget = document.getElementById('progressWidget');
+  if (!widget) return;
+  widget.style.display = 'block';
+  document.getElementById('progressFill').style.width = s.pct + '%';
+  document.getElementById('progressPct').textContent = s.pct + '%';
+  document.getElementById('progressMiniSummary').innerHTML =
+    '<div class="progress-mini"><span class="dot" style="background:#28a745"></span> 완료 ' + s.completed + '건</div>' +
+    '<div class="progress-mini"><span class="dot" style="background:#ffc107"></span> 진행 중 ' + s.inProgress + '건</div>' +
+    '<div class="progress-mini"><span class="dot" style="background:#e9ecef"></span> 미착수 ' + s.pending + '건</div>';
+}
+function openProgressEditor() {
+  var data = getProgressData();
+  var tasks = DATA.tasks.tasks;
+  var html = '<div style="max-height:70vh;overflow-y:auto;padding:10px">';
+  html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px"><h3 style="margin:0;font-size:1.1rem">이행 진척 상태 입력</h3>';
+  html += '<div style="display:flex;gap:6px"><button onclick="setAllProgress(\'pending\')" style="padding:4px 10px;border:1px solid var(--border);border-radius:4px;background:var(--card-bg);cursor:pointer;font-size:0.75rem">전체 미착수</button>';
+  html += '<button onclick="setAllProgress(\'in_progress\')" style="padding:4px 10px;border:1px solid #ffc107;border-radius:4px;background:#fff8e1;cursor:pointer;font-size:0.75rem">전체 진행중</button>';
+  html += '<button onclick="setAllProgress(\'completed\')" style="padding:4px 10px;border:1px solid #28a745;border-radius:4px;background:#e8f5e9;cursor:pointer;font-size:0.75rem">전체 완료</button></div></div>';
+  // Group by axis
+  var byAxis = {};
+  tasks.forEach(function(t) {
+    var ax = t.policy_axis_name;
+    if (!byAxis[ax]) byAxis[ax] = [];
+    byAxis[ax].push(t);
+  });
+  Object.keys(byAxis).forEach(function(ax) {
+    html += '<div style="font-size:0.85rem;font-weight:700;color:var(--primary);margin:12px 0 6px;padding:6px 10px;background:var(--light);border-radius:4px">' + ax + '</div>';
+    byAxis[ax].forEach(function(t) {
+      var cur = data[t.id] || 'pending';
+      html += '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border)">';
+      html += '<span style="font-size:0.78rem;color:var(--gray);width:28px;text-align:right;flex-shrink:0">#' + t.id + '</span>';
+      html += '<span style="flex:1;font-size:0.82rem;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + t.title + '</span>';
+      html += '<select onchange="updateTaskProgress(' + t.id + ',this.value)" style="padding:3px 6px;border:1px solid var(--border);border-radius:4px;font-size:0.78rem;min-width:80px">';
+      html += '<option value="pending"' + (cur==='pending'?' selected':'') + '>미착수</option>';
+      html += '<option value="in_progress"' + (cur==='in_progress'?' selected':'') + '>진행중</option>';
+      html += '<option value="completed"' + (cur==='completed'?' selected':'') + '>완료</option>';
+      html += '</select></div>';
+    });
+  });
+  html += '</div>';
+  // Reuse modal overlay
+  var overlay = document.getElementById('modalOverlay');
+  var modalTitle = document.getElementById('modalTitle');
+  var modalBody = document.getElementById('modalBody');
+  var modalNav = document.getElementById('modalNav');
+  if (overlay && modalBody) {
+    modalTitle.textContent = '📊 이행 진척률 관리';
+    modalBody.innerHTML = html;
+    if (modalNav) modalNav.style.display = 'none';
+    overlay.classList.add('open');
+  }
+}
+function updateTaskProgress(taskId, status) {
+  var data = getProgressData();
+  data[taskId] = status;
+  saveProgressData(data);
+  renderProgressWidget();
+  renderNotifBanner();
+}
+function setAllProgress(status) {
+  var data = getProgressData();
+  DATA.tasks.tasks.forEach(function(t) { data[t.id] = status; });
+  saveProgressData(data);
+  openProgressEditor();
+  renderProgressWidget();
+}
+
+// ============================================================
+// B5: Radar Chart for Ministry Comparison
+// ============================================================
+var _radarChart = null;
+var _radarSelected = [];
+var _radarColors = [
+  'rgba(21,101,192,', 'rgba(106,27,154,', 'rgba(46,125,50,', 'rgba(230,81,0,',
+  'rgba(0,150,136,', 'rgba(194,24,91,', 'rgba(255,143,0,', 'rgba(63,81,181,'
+];
+
+function calcMinistryRawMetrics(m) {
+  var basicSoc = 0, coop = 0, std = 0, riskTotal = 0;
+  var basicSocRe = /윤리|인권|포용|격차.{0,2}해소|디지털.{0,2}격차|공론장|기본권|사회.{0,2}안전망|일자리|노동|소외.{0,2}계층|장애인|고령|접근성|공정|책임|기본사회|사회적.{0,2}영향|AI.{0,2}복지|디지털.{0,2}포용|취약.{0,2}계층/i;
+  m.actions.forEach(function(a) {
+    var dl = classifyDeadline(a.deadline);
+    riskTotal += dl === 'overdue' ? 100 : dl === 'critical' ? 75 : dl === 'high' ? 50 : dl === 'medium' ? 25 : 0;
+    var txt = a.content || '';
+    if (basicSocRe.test(txt)) basicSoc++;
+    if (/국제|글로벌|해외|협력|mou/i.test(txt)) coop++;
+    if (/표준|인증|가이드라인|ISO|KS/.test(txt)) std++;
+  });
+  return {
+    taskCount: m.actions.length,
+    riskScore: m.actions.length > 0 ? Math.round(riskTotal / m.actions.length) : 0,
+    basicSocCount: basicSoc,
+    coopCount: coop,
+    stdCount: std
+  };
+}
+
+function renderMinistryRadar() {
+  var canvas = document.getElementById('chartMinistryRadar');
+  var selector = document.getElementById('radarMinistrySelector');
+  if (!canvas || !selector) return;
+  var allMin = DATA.ministries.ministries;
+  // Default: top 4 by action count
+  if (_radarSelected.length === 0) {
+    _radarSelected = allMin.slice(0, 4).map(function(m) { return m.name; });
+  }
+  // Build selector checkboxes
+  var html = '<span style="font-size:0.78rem;color:var(--text-muted,var(--gray))">부처 선택 (최대 8개):</span> ';
+  allMin.forEach(function(m) {
+    var checked = _radarSelected.indexOf(m.name) !== -1;
+    var colorIdx = checked ? _radarSelected.indexOf(m.name) : -1;
+    var dotColor = colorIdx >= 0 ? _radarColors[colorIdx % _radarColors.length] + '1)' : '#ccc';
+    html += '<label style="display:inline-flex;align-items:center;gap:3px;padding:3px 8px;border-radius:14px;font-size:0.78rem;cursor:pointer;border:1px solid ' + (checked ? dotColor : 'var(--border)') + ';background:' + (checked ? _radarColors[colorIdx >= 0 ? colorIdx % _radarColors.length : 0] + '0.08)' : 'transparent') + ';transition:all 0.15s;white-space:nowrap">';
+    html += '<input type="checkbox" onchange="toggleRadarMinistry(\'' + m.name.replace(/'/g, "\\'") + '\',this.checked)" ' + (checked ? 'checked' : '') + ' style="width:12px;height:12px;accent-color:' + dotColor + '">';
+    html += '<span style="color:var(--text,var(--dark))">' + m.name + '</span> <span style="font-size:0.68rem;color:var(--gray)">(' + m.actions.length + ')</span></label> ';
+  });
+  selector.innerHTML = html;
+  updateRadarChart();
+}
+
+function toggleRadarMinistry(name, checked) {
+  if (checked) {
+    if (_radarSelected.length >= 8) {
+      alert('최대 8개 부처까지 선택할 수 있습니다.');
+      renderMinistryRadar();
+      return;
+    }
+    _radarSelected.push(name);
+  } else {
+    _radarSelected = _radarSelected.filter(function(n) { return n !== name; });
+  }
+  renderMinistryRadar();
+}
+
+function updateRadarChart() {
+  var canvas = document.getElementById('chartMinistryRadar');
+  if (!canvas) return;
+  if (_radarChart) { _radarChart.destroy(); _radarChart = null; }
+  if (_radarSelected.length === 0) return;
+  var allMin = DATA.ministries.ministries;
+  // 1) 선택된 부처들의 원시 지표 수집
+  var rawList = [];
+  _radarSelected.forEach(function(name) {
+    var m = allMin.find(function(x) { return x.name === name; });
+    if (m) rawList.push({ name: name, raw: calcMinistryRawMetrics(m) });
+  });
+  if (rawList.length === 0) return;
+  // 2) 각 축별 선택 부처 내 최대값 계산
+  var keys = ['taskCount', 'riskScore', 'basicSocCount', 'coopCount', 'stdCount'];
+  var axisMax = {};
+  keys.forEach(function(k) {
+    axisMax[k] = Math.max.apply(null, rawList.map(function(r) { return r.raw[k]; })) || 1;
+  });
+  // 3) 상대적 정규화 (선택 부처 내 최대값 = 100)
+  var datasets = [];
+  rawList.forEach(function(item, i) {
+    var c = _radarColors[i % _radarColors.length];
+    datasets.push({
+      label: item.name,
+      data: keys.map(function(k) { return Math.round(item.raw[k] / axisMax[k] * 100); }),
+      borderColor: c + '0.8)',
+      backgroundColor: c + '0.1)',
+      pointBackgroundColor: c + '1)',
+      borderWidth: 2
+    });
+  });
+  var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  // 4) 툴팁에 실제값 표시
+  var axisLabels = ['과제 수', '기한 임박', 'AI기본사회', '글로벌 협력', '표준화'];
+  var axisUnits = ['건', '점', '건', '건', '건'];
+  _radarChart = new Chart(canvas, {
+    type: 'radar',
+    data: { labels: axisLabels, datasets: datasets },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { position: 'bottom', labels: { color: isDark ? '#e0e0e0' : '#343a40', font: { size: 11 } } },
+        tooltip: {
+          callbacks: {
+            label: function(ctx) {
+              var raw = rawList[ctx.datasetIndex].raw;
+              var val = raw[keys[ctx.dataIndex]];
+              return ctx.dataset.label + ': ' + val + axisUnits[ctx.dataIndex] + ' (' + ctx.raw + '%)';
+            }
+          }
+        }
+      },
+      scales: { r: { beginAtZero: true, max: 100, ticks: { display: false }, grid: { color: isDark ? '#3a3f4a' : '#e5e5e5' }, pointLabels: { color: isDark ? '#e0e0e0' : '#343a40', font: { size: 11 } } } }
+    }
+  });
+}
+
+// ============================================================
+// C1+C2: Policy Simulator & Workload Analysis
+// ============================================================
+function renderWorkloadAnalysis() {
+  var container = document.getElementById('workloadAnalysis');
+  if (!container) return;
+  var ministryLoads = [];
+  DATA.ministries.ministries.forEach(function(m) {
+    var taskCount = m.actions.length;
+    var urgentCount = 0, totalRisk = 0, coopCount = 0;
+    m.actions.forEach(function(a) {
+      var dl = classifyDeadline(a.deadline);
+      if (dl === 'overdue' || dl === 'critical') urgentCount++;
+      totalRisk += dl === 'overdue' ? 4 : dl === 'critical' ? 3 : dl === 'high' ? 2 : dl === 'medium' ? 1 : 0;
+    });
+    // Composite load score: tasks*2 + urgent*5 + risk
+    var score = taskCount * 2 + urgentCount * 5 + totalRisk;
+    ministryLoads.push({ name: m.name, taskCount: taskCount, urgentCount: urgentCount, score: score, riskAvg: taskCount > 0 ? (totalRisk/taskCount).toFixed(1) : 0 });
+  });
+  ministryLoads.sort(function(a,b) { return b.score - a.score; });
+  var maxScore = ministryLoads[0] ? ministryLoads[0].score : 1;
+  var html = '<div class="section-title" style="margin-top:20px">📊 부처 업무부담 분석</div>';
+  html += '<div style="font-size:0.78rem;color:var(--gray);margin-bottom:12px">부담 점수 = 과제수×2 + 긴급과제×5 + 위험점수 합계</div>';
+  ministryLoads.slice(0, 10).forEach(function(m) {
+    var pct = Math.round(m.score / maxScore * 100);
+    var isHigh = pct > 70;
+    html += '<div class="workload-card' + (isHigh ? ' high-load' : '') + '">';
+    html += '<div style="display:flex;justify-content:space-between;align-items:center">';
+    html += '<span class="wl-name">' + m.name + '</span>';
+    html += '<span class="wl-score" style="color:' + (isHigh ? 'var(--danger)' : pct > 40 ? 'var(--warning)' : 'var(--success)') + '">' + m.score + '점</span>';
+    html += '</div>';
+    html += '<div class="wl-detail">과제 ' + m.taskCount + '건 · 긴급 ' + m.urgentCount + '건 · 평균위험 ' + m.riskAvg + '</div>';
+    html += '<div class="workload-bar"><div class="workload-fill" style="width:' + pct + '%;background:' + (isHigh ? 'var(--danger)' : pct > 40 ? 'var(--warning)' : 'var(--success)') + '"></div></div>';
+    html += '</div>';
+  });
+  container.innerHTML = html;
+}
+
+function renderPolicySimulator() {
+  var container = document.getElementById('policySimulator');
+  if (!container) return;
+  var html = '<div class="section-title" style="margin-top:20px">🔮 정책 지연 시뮬레이터</div>';
+  html += '<div style="background:var(--card-bg);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow);margin-bottom:16px">';
+  html += '<div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:12px">';
+  html += '<label style="font-size:0.85rem;font-weight:600">시뮬레이션할 분기:</label>';
+  html += '<select id="simQuarter" style="padding:6px 12px;border:1px solid var(--border);border-radius:6px;font-size:0.85rem">';
+  html += '<option value="26Q1">26년 1분기</option><option value="26Q2">26년 2분기</option>';
+  html += '<option value="26Q3">26년 3분기</option><option value="26Q4">26년 4분기</option>';
+  html += '</select>';
+  html += '<button onclick="runSimulation()" style="padding:6px 16px;background:var(--primary);color:white;border:none;border-radius:6px;cursor:pointer;font-family:var(--font);font-size:0.85rem">시뮬레이션 실행</button>';
+  html += '</div>';
+  html += '<div id="simResults" style="font-size:0.85rem;color:var(--gray)">분기를 선택하고 시뮬레이션을 실행하세요.</div>';
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+function runSimulation() {
+  var quarter = document.getElementById('simQuarter').value;
+  var affected = [];
+  var directTasks = [];
+
+  // Find tasks with the selected deadline
+  DATA.tasks.tasks.forEach(function(t) {
+    t.recommendations.forEach(function(r) {
+      if (r.deadline === quarter) {
+        directTasks.push({ id: t.id, title: t.title, ministry: r.ministry });
+      }
+    });
+  });
+
+  // Find related tasks that would be impacted
+  if (typeof buildRelationScores === 'function') {
+    directTasks.forEach(function(dt) {
+      var scores = buildRelationScores(dt.id);
+      scores.slice(0, 3).forEach(function(s) {
+        if (s.score > 30) {
+          var task = DATA.tasks.tasks.find(function(t) { return t.id === s.taskId; });
+          if (task && !affected.find(function(a) { return a.id === task.id; })) {
+            affected.push({ id: task.id, title: task.title, score: s.score, type: s.type || 'following' });
+          }
+        }
+      });
+    });
+  }
+
+  var html = '<div style="margin-bottom:12px"><strong>📋 ' + quarter + ' 직접 영향 과제:</strong> ' + directTasks.length + '건</div>';
+  directTasks.forEach(function(t) {
+    html += '<div style="padding:6px 10px;background:var(--light);border-left:3px solid var(--danger);border-radius:4px;margin-bottom:4px;font-size:0.82rem;cursor:pointer" onclick="openTaskModal(' + t.id + ')">';
+    html += '<strong>#' + t.id + '</strong> ' + t.title + ' <span style="color:var(--gray)">(' + t.ministry + ')</span></div>';
+  });
+  if (affected.length > 0) {
+    html += '<div style="margin:12px 0 8px"><strong>🔗 연쇄 영향 과제:</strong> ' + affected.length + '건</div>';
+    affected.forEach(function(a) {
+      html += '<div style="padding:6px 10px;background:var(--light);border-left:3px solid var(--warning);border-radius:4px;margin-bottom:4px;font-size:0.82rem;cursor:pointer" onclick="openTaskModal(' + a.id + ')">';
+      html += '<strong>#' + a.id + '</strong> ' + a.title + ' <span style="color:var(--gray)">(연관도 ' + a.score + '점)</span></div>';
+    });
+  }
+  html += '<div style="margin-top:12px;padding:10px;background:#fff3cd;border-radius:6px;font-size:0.82rem;color:#856404">';
+  html += '⚠️ ' + quarter + ' 과제가 지연되면 직접 <strong>' + directTasks.length + '건</strong> + 연쇄 <strong>' + affected.length + '건</strong> = 총 <strong>' + (directTasks.length + affected.length) + '건</strong>에 영향</div>';
+  document.getElementById('simResults').innerHTML = html;
+}
+
+// ============================================================
+// A5: Mobile Navigation
+// ============================================================
+function updateMobileNav(viewId) {
+  var tabs = document.querySelectorAll('.mob-tab');
+  tabs.forEach(function(t) { t.classList.remove('active'); });
+  var viewMap = {overview: 0, tasks: 1, timeline: 2, risk: 3};
+  if (viewMap[viewId] !== undefined) {
+    tabs[viewMap[viewId]].classList.add('active');
+  }
+}
+function switchMobileMore() {
+  var views = ['ministries','references','similarity','relations','global','standards','globalcomp'];
+  var labels = ['부처별 현황','참고/각주','유사/중복 분석','연관 과제','글로벌 협력','표준화 현황','글로벌 정책 비교'];
+  var html = '<div style="position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:600;display:flex;align-items:flex-end" onclick="if(event.target===this)this.remove()">';
+  html += '<div style="background:var(--card-bg);width:100%;border-radius:16px 16px 0 0;padding:20px;max-height:60vh;overflow-y:auto">';
+  html += '<div style="font-size:1rem;font-weight:700;margin-bottom:12px;color:var(--text,var(--dark))">더보기</div>';
+  views.forEach(function(v, i) {
+    html += '<div onclick="switchView(\'' + v + '\');this.closest(\'div[style*=fixed]\').remove()" style="padding:12px 16px;border-bottom:1px solid var(--border);cursor:pointer;font-size:0.9rem;color:var(--text,var(--dark))">' + labels[i] + '</div>';
+  });
+  html += '</div></div>';
+  var el = document.createElement('div');
+  el.innerHTML = html;
+  document.body.appendChild(el.firstChild);
+}
+
+// ============================================================
+// B1: Gantt Timeline View
+// ============================================================
+var _ganttSort = 'deadline'; // 'deadline' | 'task'
+var _ganttExpand = false;
+
+function toggleGanttSort(mode) {
+  _ganttSort = mode;
+  renderGanttView();
+  updateURL();
+}
+
+function toggleGanttExpand() {
+  _ganttExpand = !_ganttExpand;
+  renderGanttView();
+}
+
+function printGantt() {
+  var container = document.getElementById('ganttContainer');
+  if (!container) return;
+  // Clone content excluding toolbar buttons
+  var clone = container.cloneNode(true);
+  // Remove first toolbar row (sort/expand/print buttons)
+  var toolbar = clone.querySelector('div');
+  if (toolbar) toolbar.remove();
+  var today = new Date().toLocaleDateString('ko-KR');
+  var sortLabel = _ganttSort === 'task' ? '과제번호순' : '추진기한순';
+  var expandLabel = _ganttExpand ? '전체보기' : '요약보기';
+  var w = window.open('', '_blank');
+  w.document.write('<!DOCTYPE html><html><head><meta charset="utf-8"><title>Gantt 차트 인쇄</title><style>' +
+    '@page{size:landscape;margin:12mm}' +
+    'body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;padding:16px;color:#333;font-size:12px}' +
+    'h1{font-size:16px;margin:0 0 4px}' +
+    '.print-meta{font-size:11px;color:#666;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid #ddd}' +
+    '.gantt-header{display:flex;border-bottom:2px solid #999;padding:6px 0;font-size:11px;font-weight:700;color:#666}' +
+    '.gantt-header-label{width:340px;flex-shrink:0}' +
+    '.gantt-header-months{flex:1;display:flex}' +
+    '.gantt-header-months span{flex:1;text-align:center}' +
+    '.gantt-row{display:flex;align-items:center;border-bottom:1px solid #eee;padding:3px 0;min-height:28px;page-break-inside:avoid}' +
+    '.gantt-label{width:340px;flex-shrink:0;font-size:11px;font-weight:600;padding-right:8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}' +
+    '.gantt-track{flex:1;position:relative;height:20px}' +
+    '.gantt-bar{position:absolute;height:16px;border-radius:3px;top:2px;font-size:9px;color:white;display:flex;align-items:center;padding:0 4px;overflow:hidden;white-space:nowrap;-webkit-print-color-adjust:exact;print-color-adjust:exact}' +
+  '</style></head><body>' +
+  '<h1>📅 AI 행동계획 Gantt 차트</h1>' +
+  '<div class="print-meta">대한민국 AI 행동계획 2026 &nbsp;|&nbsp; 정렬: ' + sortLabel + ' &nbsp;|&nbsp; ' + expandLabel + ' &nbsp;|&nbsp; 출력일: ' + today + '</div>' +
+  clone.innerHTML +
+  '<script>window.onload=function(){window.print();}<\/script>' +
+  '</body></html>');
+  w.document.close();
+}
+
+function renderGanttView() {
+  var container = document.getElementById('ganttContainer');
+  if (!container) return;
+
+  // 타임라인과 동일한 필터 조건 적용
+  var axisVal = (document.getElementById('tlFilterAxis') || {}).value || '';
+  var areaVal = (document.getElementById('tlFilterArea') || {}).value || '';
+  var ministryVal = (document.getElementById('tlFilterMinistry') || {}).value || '';
+  var kwVal = ((document.getElementById('tlFilterKeyword') || {}).value || '').trim().toLowerCase();
+  var kwList = kwVal ? parseKeywords(kwVal) : [];
+
+  var quarters = ['26Q1','26Q2','26Q3','26Q4','27+'];
+  var qLabels = ['26/Q1','26/Q2','26/Q3','26/Q4','27+'];
+
+  // 과제-권고사항 단위로 수집 (필터 적용)
+  var ganttData = [];
+  DATA.tasks.tasks.forEach(function(t) {
+    if (axisVal && String(t.policy_axis_id) !== axisVal) return;
+    if (areaVal && String(t.strategic_area_id) !== areaVal) return;
+
+    t.recommendations.forEach(function(r) {
+      if (ministryVal && r.ministry !== ministryVal) return;
+      if (kwList.length > 0) {
+        var matchTask = kwList.some(function(k) { return k === String(t.id); });
+        if (!matchTask) {
+          var hay = (t.title + ' ' + (r.content || '')).toLowerCase();
+          if (!kwList.every(function(k) { return hay.indexOf(k) !== -1; })) return;
+        }
+      }
+      var dl = (r.deadline || '').toUpperCase();
+      var qStart, qEnd;
+      if (!dl) { qStart = 0; qEnd = 4; } // 기한미정: 전체 일정
+      else if (dl === '25Q4' || dl === '26Q1') { qStart = 0; qEnd = 0; }
+      else if (dl === '26Q2') { qStart = 1; qEnd = 1; }
+      else if (dl === '26Q3') { qStart = 2; qEnd = 2; }
+      else if (dl === '26Q4') { qStart = 3; qEnd = 3; }
+      else { qStart = 4; qEnd = 4; }
+      ganttData.push({
+        taskId: t.id, taskNumber: t.number, recSeq: r.seq,
+        title: t.title, content: r.content || '',
+        ministry: r.ministry, axis: t.policy_axis_id,
+        qStart: qStart, qEnd: qEnd, deadline: r.deadline || '미정', noDeadline: !dl
+      });
+    });
+  });
+
+  // 정렬
+  if (_ganttSort === 'task') {
+    ganttData.sort(function(a,b) { return a.taskId - b.taskId || a.recSeq - b.recSeq; });
+  } else {
+    ganttData.sort(function(a,b) {
+      if (a.noDeadline !== b.noDeadline) return a.noDeadline ? 1 : -1;
+      return a.qStart - b.qStart || a.taskId - b.taskId || a.recSeq - b.recSeq;
+    });
+  }
+
+  var axisColors = {1:'#1565c0', 2:'#6a1b9a', 3:'#2e7d32'};
+  var hasFilter = axisVal || areaVal || ministryVal || kwVal;
+  var html = '';
+
+  // 정렬 버튼 + 필터 결과
+  html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap">';
+  html += '<span style="font-size:0.78rem;color:var(--text-muted,var(--gray))">정렬:</span>';
+  html += '<button onclick="toggleGanttSort(\'deadline\')" style="padding:3px 10px;border-radius:14px;border:1px solid ' + (_ganttSort === 'deadline' ? 'var(--primary)' : 'var(--border)') + ';background:' + (_ganttSort === 'deadline' ? 'var(--primary)' : 'var(--card-bg,white)') + ';color:' + (_ganttSort === 'deadline' ? 'white' : 'var(--text,var(--dark))') + ';font-size:0.78rem;cursor:pointer">📅 추진기한순</button>';
+  html += '<button onclick="toggleGanttSort(\'task\')" style="padding:3px 10px;border-radius:14px;border:1px solid ' + (_ganttSort === 'task' ? 'var(--primary)' : 'var(--border)') + ';background:' + (_ganttSort === 'task' ? 'var(--primary)' : 'var(--card-bg,white)') + ';color:' + (_ganttSort === 'task' ? 'white' : 'var(--text,var(--dark))') + ';font-size:0.78rem;cursor:pointer">#️⃣ 과제번호순</button>';
+  html += '<span style="margin-left:8px;color:var(--border)">|</span>';
+  html += '<button onclick="toggleGanttExpand()" style="padding:3px 10px;border-radius:14px;border:1px solid ' + (_ganttExpand ? 'var(--primary)' : 'var(--border)') + ';background:' + (_ganttExpand ? 'var(--primary)' : 'var(--card-bg,white)') + ';color:' + (_ganttExpand ? 'white' : 'var(--text,var(--dark))') + ';font-size:0.78rem;cursor:pointer">' + (_ganttExpand ? '📋 전체보기 ON' : '📋 전체보기') + '</button>';
+  html += '<span style="margin-left:4px;color:var(--border)">|</span>';
+  html += '<button onclick="printGantt()" style="padding:3px 10px;border-radius:14px;border:1px solid var(--border);background:var(--card-bg,white);color:var(--text,var(--dark));font-size:0.78rem;cursor:pointer">🖨 인쇄</button>';
+  if (hasFilter) {
+    html += '<span style="font-size:0.8rem;color:var(--primary);font-weight:600;margin-left:auto">필터 결과: ' + ganttData.length + '개 권고사항</span>';
+  }
+  html += '</div>';
+
+  html += '<div class="gantt-header"><div class="gantt-header-label">과제-권고</div><div class="gantt-header-months">';
+  qLabels.forEach(function(q) { html += '<span>' + q + '</span>'; });
+  html += '</div></div>';
+
+  if (ganttData.length === 0) {
+    html += '<div style="padding:40px;text-align:center;color:var(--text-muted,var(--gray))">필터 조건에 해당하는 권고사항이 없습니다.</div>';
+  } else {
+    var prevTaskId = null;
+    ganttData.forEach(function(g) {
+      // 과제번호순일 때 과제 그룹 헤더
+      if (_ganttSort === 'task' && g.taskId !== prevTaskId) {
+        var groupColor = axisColors[g.axis] || '#546e7a';
+        html += '<div style="display:flex;align-items:center;gap:6px;padding:6px 8px;margin-top:' + (prevTaskId !== null ? '8px' : '0') + ';border-left:3px solid ' + groupColor + ';background:' + groupColor + '0d;border-radius:0 4px 4px 0">';
+        html += '<strong style="font-size:0.8rem;color:' + groupColor + '">과제 ' + g.taskNumber + '</strong>';
+        html += '<span style="font-size:0.78rem;color:var(--text,var(--dark))">' + g.title + '</span>';
+        html += '</div>';
+        prevTaskId = g.taskId;
+      }
+      var left = (g.qStart / quarters.length * 100);
+      var width = ((g.qEnd - g.qStart + 1) / quarters.length * 100);
+      var color = g.noDeadline ? '#9e9e9e' : (axisColors[g.axis] || '#546e7a');
+      var barStyle = g.noDeadline ? 'background:repeating-linear-gradient(45deg,' + color + ',' + color + ' 4px,transparent 4px,transparent 8px);opacity:0.7' : 'background:' + color;
+      var label = g.taskNumber + '-' + g.recSeq;
+      var deadlineInfo = g.noDeadline ? ' [기한미정]' : ' [' + g.deadline + ']';
+      var tooltipText = '#' + label + ' ' + g.title + ' | ' + g.ministry + deadlineInfo + ' | ' + g.content.substring(0, 80);
+      html += '<div class="gantt-row" style="' + (_ganttExpand ? 'align-items:flex-start' : '') + '">';
+      if (_ganttExpand) {
+        var ganttLabel = '<strong style="flex-shrink:0">' + label + '</strong> <span style="font-size:0.72rem;color:var(--text-muted,var(--gray))">' + g.ministry + (g.noDeadline ? ' · 미정' : '') + '</span><div style="white-space:normal;line-height:1.4;margin-top:2px;font-weight:400;color:var(--text,var(--dark))">' + (g.content || g.ministry) + '</div>';
+        html += '<div class="gantt-label" style="white-space:normal;height:auto" title="' + tooltipText.replace(/"/g, '&quot;') + '">' + ganttLabel + '</div>';
+      } else {
+        var contentSnip = g.content.length > 45 ? g.content.substring(0, 45) + '…' : g.content;
+        var ganttLabel = '<strong style="flex-shrink:0">' + label + '</strong> <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + (contentSnip || g.ministry) + '</span>' + (g.noDeadline ? ' <span style="color:var(--text-muted,var(--gray));font-size:0.7rem;flex-shrink:0">미정</span>' : '');
+        html += '<div class="gantt-label" title="' + tooltipText.replace(/"/g, '&quot;') + '">' + ganttLabel + '</div>';
+      }
+      html += '<div class="gantt-track">';
+      html += '<div class="gantt-bar" style="left:' + left + '%;width:' + width + '%;' + barStyle + '" onclick="openTaskModal(' + g.taskId + ',' + g.recSeq + ')" title="' + tooltipText.replace(/"/g, '&quot;') + '">' + label + '</div>';
+      html += '</div></div>';
+    });
+  }
+
+  container.innerHTML = html;
+}
+
+// ============================================================
+// B1: Gantt View Mode Toggle
+// ============================================================
+function setTlViewMode(mode) {
+  var grid = document.getElementById('timelineGrid');
+  var gantt = document.getElementById('ganttContainer');
+  var btnGrid = document.getElementById('tlViewGrid');
+  var btnGantt = document.getElementById('tlViewGantt');
+  if (mode === 'gantt') {
+    grid.style.display = 'none';
+    gantt.style.display = 'block';
+    btnGrid.style.background = 'white'; btnGrid.style.color = 'var(--gray)'; btnGrid.style.borderColor = 'var(--border)';
+    btnGantt.style.background = 'var(--primary)'; btnGantt.style.color = 'white'; btnGantt.style.borderColor = 'var(--primary)';
+    renderGanttView();
+  } else {
+    grid.style.display = 'grid';
+    gantt.style.display = 'none';
+    btnGrid.style.background = 'var(--primary)'; btnGrid.style.color = 'white'; btnGrid.style.borderColor = 'var(--primary)';
+    btnGantt.style.background = 'white'; btnGantt.style.color = 'var(--gray)'; btnGantt.style.borderColor = 'var(--border)';
+  }
+  updateURL();
+}
+
+// ============================================================
+// D3: Guide Tour
+// ============================================================
+var TOUR_STEPS = [
+  { target: '#kpiGrid', title: '종합 현황판', desc: '99개 과제와 321개 정책권고의 핵심 지표를 한눈에 확인할 수 있습니다. 각 카드를 클릭하면 상세 정보로 이동합니다.' },
+  { target: '#navTabs', title: '탭 내비게이션', desc: '11개 탭으로 다양한 분석 뷰를 제공합니다. 키보드 숫자 1~0으로 빠르게 전환할 수 있습니다.' },
+  { target: '#globalSearch', title: '전역 검색', desc: '과제·부처·키워드를 검색하세요. 공백이나 쉼표로 구분하면 AND 검색됩니다. Ctrl+F로 바로 접근 가능합니다.' },
+  { target: '#progressWidget', title: '이행 진척률', desc: '각 과제의 진행 상태를 직접 입력하고 전체 진척률을 추적할 수 있습니다. 데이터는 브라우저에 저장됩니다.' },
+  { target: '#themeToggle', title: '다크 모드', desc: '🌙 버튼으로 라이트/다크 모드를 전환할 수 있습니다. 시스템 설정도 자동 감지합니다.' },
+  { target: '#bmHeaderBtn', title: '북마크', desc: '각 정책권고의 ☆ 버튼으로 북마크하고, 이곳에서 모아 볼 수 있습니다. 인쇄도 가능합니다.' }
+];
+var _tourStep = 0;
+function startTour() {
+  if (localStorage.getItem('tourDone') && !confirm('가이드 투어를 다시 시작하시겠습니까?')) return;
+  _tourStep = 0;
+  switchView('overview');
+  setTimeout(function() { showTourStep(0); }, 300);
+}
+function showTourStep(idx) {
+  var container = document.getElementById('tourContainer');
+  if (idx >= TOUR_STEPS.length) { endTour(); return; }
+  _tourStep = idx;
+  var step = TOUR_STEPS[idx];
+  var el = document.querySelector(step.target);
+  if (!el) { showTourStep(idx + 1); return; }
+  el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  setTimeout(function() {
+    var rect = el.getBoundingClientRect();
+    var pad = 8;
+    container.innerHTML = '<div class="tour-backdrop" onclick="endTour()"></div>' +
+      '<div class="tour-highlight" style="top:' + (rect.top + window.scrollY - pad) + 'px;left:' + (rect.left - pad) + 'px;width:' + (rect.width + pad*2) + 'px;height:' + (rect.height + pad*2) + 'px"></div>' +
+      '<div class="tour-tooltip" style="top:' + (rect.bottom + window.scrollY + 16) + 'px;left:' + Math.max(16, Math.min(rect.left, window.innerWidth - 380)) + 'px">' +
+      '<div class="tour-step-indicator">' + (idx+1) + ' / ' + TOUR_STEPS.length + '</div>' +
+      '<h4>' + step.title + '</h4><p>' + step.desc + '</p>' +
+      '<div class="tour-btns">' +
+      (idx > 0 ? '<button class="tour-btn" onclick="showTourStep(' + (idx-1) + ')">← 이전</button>' : '') +
+      '<button class="tour-btn" onclick="endTour()">건너뛰기</button>' +
+      '<button class="tour-btn tour-btn-primary" onclick="showTourStep(' + (idx+1) + ')">' + (idx === TOUR_STEPS.length - 1 ? '완료' : '다음 →') + '</button>' +
+      '</div></div>';
+    container.style.display = 'block';
+  }, 400);
+}
+function endTour() {
+  document.getElementById('tourContainer').style.display = 'none';
+  document.getElementById('tourContainer').innerHTML = '';
+  localStorage.setItem('tourDone', '1');
+}
+
+// ============================================================
+// D4: Compare Mode
+// ============================================================
+var _compareSelections = [];
+function openCompareSelector() {
+  _compareSelections = [];
+  var tasks = DATA.tasks.tasks;
+  var html = '<div style="padding:20px;max-height:70vh;overflow-y:auto">';
+  html += '<h3 style="margin-bottom:12px">⚖️ 비교할 과제 2개를 선택하세요</h3>';
+  html += '<div style="display:flex;gap:8px;margin-bottom:12px"><input type="text" id="compareFilter" oninput="filterCompareList()" placeholder="과제 검색..." style="flex:1;padding:8px 12px;border:1px solid var(--border);border-radius:6px;font-size:0.85rem"></div>';
+  html += '<div id="compareTaskList">';
+  tasks.forEach(function(t) {
+    html += '<label style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-bottom:1px solid var(--border);cursor:pointer;font-size:0.85rem" data-title="' + t.title.toLowerCase() + '">';
+    html += '<input type="checkbox" onchange="toggleCompareTask(' + t.id + ',this.checked)" style="width:16px;height:16px">';
+    html += '<span style="color:var(--gray);width:30px;flex-shrink:0">#' + t.id + '</span>';
+    html += '<span style="flex:1">' + t.title + '</span>';
+    html += '<span class="badge badge-axis' + t.policy_axis_id + '" style="flex-shrink:0">' + t.policy_axis_name.slice(0,8) + '</span>';
+    html += '</label>';
+  });
+  html += '</div></div>';
+  var overlay = document.getElementById('modalOverlay');
+  var modalTitle = document.getElementById('modalTitle');
+  var modalBody = document.getElementById('modalBody');
+  var modalNav = document.getElementById('modalNav');
+  if (overlay && modalBody) {
+    modalTitle.textContent = '⚖️ 과제 비교';
+    modalBody.innerHTML = html;
+    if (modalNav) modalNav.style.display = 'none';
+    overlay.classList.add('open');
+  }
+}
+function filterCompareList() {
+  var q = document.getElementById('compareFilter').value.toLowerCase();
+  document.querySelectorAll('#compareTaskList label').forEach(function(l) {
+    l.style.display = l.getAttribute('data-title').indexOf(q) !== -1 ? 'flex' : 'none';
+  });
+}
+function toggleCompareTask(id, checked) {
+  if (checked) {
+    if (_compareSelections.length >= 2) {
+      alert('최대 2개까지 선택 가능합니다.');
+      event.target.checked = false;
+      return;
+    }
+    _compareSelections.push(id);
+  } else {
+    _compareSelections = _compareSelections.filter(function(x) { return x !== id; });
+  }
+  if (_compareSelections.length === 2) {
+    closeModal();
+    setTimeout(function() { showCompare(_compareSelections[0], _compareSelections[1]); }, 200);
+  }
+}
+function showCompare(id1, id2) {
+  var t1 = DATA.tasks.tasks.find(function(t) { return t.id === id1; });
+  var t2 = DATA.tasks.tasks.find(function(t) { return t.id === id2; });
+  if (!t1 || !t2) return;
+  function renderCol(t) {
+    var html = '<div class="compare-col">';
+    html += '<h4>#' + t.id + ' ' + t.title + '</h4>';
+    html += '<div class="compare-field"><div class="compare-field-label">정책축</div><div class="compare-field-value">' + t.policy_axis_name + '</div></div>';
+    html += '<div class="compare-field"><div class="compare-field-label">전략분야</div><div class="compare-field-value">' + t.strategic_area_name + '</div></div>';
+    html += '<div class="compare-field"><div class="compare-field-label">배경</div><div class="compare-field-value" style="max-height:120px;overflow-y:auto;font-size:0.82rem;line-height:1.6">' + (t.background || '-') + '</div></div>';
+    html += '<div class="compare-field"><div class="compare-field-label">정책권고 (' + t.recommendations.length + '건)</div>';
+    t.recommendations.forEach(function(r, i) {
+      var dl = classifyDeadline(r.deadline);
+      var color = dl === 'overdue' ? 'var(--danger)' : dl === 'critical' ? 'var(--warning)' : 'var(--gray)';
+      html += '<div style="padding:6px 0;border-bottom:1px solid var(--border);font-size:0.82rem"><span style="color:' + color + ';font-weight:600">[' + (r.deadline_label||r.deadline||'') + ']</span> ' + r.ministry + ': ' + (r.content||'').slice(0, 150) + (r.content && r.content.length > 150 ? '…' : '') + '</div>';
+    });
+    html += '</div></div>';
+    return html;
+  }
+  // Highlight differences
+  var samAxis = t1.policy_axis_id === t2.policy_axis_id;
+  var samArea = t1.strategic_area_id === t2.strategic_area_id;
+  var container = document.getElementById('compareContainer');
+  container.innerHTML = '<div class="compare-header"><h3>⚖️ #' + t1.id + ' vs #' + t2.id + ' 비교</h3><button onclick="closeComparePanel()" style="background:rgba(255,255,255,0.2);border:none;color:white;width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:1rem">&times;</button></div>' +
+    '<div style="padding:10px 16px;font-size:0.82rem;background:var(--light);display:flex;gap:12px;flex-wrap:wrap">' +
+    '<span>정책축: ' + (samAxis ? '✅ 동일' : '⚡ 상이') + '</span>' +
+    '<span>전략분야: ' + (samArea ? '✅ 동일' : '⚡ 상이') + '</span>' +
+    '<span>권고 수: ' + t1.recommendations.length + ' vs ' + t2.recommendations.length + '</span>' +
+    '</div>' +
+    '<div class="compare-grid">' + renderCol(t1) + renderCol(t2) + '</div>';
+  document.getElementById('comparePanel').classList.add('open');
+}
+function closeComparePanel() { document.getElementById('comparePanel').classList.remove('open'); }
+
+// ============================================================
+// C3: Policy Gap Analysis
+// ============================================================
+function renderGapAnalysis() {
+  var container = document.getElementById('gapAnalysisContent');
+  if (!container) return;
+  // Define policy areas and map Korean tasks + global cases
+  // Global case categories: 종합계획(5), 응용·활용(26), 인프라(15), 교육·인력(12), 안전(32), 추진체계(15), 혁신·연구개발(9), 국제관계(6)
+  var areas = [
+    { label: '종합계획', kr: '종합.{0,2}계획|행동.{0,2}계획|국가.{0,2}전략|마스터플랜', glCat: '종합계획' },
+    { label: '응용·활용', kr: '공공.{0,2}서비스|행정.{0,2}혁신|산업.{0,2}융합|AI.{0,2}도입|AI.{0,2}적용|의료.{0,2}AI|교통.{0,2}AI|국방.{0,2}AI|스마트.{0,2}(시티|팩토리|팜)', glCat: '응용·활용' },
+    { label: '인프라', kr: 'GPU|컴퓨팅|데이터센터|클라우드|반도체|인프라.{0,2}(구축|확충)|전력.{0,2}(공급|확보)', glCat: '인프라' },
+    { label: '교육·인력', kr: 'AI.{0,4}인재|인공지능.{0,4}인재|AI.{0,4}교육|인공지능.{0,4}교육|AI.{0,4}인력|전문인력.{0,4}양성|인재.{0,4}양성', glCat: '교육·인력' },
+    { label: '안전·규제', kr: 'AI.{0,4}안전|인공지능.{0,4}안전|안전연구소|투명성|고영향|영향평가|윤리.{0,4}(기준|원칙)|신뢰.{0,4}AI', glCat: '안전' },
+    { label: '추진체계', kr: '위원회|거버넌스|컨트롤타워|추진.{0,2}체계|법.{0,2}제도|시행령|가이드라인.{0,2}(마련|수립)', glCat: '추진체계' },
+    { label: '혁신·R&D', kr: '연구개발|R&D|원천.{0,2}기술|초거대|파운데이션|AI.{0,4}모델|거대.{0,2}언어|LLM|기초.{0,2}연구', glCat: '혁신·연구개발' },
+    { label: '국제협력', kr: '국제.{0,2}협력|글로벌.{0,2}협력|해외.{0,2}진출|국제.{0,2}규범|국제기구|OECD|G7', glCat: '국제관계' }
+  ];
+  var globalCases = (typeof GLOBAL_CASES_DATA !== 'undefined') ? GLOBAL_CASES_DATA : [];
+  // 권고사항 총 건수 계산
+  var krTotal = 0;
+  DATA.tasks.tasks.forEach(function(t) { krTotal += t.recommendations.length; });
+  krTotal = krTotal || 1;
+  var glTotal = globalCases.length || 1;
+  var html = '<div class="gap-legend"><span><span class="dot-kr"></span> 한국 권고사항 (총 ' + krTotal + '개)</span><span><span class="dot-gl"></span> 글로벌 사례 (총 ' + glTotal + '개)</span></div>';
+  var maxPct = 1;
+  var data = areas.map(function(a) {
+    var krRe = new RegExp(a.kr, 'i');
+    var krCount = 0;
+    DATA.tasks.tasks.forEach(function(t) {
+      t.recommendations.forEach(function(r) {
+        var txt = (r.content||'') + ' ' + (r.ministry||'');
+        if (krRe.test(txt)) krCount++;
+      });
+    });
+    var glCount = 0;
+    globalCases.forEach(function(c) {
+      if ((c.category||'') === a.glCat) glCount++;
+    });
+    var krPct = Math.round(krCount / krTotal * 100);
+    var glPct = Math.round(glCount / glTotal * 100);
+    maxPct = Math.max(maxPct, krPct, glPct);
+    return { label: a.label, kr: krCount, gl: glCount, krPct: krPct, glPct: glPct };
+  });
+  data.forEach(function(d) {
+    var krBar = Math.round(d.krPct / maxPct * 100);
+    var glBar = Math.round(d.glPct / maxPct * 100);
+    var gapPct = d.krPct - d.glPct;
+    var gapLabel = gapPct > 10 ? '🟢 강점' : gapPct < -10 ? '🔴 보완 필요' : '🟡 균형';
+    html += '<div class="gap-bar"><div class="gap-label">' + d.label + '</div>';
+    html += '<div class="gap-track" style="flex-direction:column;height:auto;gap:2px">';
+    html += '<div style="display:flex;height:12px;background:#e9ecef;border-radius:3px;overflow:hidden"><div class="gap-fill-kr" style="width:' + krBar + '%">' + d.kr + '건(' + d.krPct + '%)</div></div>';
+    html += '<div style="display:flex;height:12px;background:#e9ecef;border-radius:3px;overflow:hidden"><div class="gap-fill-gl" style="width:' + glBar + '%">' + d.gl + '건(' + d.glPct + '%)</div></div>';
+    html += '</div>';
+    html += '<span style="font-size:0.75rem;min-width:80px;text-align:right">' + gapLabel + '</span></div>';
+  });
+  container.innerHTML = html;
+}
+
+// ============================================================
+// C5: AI Basic Law Compliance Score
+// ============================================================
+function renderComplianceScore() {
+  var container = document.getElementById('complianceContent');
+  if (!container) return;
+  // Define compliance requirements and check which tasks address them
+  var requirements = [
+    { label: '고영향AI 판단 체계', keywords: '고영향|영향평가.{0,6}(실시|의무|제도)|고영향.{0,4}규율', article: '제33조' },
+    { label: '투명성 의무', keywords: '투명성|AI.{0,4}고지|인공지능.{0,4}표시|딥페이크.{0,4}표시|생성형.{0,4}표시|AI 생성.{0,4}표시', article: '제31조' },
+    { label: '안전성 확보', keywords: 'AI.{0,4}안전|인공지능.{0,4}안전|안전연구소|안전성.{0,4}확보|위험.{0,4}관리체계|안전사고.{0,4}모니터링', article: '제32조' },
+    { label: '사업자 책무', keywords: '사업자.{0,4}(책무|의무|책임|조치|규율)|AI.{0,4}사업자|인공지능.{0,4}사업자', article: '제34조' },
+    { label: '기본권 영향평가', keywords: '영향평가|기본권.{0,4}(보호|침해)|인권.{0,4}영향', article: '제35조' },
+    { label: '거버넌스 체계', keywords: '국가.{0,6}위원회|AI.{0,4}위원회|인공지능.{0,6}위원회|거버넌스|컨트롤타워', article: '제7조' },
+    { label: '국제 협력', keywords: '국제.{0,4}협력|글로벌.{0,4}협력|국제.{0,4}규범|국제.{0,4}표준|해외.{0,4}진출|국제기구', article: '제12조' },
+    { label: '인재 양성', keywords: 'AI.{0,4}인재|인공지능.{0,4}인재|AI.{0,4}교육|인공지능.{0,4}교육|AI.{0,4}인력|전문인력.{0,4}양성', article: '제20조' },
+    { label: '데이터 기반', keywords: '학습.{0,4}데이터|학습용.{0,4}데이터|데이터.{0,4}품질|데이터.{0,4}구축|AI.{0,4}데이터', article: '제23조' },
+    { label: '중소기업 지원', keywords: '중소기업|스타트업|AI.{0,4}창업|AI.{0,4}벤처|중소.{0,4}지원', article: '제17조' }
+  ];
+  var total = requirements.length;
+  var covered = 0, partial = 0;
+  var details = [];
+  requirements.forEach(function(req) {
+    var re = new RegExp(req.keywords, 'i');
+    var matchCount = 0;
+    DATA.tasks.tasks.forEach(function(t) {
+      var txt = t.title + ' ' + (t.background||'');
+      t.recommendations.forEach(function(r) { txt += ' ' + (r.content||''); });
+      if (re.test(txt)) matchCount++;
+    });
+    var status = matchCount >= 5 ? 'check' : matchCount >= 2 ? 'warn' : 'miss';
+    if (status === 'check') covered++;
+    else if (status === 'warn') partial++;
+    details.push({ label: req.label, article: req.article, count: matchCount, status: status });
+  });
+  var score = Math.round((covered * 100 + partial * 50) / total);
+  var scoreColor = score >= 80 ? 'var(--success)' : score >= 60 ? 'var(--warning)' : 'var(--danger)';
+  // Ring SVG
+  var circum = 2 * Math.PI * 50;
+  var offset = circum - (score / 100 * circum);
+  var ringHtml = '<div class="compliance-ring"><svg width="120" height="120" viewBox="0 0 120 120">' +
+    '<circle cx="60" cy="60" r="50" fill="none" stroke="#e9ecef" stroke-width="10"/>' +
+    '<circle cx="60" cy="60" r="50" fill="none" stroke="' + scoreColor + '" stroke-width="10" stroke-dasharray="' + circum + '" stroke-dashoffset="' + offset + '" stroke-linecap="round"/>' +
+    '</svg><div class="compliance-ring-text" style="color:' + scoreColor + '">' + score + '</div></div>';
+  var detailHtml = '<div style="flex:1">';
+  details.forEach(function(d) {
+    var icon = d.status === 'check' ? '<span class="compliance-check">✓</span>' : d.status === 'warn' ? '<span class="compliance-warn">△</span>' : '<span class="compliance-miss">✗</span>';
+    detailHtml += '<div class="compliance-detail-row">' + icon + ' <span style="flex:1">' + d.label + '</span><span style="font-size:0.75rem;color:var(--gray)">' + d.article + '</span><span style="font-size:0.75rem;color:var(--gray);min-width:40px;text-align:right">' + d.count + '건</span></div>';
+  });
+  detailHtml += '</div>';
+  container.innerHTML = ringHtml + detailHtml;
+}
+
+function openComplianceDetail() {
+  var requirements = [
+    { label: '고영향AI 판단 체계', keywords: '고영향|영향평가|판단', article: '제33조', desc: '고영향 인공지능의 판단 기준 및 절차' },
+    { label: '투명성 의무', keywords: '투명|고지|표시|공개', article: '제31조', desc: '인공지능의 투명성 확보 및 이용자 고지 의무' },
+    { label: '안전성 확보', keywords: '안전|위험|사고|보고', article: '제32조', desc: '인공지능 안전성 확보 및 사고 보고 체계' },
+    { label: '사업자 책무', keywords: '책무|의무|사업자|제공자', article: '제34조', desc: '고영향 인공지능 사업자의 책무 이행' },
+    { label: '기본권 영향평가', keywords: '영향평가|기본권|인권', article: '제35조', desc: '기본권 영향평가 실시 및 결과 공개' },
+    { label: '거버넌스 체계', keywords: '위원회|거버넌스|전략|체계', article: '제7조', desc: '국가인공지능위원회 등 거버넌스 운영' },
+    { label: '국제 협력', keywords: '국제|글로벌|협력|표준', article: '제12조', desc: '국제 협력 및 글로벌 표준 참여' },
+    { label: '인재 양성', keywords: '인재|교육|양성|인력', article: '제20조', desc: 'AI 인재 양성 및 교육 지원' },
+    { label: '데이터 기반', keywords: '데이터|학습|품질', article: '제23조', desc: '데이터 품질 확보 및 학습데이터 관리' },
+    { label: '중소기업 지원', keywords: '중소|스타트업|창업|벤처', article: '제17조', desc: '중소기업·스타트업 지원 및 육성' }
+  ];
+
+  var html = '';
+  requirements.forEach(function(req) {
+    var re = new RegExp(req.keywords, 'i');
+    var matches = [];
+    DATA.tasks.tasks.forEach(function(t) {
+      var txt = t.title + ' ' + (t.background || '');
+      var matchedRecs = [];
+      t.recommendations.forEach(function(r) {
+        txt += ' ' + (r.content || '');
+        if (re.test(r.content || '')) matchedRecs.push(r);
+      });
+      if (re.test(txt)) matches.push({ task: t, recs: matchedRecs });
+    });
+    var status = matches.length >= 3 ? 'check' : matches.length >= 1 ? 'warn' : 'miss';
+    var statusIcon = status === 'check' ? '<span class="compliance-check" style="font-size:1.1rem">✓</span>' : status === 'warn' ? '<span class="compliance-warn" style="font-size:1.1rem">△</span>' : '<span class="compliance-miss" style="font-size:1.1rem">✗</span>';
+    var statusLabel = status === 'check' ? '<span style="color:var(--success);font-size:0.75rem;font-weight:600">충족</span>' : status === 'warn' ? '<span style="color:var(--warning);font-size:0.75rem;font-weight:600">부분 충족</span>' : '<span style="color:var(--danger);font-size:0.75rem;font-weight:600">미충족</span>';
+    var borderColor = status === 'check' ? 'var(--success)' : status === 'warn' ? 'var(--warning)' : 'var(--danger)';
+
+    html += '<div style="border-left:4px solid ' + borderColor + ';background:var(--card-bg,white);border-radius:0 8px 8px 0;padding:14px 16px;margin-bottom:12px">';
+    html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">';
+    html += statusIcon + ' <strong style="font-size:0.95rem">' + req.label + '</strong>';
+    html += '<span style="background:var(--input-bg,#f1f3f5);padding:2px 8px;border-radius:10px;font-size:0.72rem;color:var(--text-muted,var(--gray))">' + req.article + '</span>';
+    html += statusLabel;
+    html += '<span style="margin-left:auto;font-size:0.78rem;color:var(--text-muted,var(--gray))">매칭 과제 ' + matches.length + '건</span>';
+    html += '</div>';
+    html += '<div style="font-size:0.78rem;color:var(--text-muted,var(--gray));margin-bottom:8px">' + req.desc + '</div>';
+
+    if (matches.length > 0) {
+      matches.forEach(function(m) {
+        html += '<div style="padding:6px 10px;margin:4px 0;border-radius:6px;background:var(--input-bg,#f8f9fa);font-size:0.8rem;cursor:pointer" onclick="closeModal();openTaskModal(' + m.task.id + ')">';
+        html += '<span style="color:var(--primary);font-weight:700">과제 ' + m.task.number + '</span> ';
+        html += '<span style="color:var(--text,var(--dark))">' + m.task.title + '</span>';
+        if (m.recs.length > 0) {
+          html += '<div style="margin-top:4px;padding-left:12px;border-left:2px solid var(--border)">';
+          m.recs.slice(0, 3).forEach(function(r) {
+            var snippet = (r.content || '').length > 60 ? (r.content || '').substring(0, 60) + '…' : (r.content || '');
+            html += '<div style="font-size:0.75rem;color:var(--text-muted,var(--gray));padding:2px 0">권고 ' + r.seq + ': ' + snippet + '</div>';
+          });
+          if (m.recs.length > 3) html += '<div style="font-size:0.72rem;color:var(--gray);padding:2px 0">외 ' + (m.recs.length - 3) + '건</div>';
+          html += '</div>';
+        }
+        html += '</div>';
+      });
+    } else {
+      html += '<div style="font-size:0.78rem;color:var(--text-muted,var(--gray));font-style:italic;padding:4px 0">매칭되는 과제가 없습니다.</div>';
+    }
+    html += '</div>';
+  });
+
+  // aiact.html 링크도 하단에 추가
+  html += '<div style="text-align:center;margin-top:16px"><a href="aiact.html" target="_blank" style="font-size:0.82rem;color:var(--accent)">📄 AI기본법 × 행동계획 연계 분석 페이지 열기 →</a></div>';
+
+  document.getElementById('modalTitle').textContent = '⚖️ AI기본법 컴플라이언스 상세';
+  document.getElementById('modalBody').innerHTML = html;
+  document.getElementById('modalNav').style.display = 'none';
+  document.getElementById('modalOverlay').style.display = 'flex';
+}
+
+// ============================================================
+// A2: Dashboard Customization
+// ============================================================
+function getCustomSettings() {
+  var saved = localStorage.getItem('dashCustom');
+  return saved ? JSON.parse(saved) : { startTab: 'overview', showProgress: false, showCompliance: false, showGap: false, showAlerts: false, compactMode: false };
+}
+function saveCustomSettings(s) { localStorage.setItem('dashCustom', JSON.stringify(s)); }
+function openCustomizePanel() {
+  var s = getCustomSettings();
+  var tabs = [
+    {id:'overview',name:'종합 현황판'},{id:'tasks',name:'과제별 상세'},{id:'ministries',name:'부처별 현황'},
+    {id:'timeline',name:'타임라인'},{id:'risk',name:'위험 관리'},{id:'similarity',name:'유사/중복'},{id:'relations',name:'연관 과제'},
+    {id:'global',name:'글로벌 협력'},{id:'standards',name:'표준화'},{id:'globalcomp',name:'글로벌 비교'}
+  ];
+  var body = document.getElementById('customizeBody');
+  var html = '<div class="customize-section"><h4>시작 탭</h4>';
+  html += '<select id="custStartTab" onchange="updateCustomSetting(\'startTab\',this.value)" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:6px;font-size:0.85rem">';
+  tabs.forEach(function(t) { html += '<option value="' + t.id + '"' + (s.startTab === t.id ? ' selected' : '') + '>' + t.name + '</option>'; });
+  html += '</select></div>';
+  var toggles = [
+    {key:'showProgress',label:'이행 진척률 위젯'},
+    {key:'showCompliance',label:'컴플라이언스 스코어'},
+    {key:'showGap',label:'정책 갭 분석'},
+    {key:'showAlerts',label:'알림 배너'}
+  ];
+  html += '<div class="customize-section"><h4>위젯 표시</h4>';
+  toggles.forEach(function(t) {
+    html += '<div class="customize-option"><span>' + t.label + '</span>';
+    html += '<div class="customize-toggle' + (s[t.key] ? ' active' : '') + '" onclick="toggleCustomWidget(\'' + t.key + '\',this)"></div></div>';
+  });
+  html += '</div>';
+  html += '<div class="customize-section"><h4>기타</h4>';
+  html += '<div class="customize-option"><span>가이드 투어 초기화</span><button onclick="localStorage.removeItem(\'tourDone\');alert(\'다음 방문 시 가이드 투어가 다시 표시됩니다.\')" style="padding:4px 12px;border:1px solid var(--border);border-radius:4px;background:var(--card-bg);cursor:pointer;font-size:0.8rem">초기화</button></div>';
+  html += '<div class="customize-option"><span>진척 데이터 초기화</span><button onclick="if(confirm(\'진척 데이터를 삭제하시겠습니까?\')){localStorage.removeItem(\'taskProgress\');renderProgressWidget();alert(\'초기화 완료\')}" style="padding:4px 12px;border:1px solid var(--border);border-radius:4px;background:var(--card-bg);cursor:pointer;font-size:0.8rem;color:var(--danger)">삭제</button></div>';
+  html += '</div>';
+  body.innerHTML = html;
+  document.getElementById('customizePanel').classList.add('open');
+  document.getElementById('customizeOverlay').classList.add('visible');
+}
+function closeCustomizePanel() {
+  document.getElementById('customizePanel').classList.remove('open');
+  document.getElementById('customizeOverlay').classList.remove('visible');
+}
+function updateCustomSetting(key, val) {
+  var s = getCustomSettings();
+  s[key] = val;
+  saveCustomSettings(s);
+}
+function toggleCustomWidget(key, el) {
+  var s = getCustomSettings();
+  s[key] = !s[key];
+  saveCustomSettings(s);
+  el.classList.toggle('active');
+  applyCustomSettings();
+}
+function applyCustomSettings() {
+  var s = getCustomSettings();
+  var pw = document.getElementById('progressWidget');
+  var cw = document.getElementById('complianceWidget');
+  var ga = document.getElementById('gapAnalysisCard');
+  var nb = document.getElementById('notifBanner');
+  if (pw) pw.style.display = s.showProgress ? 'block' : 'none';
+  if (cw) cw.style.display = s.showCompliance ? 'block' : 'none';
+  if (ga) ga.style.display = s.showGap ? 'block' : 'none';
+  if (nb && !s.showAlerts) nb.style.display = 'none';
+}
+
+// ============================================================
+// B2: Risk Trend Chart
+// ============================================================
+function renderRiskTrend() {
+  var canvas = document.getElementById('chartRiskTrend');
+  if (!canvas) return;
+  var today = new Date();
+  var months = [];
+  var criticalData = [], highData = [], mediumData = [], lowData = [];
+  // Simulate next 12 months
+  for (var m = 0; m < 12; m++) {
+    var simDate = new Date(today.getFullYear(), today.getMonth() + m, today.getDate());
+    months.push(simDate.getFullYear() + '-' + String(simDate.getMonth()+1).padStart(2,'0'));
+    var crit = 0, high = 0, med = 0, low = 0;
+    DATA.tasks.tasks.forEach(function(t) {
+      t.recommendations.forEach(function(r) {
+        var dd = getDeadlineDate(r.deadline);
+        if (!dd) return;
+        var daysLeft = Math.ceil((dd - simDate) / 86400000);
+        if (daysLeft < 0) crit++;
+        else if (daysLeft <= 34) crit++;
+        else if (daysLeft <= 120) high++;
+        else if (daysLeft <= 240) med++;
+        else low++;
+      });
+    });
+    criticalData.push(crit);
+    highData.push(high);
+    mediumData.push(med);
+    lowData.push(low);
+  }
+  var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  new Chart(canvas, {
+    type: 'line',
+    data: {
+      labels: months,
+      datasets: [
+        { label: '긴급/초과', data: criticalData, borderColor: '#dc3545', backgroundColor: 'rgba(220,53,69,0.1)', fill: true, tension: 0.3 },
+        { label: '주의', data: highData, borderColor: '#fd7e14', backgroundColor: 'rgba(253,126,20,0.1)', fill: true, tension: 0.3 },
+        { label: '관찰', data: mediumData, borderColor: '#ffc107', backgroundColor: 'rgba(255,193,7,0.1)', fill: true, tension: 0.3 },
+        { label: '여유', data: lowData, borderColor: '#28a745', backgroundColor: 'rgba(40,167,69,0.1)', fill: true, tension: 0.3 }
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { position: 'bottom', labels: { color: isDark ? '#e0e0e0' : '#343a40', font: { size: 11 } } } },
+      scales: {
+        x: { ticks: { color: isDark ? '#9e9e9e' : '#666', font: { size: 10 } }, grid: { color: isDark ? '#3a3f4a' : '#eee' } },
+        y: { beginAtZero: true, stacked: true, ticks: { color: isDark ? '#9e9e9e' : '#666' }, grid: { color: isDark ? '#3a3f4a' : '#eee' } }
+      },
+      interaction: { intersect: false, mode: 'index' }
+    }
+  });
+}
+
+// ============================================================
+// B3: Network Graph Zoom/Pan Enhancement
+// ============================================================
+var _netZoom = 1, _netPanX = 0, _netPanY = 0;
+function zoomNetwork(factor) {
+  _netZoom *= factor;
+  _netZoom = Math.max(0.3, Math.min(5, _netZoom));
+  applyNetworkTransform();
+}
+function resetNetworkZoom() {
+  _netZoom = 1; _netPanX = 0; _netPanY = 0;
+  applyNetworkTransform();
+}
+function applyNetworkTransform() {
+  var svg = document.getElementById('network-svg');
+  if (!svg) return;
+  var g = svg.querySelector('g');
+  if (g) {
+    g.setAttribute('transform', 'translate(' + _netPanX + ',' + _netPanY + ') scale(' + _netZoom + ')');
+  }
+  updateMinimap();
+}
+function updateMinimap() {
+  var minimap = document.getElementById('netMinimap');
+  var svg = document.getElementById('network-svg');
+  if (!minimap || !svg) return;
+  var vb = svg.getAttribute('viewBox');
+  if (!vb) return;
+  var parts = vb.split(' ').map(Number);
+  var vw = parts[2], vh = parts[3];
+  var mmW = 140, mmH = 90;
+  // Draw minimap
+  var viewW = mmW / _netZoom;
+  var viewH = mmH / _netZoom;
+  var viewX = (-_netPanX / _netZoom) / vw * mmW;
+  var viewY = (-_netPanY / _netZoom) / vh * mmH;
+  minimap.innerHTML = '<div class="net-minimap-view" style="left:' + Math.max(0,viewX) + 'px;top:' + Math.max(0,viewY) + 'px;width:' + Math.min(mmW,viewW) + 'px;height:' + Math.min(mmH,viewH) + 'px"></div>';
+}
+function renderNetClusterLegend() {
+  var legend = document.getElementById('netClusterLegend');
+  if (!legend) return;
+  legend.innerHTML = '<span><span class="net-cluster-dot" style="background:#1565c0"></span>정책축1: AI 혁신 생태계</span>' +
+    '<span><span class="net-cluster-dot" style="background:#6a1b9a"></span>정책축2: AI 기반 대전환</span>' +
+    '<span><span class="net-cluster-dot" style="background:#2e7d32"></span>정책축3: 글로벌 기여</span>';
+}
+// Mouse wheel zoom
+document.addEventListener('DOMContentLoaded', function() {
+  var svg = document.getElementById('network-svg');
+  if (svg) {
+    svg.addEventListener('wheel', function(e) {
+      if (!document.getElementById('view-relations').classList.contains('active')) return;
+      e.preventDefault();
+      var factor = e.deltaY < 0 ? 1.1 : 0.9;
+      zoomNetwork(factor);
+    }, { passive: false });
+    // Pan with mouse drag
+    var dragging = false, startX, startY;
+    svg.addEventListener('mousedown', function(e) {
+      if (e.target.closest('.net-node')) return;
+      dragging = true; startX = e.clientX - _netPanX; startY = e.clientY - _netPanY;
+      svg.style.cursor = 'grabbing';
+    });
+    window.addEventListener('mousemove', function(e) {
+      if (!dragging) return;
+      _netPanX = e.clientX - startX; _netPanY = e.clientY - startY;
+      applyNetworkTransform();
+    });
+    window.addEventListener('mouseup', function() { dragging = false; svg.style.cursor = 'default'; });
+  }
+});
+
+// ============================================================
+// Init new features (v2.45 + v2.46)
+// ============================================================
+var _origInit = typeof init === 'function' ? init : null;
+function initNewFeatures() {
+  initTheme();
+  renderNotifBanner();
+  renderProgressWidget();
+  renderComplianceScore();
+  renderGapAnalysis();
+  renderNetClusterLegend();
+  applyCustomSettings();
+  applyURLParams();
+  // Auto start tour on first visit
+  if (!localStorage.getItem('tourDone')) {
+    setTimeout(startTour, 1500);
+  }
+  // Apply custom start tab
+  var cs = getCustomSettings();
+  if (cs.startTab && cs.startTab !== 'overview' && !new URLSearchParams(window.location.search).get('view')) {
+    setTimeout(function() { switchView(cs.startTab); }, 200);
+  }
+  // Lazy-init new features on first tab visit
+  var _radarDone = false, _workloadDone = false, _riskTrendDone = false;
+  var _patchedSwitch = switchView;
+  switchView = function(v) {
+    _patchedSwitch(v);
+    if (v === 'ministries' && !_radarDone) {
+      _radarDone = true;
+      setTimeout(renderMinistryRadar, 200);
+    }
+    if (v === 'risk' && !_workloadDone) {
+      _workloadDone = true;
+      setTimeout(function() { renderWorkloadAnalysis(); renderPolicySimulator(); }, 200);
+    }
+    if (v === 'risk' && !_riskTrendDone) {
+      _riskTrendDone = true;
+      setTimeout(renderRiskTrend, 300);
+    }
+    if (v === 'relations') {
+      setTimeout(renderNetClusterLegend, 100);
+    }
+  };
+  // Init if already on ministries/risk
+  if (STATE.currentView === 'ministries') setTimeout(renderMinistryRadar, 500);
+  if (STATE.currentView === 'risk') setTimeout(function() { renderWorkloadAnalysis(); renderPolicySimulator(); renderRiskTrend(); }, 500);
+}
+
+// Run after DOMContentLoaded
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', function() { setTimeout(initNewFeatures, 100); });
+} else {
+  setTimeout(initNewFeatures, 100);
+}
+
 </script>
 
+
+<!-- D4: Compare Panel -->
+<div class="compare-panel" id="comparePanel" onclick="if(event.target===this)closeComparePanel()">
+  <div class="compare-container" id="compareContainer"></div>
+</div>
+
+<!-- A2: Customize Panel -->
+<div class="customize-panel" id="customizePanel">
+  <div class="customize-panel-header">
+    <h3 style="font-size:1.05rem;font-weight:700">⚙️ 대시보드 설정</h3>
+    <button onclick="closeCustomizePanel()" style="background:rgba(255,255,255,0.2);border:none;color:white;width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:1rem">&times;</button>
+  </div>
+  <div style="flex:1;overflow-y:auto" id="customizeBody"></div>
+</div>
+<div class="bm-overlay" id="customizeOverlay" onclick="closeCustomizePanel()" style="z-index:1299"></div>
+
+<!-- D3: Tour Container -->
+<div id="tourContainer" style="display:none"></div>
+
+<!-- Mobile bottom navigation -->
+<nav class="mobile-bottom-nav" id="mobileBottomNav">
+  <div class="mob-tab active" onclick="switchView('overview');updateMobileNav('overview')"><span class="mob-icon">📊</span>현황</div>
+  <div class="mob-tab" onclick="switchView('tasks');updateMobileNav('tasks')"><span class="mob-icon">📋</span>과제</div>
+  <div class="mob-tab" onclick="switchView('timeline');updateMobileNav('timeline')"><span class="mob-icon">📅</span>타임라인</div>
+  <div class="mob-tab" onclick="switchView('risk');updateMobileNav('risk')"><span class="mob-icon">⚠️</span>위험</div>
+  <div class="mob-tab" onclick="switchMobileMore()"><span class="mob-icon">≡</span>더보기</div>
+</nav>
 
 <!-- Bookmark overlay -->
 <div class="bm-overlay" id="bmOverlay" onclick="closeBookmarkPanel()"></div>
