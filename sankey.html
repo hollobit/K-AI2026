@@ -28,7 +28,8 @@ svg text{font-family:'Noto Sans KR',sans-serif}
 .node rect{cursor:pointer}
 .node rect:hover{filter:brightness(1.3)}
 .node.highlighted rect{filter:brightness(1.4);stroke-width:2px!important}
-.link{fill:none;stroke-opacity:0.22;transition:stroke-opacity .2s,stroke-width .2s}
+.link{fill:none;stroke-opacity:0.22;transition:stroke-opacity .2s,stroke-width .2s,stroke .2s}
+.coop-link{stroke-opacity:0.30}
 .link:hover{stroke-opacity:0.6}
 .link.highlighted{stroke-opacity:0.55}
 .col-label{font-size:12px;fill:#8eb4d4;font-weight:600}
@@ -123,6 +124,8 @@ svg text{font-family:'Noto Sans KR',sans-serif}
   <div class="legend-item"><div class="legend-dot" style="background:#1B5FA4"></div> 정책축 1 · AI 혁신 생태계 조성</div>
   <div class="legend-item"><div class="legend-dot" style="background:#7B3FB0"></div> 정책축 2 · 범국가 AI 기반 대전환</div>
   <div class="legend-item"><div class="legend-dot" style="background:#1A7A4A"></div> 정책축 3 · 글로벌 AI 기본사회 기여</div>
+  <div class="legend-item"><div style="width:20px;height:3px;background:#8eb4d4;border-radius:2px"></div> 주관 연결</div>
+  <div class="legend-item"><div style="width:20px;height:3px;background:#4fc3f7;border-radius:2px;background-image:repeating-linear-gradient(90deg,#4fc3f7 0,#4fc3f7 6px,transparent 6px,transparent 9px)"></div> 협력 연결</div>
   <div class="legend-item" style="margin-left:auto"><span style="color:#6a93b8;font-size:0.75rem">※ 과제 클릭 → 상세 패널 | 정책축/전략분야 클릭 → 해당 과제 목록 | 부처 클릭 → 부처별 현황</span></div>
 </div>
 <div class="info-bar">
@@ -166,6 +169,128 @@ const TASK_DETAILS = {"1":{"id":1,"number":"[1]","title":"GPU, NPU 등 핵심 AI
 const AXIS_COLOR = {1:'#1B5FA4', 2:'#7B3FB0', 3:'#1A7A4A'};
 const AXIS_NAME  = {1:'정책축 1 · AI 혁신 생태계', 2:'정책축 2 · 범국가 AI 대전환', 3:'정책축 3 · 글로벌 AI 기여'};
 const DASHBOARD = 'index.html';
+
+// --- 복수 주관·협력 부처 추출 ---
+var _MINS_LIST = '국가AI전략위|국가데이터처|과학기술혁신본부|과기정통부|행안부|산업부|복지부|교육부|국방부|법무부|외교부|기후부|개인정보위|국정원|경찰청|해수부|문체부|중기부|농식품부|국토부|환경부|방통위|공정위|관세청|방사청|고용부|소방청|국조실|여가부|인사처|조달청|병무청|금융위|국표원|노동부|국세청|우주청|기상청|질병청|원안위|식약처|지식재산처|재정경제부|성평등부|지방시대위원회|시도교육청|국교위|법원행정처|방미통위|기획예산처';
+var _MINS_RE_EXTRACT = new RegExp('(' + _MINS_LIST + ')(?:\\((?:및\\s*)?(' + _MINS_LIST + ')\\))?', 'g');
+var _MIN_ALIAS = { '국표원': '산업부(국표원)' };
+function _normalizeMinName(name) { return _MIN_ALIAS[name] || name; }
+
+function _extractMinistries(content) {
+  if (!content) return [];
+  var m = content.match(/^(.+?)[은는]\s/);
+  if (!m) return [];
+  var subj = m[1], found = [], mm;
+  _MINS_RE_EXTRACT.lastIndex = 0;
+  while ((mm = _MINS_RE_EXTRACT.exec(subj)) !== null) {
+    var name = mm[2] ? mm[1] + '(' + mm[2] + ')' : _normalizeMinName(mm[1]);
+    if (found.indexOf(name) === -1) found.push(name);
+  }
+  return found;
+}
+
+function _extractCoopMinistries(content) {
+  if (!content) return [];
+  var leadSet = new Set();
+  var sm = content.match(/^(.+?)[은는]\s/);
+  if (sm) {
+    _MINS_RE_EXTRACT.lastIndex = 0;
+    var lm;
+    while ((lm = _MINS_RE_EXTRACT.exec(sm[1])) !== null) {
+      var ln = lm[2] ? lm[1] + '(' + lm[2] + ')' : _normalizeMinName(lm[1]);
+      leadSet.add(ln);
+    }
+  }
+  var allMins = [];
+  _MINS_RE_EXTRACT.lastIndex = 0;
+  var am;
+  while ((am = _MINS_RE_EXTRACT.exec(content)) !== null) {
+    var cn = am[2] ? am[1] + '(' + am[2] + ')' : _normalizeMinName(am[1]);
+    if (!leadSet.has(cn) && allMins.indexOf(cn) === -1) allMins.push(cn);
+  }
+  return allMins;
+}
+
+// 전처리: SANKEY_DATA에 복수 주관·협력 부처 연결 반영
+function preprocessSankeyData() {
+  var nodes = SANKEY_DATA.nodes;
+  var links = SANKEY_DATA.links;
+  var nodeIdx = {};
+  nodes.forEach(function(n, i) { nodeIdx[n.id] = i; });
+
+  // 기존 task→ministry 링크 제거 (숫자 인덱스 기반 + 문자열 기반 모두)
+  var oldTaskMinLinks = [];
+  var keepLinks = [];
+  links.forEach(function(l) {
+    var srcNode = typeof l.source === 'number' ? nodes[l.source] : (typeof l.source === 'string' ? nodes[nodeIdx[l.source]] : null);
+    var tgtNode = typeof l.target === 'number' ? nodes[l.target] : (typeof l.target === 'string' ? nodes[nodeIdx[l.target]] : null);
+    if (srcNode && tgtNode && srcNode.type === 'task' && tgtNode.type === 'ministry') {
+      oldTaskMinLinks.push(l);
+    } else {
+      keepLinks.push(l);
+    }
+  });
+
+  // TASK_DETAILS에서 권고사항별 주관·협력 부처 추출 후 새 링크 생성
+  var newLinkMap = {}; // 'task_N->min_X' → {value, coop}
+  function ensureMinNode(name) {
+    var id = 'min_' + name;
+    if (nodeIdx[id] !== undefined) return nodeIdx[id];
+    var newNode = {id: id, name: name, type: 'ministry'};
+    var idx = nodes.length;
+    nodes.push(newNode);
+    nodeIdx[id] = idx;
+    return idx;
+  }
+  function addLink(taskId, minName, count, isCoop) {
+    var key = 'task_' + taskId + '->' + 'min_' + minName;
+    if (!newLinkMap[key]) newLinkMap[key] = {source: nodeIdx['task_' + taskId], target: ensureMinNode(minName), value: 0, coop: isCoop};
+    newLinkMap[key].value += count;
+    if (!isCoop) newLinkMap[key].coop = false; // lead가 하나라도 있으면 lead 링크
+  }
+
+  Object.keys(TASK_DETAILS).forEach(function(taskKey) {
+    var td = TASK_DETAILS[taskKey];
+    var taskId = td.id;
+    if (nodeIdx['task_' + taskId] === undefined) return;
+
+    (td.recommendations || []).forEach(function(r) {
+      var leadMins = _extractMinistries(r.content);
+      if (leadMins.length === 0) leadMins = [_normalizeMinName(r.ministry)];
+      leadMins.forEach(function(m) { addLink(taskId, m, 1, false); });
+
+      var coopMins = _extractCoopMinistries(r.content);
+      var leadSet = new Set(leadMins);
+      leadSet.add(_normalizeMinName(r.ministry));
+      leadSet.add(r.ministry);
+      coopMins.forEach(function(m) {
+        if (!leadSet.has(m)) addLink(taskId, m, 1, true);
+      });
+    });
+  });
+
+  // 새 링크를 keepLinks에 추가
+  var newLinks = Object.values(newLinkMap);
+  SANKEY_DATA.links = keepLinks.concat(newLinks);
+  SANKEY_DATA.nodes = nodes;
+
+  // info-bar 업데이트
+  var minNodes = nodes.filter(function(n) { return n.type === 'ministry'; });
+  var taskMinLinkCount = newLinks.length;
+  var coopLinkCount = newLinks.filter(function(l) { return l.coop; }).length;
+  var leadLinkCount = taskMinLinkCount - coopLinkCount;
+  var infoBar = document.querySelector('.info-bar');
+  if (infoBar) {
+    infoBar.innerHTML =
+      '<span><b>3</b> 정책축</span>' +
+      '<span><b>12</b> 전략분야</span>' +
+      '<span><b>99</b> 실행과제</span>' +
+      '<span><b>326</b> 정책권고</span>' +
+      '<span><b>' + minNodes.length + '</b> 부처·기관</span>' +
+      '<span><b>' + taskMinLinkCount + '</b> 과제-부처 연결 (주관 ' + leadLinkCount + ' + 협력 ' + coopLinkCount + ')</span>';
+  }
+}
+preprocessSankeyData();
 
 function nodeColor(node, alpha) {
   const c = AXIS_COLOR[node.axisId] || '#4a7fa5';
@@ -214,7 +339,14 @@ function openTaskPanel(taskId) {
     const cls = recClass[axisId] || '';
     body += '<div class="dp-rec-item ' + cls + '">';
     body += '<div class="dp-rec-meta">';
-    body += '<span class="dp-rec-ministry">' + escHtml(r.ministry) + '</span>';
+    var leadMs = _extractMinistries(r.content);
+    var dispMin = leadMs.length > 0 ? leadMs.join(', ') : _normalizeMinName(r.ministry);
+    body += '<span class="dp-rec-ministry">' + escHtml(dispMin) + '</span>';
+    var coopMs = _extractCoopMinistries(r.content);
+    var leadSet2 = new Set(leadMs.length > 0 ? leadMs : [_normalizeMinName(r.ministry)]);
+    leadSet2.add(_normalizeMinName(r.ministry)); leadSet2.add(r.ministry);
+    coopMs = coopMs.filter(function(cm) { return !leadSet2.has(cm); });
+    if (coopMs.length > 0) body += '<span style="background:rgba(79,195,247,0.2);color:#4fc3f7;font-size:0.73rem;padding:2px 7px;border-radius:10px">협력: ' + escHtml(coopMs.join(', ')) + '</span>';
     if (r.deadline_label) body += '<span class="dp-rec-deadline">🗓 ' + escHtml(r.deadline_label) + '</span>';
     body += '</div>';
     body += '<div class="dp-rec-content">' + escHtml(r.content).replace(/\n/g,'<br>') + '</div>';
@@ -289,9 +421,10 @@ function searchSankey(query) {
     _linkSelection.each(function(d) {
       const srcNode = _builtNodes[d.source.index !== undefined ? d.source.index : d.source];
       d3.select(this)
-        .attr('stroke-opacity', 0.22)
+        .attr('stroke-opacity', d.coop ? 0.30 : 0.22)
         .attr('stroke-width', Math.max(1, d.width))
-        .attr('stroke', nodeColor(srcNode));
+        .attr('stroke', d.coop ? '#4fc3f7' : nodeColor(srcNode))
+        .attr('stroke-dasharray', d.coop ? '6,3' : null);
     });
     if (clearBtn) clearBtn.style.display = 'none';
     if (badge) badge.innerHTML = '';
@@ -414,7 +547,8 @@ function buildSankey() {
     if (!colNodes.length) return 0;
     return colNodes[0].x0 + (colNodes[0].x1 - colNodes[0].x0) / 2;
   });
-  const colLabels = ['정책축 (3개)','전략분야 (12개)','실행과제 (99개)','담당 부처·기관 (33개)'];
+  const minCount = nodes.filter(n => n.type === 'ministry').length;
+  const colLabels = ['정책축 (3개)','전략분야 (12개)','실행과제 (99개)','담당 부처·기관 (' + minCount + '개)'];
   colLabels.forEach((lbl, i) => {
     svg.append('text').attr('class','col-label')
       .attr('x', colX[i] || i * (WIDTH/4) + 11).attr('y', -28)
@@ -428,10 +562,12 @@ function buildSankey() {
   // Links
   const link = svg.append('g').selectAll('.link')
     .data(links).join('path')
-    .attr('class','link')
+    .attr('class', d => 'link' + (d.coop ? ' coop-link' : ''))
     .attr('d', d3.sankeyLinkHorizontal())
     .attr('stroke-width', d => Math.max(1, d.width))
-    .attr('stroke', d => nodeColor(nodes[typeof d.source === 'object' ? d.source.index : d.source]));
+    .attr('stroke', d => d.coop ? '#4fc3f7' : nodeColor(nodes[typeof d.source === 'object' ? d.source.index : d.source]))
+    .attr('stroke-dasharray', d => d.coop ? '6,3' : null)
+    .attr('stroke-opacity', d => d.coop ? 0.30 : 0.22);
 
   // Tooltip
   const tt = document.getElementById('tt');
@@ -445,7 +581,8 @@ function buildSankey() {
   function hideTT() { tt.style.display='none'; }
 
   link.on('mousemove', (e, d) => {
-    showTT(e, `<div class="tt-type">연결 흐름</div><div class="tt-name">${d.source.name} → ${d.target.name}</div><div class="tt-meta">연결값: ${d.value}</div>`);
+    var role = d.coop ? '<span style="color:#4fc3f7">협력</span>' : '주관';
+    showTT(e, `<div class="tt-type">연결 흐름</div><div class="tt-name">${d.source.name} → ${d.target.name}</div><div class="tt-meta">연결값: ${d.value} (${role})</div>`);
   }).on('mouseout', hideTT);
 
   // Nodes
