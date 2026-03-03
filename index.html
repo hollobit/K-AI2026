@@ -5785,7 +5785,7 @@ function renderStandards() {
     a5Html += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px" id="std-cards-area5">' +
       area5Tasks.map(t =>
         '<div onclick="openTaskModal(' + t.id + ')" style="cursor:pointer;padding:12px;background:white;border-radius:6px;border-left:3px solid ' + a5Color + '">' +
-          '<div style="font-size:0.75rem;color:#666">○' + t.id + '</div>' +
+          '<div style="font-size:0.75rem;color:#666">' + escapeHtml(t.number) + '</div>' +
           '<div style="font-weight:600;font-size:0.88rem;margin:4px 0">' + escapeHtml(t.title) + '</div>' +
           '<div style="font-size:0.78rem;color:#666">' + (function(t){ var ms=[]; (t.recommendations||[]).forEach(function(r){var x=extractMinistries(r.content);(x?x.split(', '):[r.ministry]).forEach(function(m){if(m&&ms.indexOf(m)===-1)ms.push(m);});}); return ms.slice(0,4).join(', '); })(t) + '</div>' +
         '</div>'
@@ -5834,7 +5834,7 @@ function renderStandards() {
         '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px" id="std-cards-' + catId + '">' +
           items.map(t =>
             '<div onclick="openTaskModal(' + t.id + ')" style="cursor:pointer;padding:12px;background:#f8f9fa;border-radius:6px;border-left:3px solid ' + ti.color + '">' +
-              '<div style="font-size:0.75rem;color:#666">○' + t.id + ' · ' + escapeHtml(t.strategic_area_name || '') + '</div>' +
+              '<div style="font-size:0.75rem;color:#666">' + escapeHtml(t.number) + ' · ' + escapeHtml(t.strategic_area_name || '') + '</div>' +
               '<div style="font-weight:600;font-size:0.88rem;margin:4px 0;line-height:1.4">' + escapeHtml(t.title) + '</div>' +
             '</div>'
           ).join('') +
