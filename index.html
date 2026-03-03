@@ -2011,6 +2011,13 @@ function switchView(viewId) {
     if (FD_ANIMATION) { cancelAnimationFrame(FD_ANIMATION); FD_ANIMATION = null; }
   }
   STATE.currentView = viewId;
+  // 탭 전환 시 URL 파라미터 정리
+  var url = new URL(window.location);
+  if (viewId !== 'ministries') {
+    url.searchParams.delete('ministry');
+  }
+  url.searchParams.set('view', viewId);
+  history.replaceState(null, '', url);
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
   document.querySelectorAll('.nav-tab').forEach(t => {
     t.classList.remove('active');
@@ -3152,6 +3159,11 @@ function selectMinistry(name) {
   STATE.selectedMinistry = name;
   const m = DATA.ministries.ministries.find(mi => mi.name === name);
   if (!m) return;
+  // URL 파라미터 동기화
+  var url = new URL(window.location);
+  url.searchParams.set('view', 'ministries');
+  url.searchParams.set('ministry', name);
+  history.replaceState(null, '', url);
 
   document.querySelectorAll('.ministry-card').forEach(c => c.classList.remove('selected'));
   const cards = document.querySelectorAll('.ministry-card');
@@ -5927,6 +5939,20 @@ document.addEventListener('DOMContentLoaded', function() {
         renderTimeline();
         _urlReady = true;
       }, 200);
+    } else if (viewParam === 'ministries' && ministryParam) {
+      var mName = decodeURIComponent(ministryParam);
+      setTimeout(function() {
+        var found = DATA.ministries.ministries.find(function(mi) {
+          return mi.name === mName || mi.full_name === mName;
+        });
+        if (!found) {
+          found = DATA.ministries.ministries.find(function(mi) {
+            return mi.name.includes(mName) || (mi.full_name && mi.full_name.includes(mName));
+          });
+        }
+        if (found) selectMinistry(found.name);
+      }, 200);
+      _urlReady = true;
     } else {
       _urlReady = true;
     }
@@ -5953,6 +5979,24 @@ document.addEventListener('DOMContentLoaded', function() {
       if (sel) { sel.value = String(parseInt(areaParam, 10)); applyFilters(); }
       var fp = document.querySelector('.filter-panel');
       if (fp) fp.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 200);
+    _urlReady = true;
+  } else if (ministryParam) {
+    var mName = decodeURIComponent(ministryParam);
+    switchView('ministries');
+    setTimeout(function() {
+      // 정확한 이름 또는 부분 매칭
+      var found = DATA.ministries.ministries.find(function(mi) {
+        return mi.name === mName || mi.full_name === mName;
+      });
+      if (!found) {
+        found = DATA.ministries.ministries.find(function(mi) {
+          return mi.name.includes(mName) || (mi.full_name && mi.full_name.includes(mName));
+        });
+      }
+      if (found) {
+        selectMinistry(found.name);
+      }
     }, 200);
     _urlReady = true;
   } else {
