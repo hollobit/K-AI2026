@@ -242,6 +242,17 @@ body { font-family: var(--font); background: var(--bg); color: var(--text, var(-
 .gantt-header-months { flex: 1; display: flex; }
 .gantt-header-months span { flex: 1; text-align: center; }
 
+/* Deliverables (결과물) view */
+.deliv-container { background: var(--card-bg); border-radius: var(--radius); padding: 16px; box-shadow: var(--shadow); overflow-x: auto; margin-bottom: 20px; }
+.deliv-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+.deliv-table th { position: sticky; top: 0; background: var(--card-bg); text-align: left; padding: 8px 10px; border-bottom: 2px solid var(--primary); font-weight: 700; font-size: 0.78rem; color: var(--primary); white-space: nowrap; z-index: 1; }
+.deliv-table td { padding: 7px 10px; border-bottom: 1px solid var(--border); vertical-align: top; line-height: 1.45; }
+.deliv-table tr:hover { background: var(--hover-bg, rgba(0,0,0,0.03)); }
+.deliv-table tr[data-overdue="true"] td:first-child { border-left: 3px solid #dc3545; }
+.deliv-table tr[data-urgent="true"] td:first-child { border-left: 3px solid #fd7e14; }
+.deliv-output { background: var(--tag-bg, #f0f4ff); padding: 4px 8px; border-radius: 6px; font-size: 0.8rem; line-height: 1.5; color: var(--text, var(--dark)); }
+.deliv-output strong { color: var(--primary); font-weight: 700; }
+
 /* D3: Guide Tour */
 .tour-overlay { position: fixed; inset: 0; z-index: 8000; pointer-events: none; }
 .tour-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 7999; }
@@ -1512,9 +1523,11 @@ mark.hl { background: #fff176; padding: 0 1px; border-radius: 2px; font-style: n
   <div style="display:flex;gap:6px;margin-bottom:12px">
     <button id="tlViewGrid" onclick="setTlViewMode('grid')" style="padding:6px 14px;border:1px solid var(--primary);border-radius:16px;background:var(--primary);color:white;cursor:pointer;font-size:0.82rem;font-family:var(--font)">📊 분기별 보기</button>
     <button id="tlViewGantt" onclick="setTlViewMode('gantt')" style="padding:6px 14px;border:1px solid var(--border);border-radius:16px;background:white;color:var(--gray);cursor:pointer;font-size:0.82rem;font-family:var(--font)">📅 Gantt 보기</button>
+    <button id="tlViewDeliv" onclick="setTlViewMode('deliv')" style="padding:6px 14px;border:1px solid var(--border);border-radius:16px;background:white;color:var(--gray);cursor:pointer;font-size:0.82rem;font-family:var(--font)">📋 결과물 보기</button>
   </div>
   <div class="timeline-grid" id="timelineGrid"></div>
   <div class="gantt-container" id="ganttContainer" style="display:none"></div>
+  <div class="deliv-container" id="delivContainer" style="display:none"></div>
 </div>
 
 <!-- View 5: References -->
@@ -2400,7 +2413,7 @@ function applyFilters() {
     if (axisVal && String(t.policy_axis_id) !== axisVal) return false;
     if (areaVal && String(t.strategic_area_id) !== areaVal) return false;
     if (ministryVal) {
-      const hasMinistry = t.recommendations.some(r => r.ministry === ministryVal);
+      const hasMinistry = t.recommendations.some(r => r.ministry === ministryVal || (extractMinistries(r.content) || '').indexOf(ministryVal) !== -1);
       if (!hasMinistry) return false;
     }
     if (deadlineVal) {
@@ -2550,7 +2563,7 @@ function openTaskModal(taskId, recSeq) {
       html += '<div class="rec-meta" style="justify-content:space-between">';
       html += '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">';
       html += '<span><strong>권고 ' + r.seq + '</strong></span>';
-      html += '<span class="badge badge-ministry">' + escapeHtml(r.ministry) + '</span>';
+      html += '<span class="badge badge-ministry">' + escapeHtml(extractMinistries(r.content) || r.ministry) + '</span>';
       html += renderDeadlineBadges(r);
       html += '<span class="status-badge status-progress">' + escapeHtml(r.status || '진행중') + '</span>';
       html += '</div>';
@@ -2686,14 +2699,23 @@ function renderOverview() {
   const meta = DATA.tasks.meta;
   const tasks = DATA.tasks.tasks;
 
-  // Count urgent/overdue
+  // Count urgent/overdue — 실시간 classifyDeadline 기반
   let urgentCount = 0, overdueCount = 0;
-  DATA.ministries.ministries.forEach(m => {
-    m.actions.forEach(a => {
-      if (a.is_overdue) overdueCount++;
-      else if (a.is_urgent) urgentCount++;
+  DATA.tasks.tasks.forEach(t => {
+    t.recommendations.forEach(r => {
+      const lvl = classifyDeadline(r.deadline);
+      if (lvl === 'overdue' || lvl === 'critical') overdueCount++;
+      else if (lvl === 'urgent') urgentCount++;
     });
   });
+
+  // 관련 부처/기관 수 — 주관 + 협력 기관 포함
+  const recCounts = getMinistryRecCounts();
+  const allMinistryNames = new Set(DATA.ministries.ministries.map(m => m.name));
+  Object.keys(recCounts).forEach(function(k) { allMinistryNames.add(k); });
+  const totalMinistryCount = allMinistryNames.size;
+  const primaryMinCount = DATA.ministries.ministries.length;
+  const coopAgencyCount = totalMinistryCount - primaryMinCount;
 
   // KPI cards
   const kpiHtml = `
@@ -2713,12 +2735,13 @@ function renderOverview() {
       <div class="value">${meta.strategic_areas}</div>
       <div class="label">전략분야</div>
     </div>
-    <div class="kpi-card warning" aria-label="관련 부처 ${DATA.ministries.ministries.length}개">
-      <div class="value">${DATA.ministries.ministries.length}</div>
-      <div class="label">관련 부처</div>
+    <div class="kpi-card warning" aria-label="관련 부처·기관 ${totalMinistryCount}개">
+      <div class="value">${totalMinistryCount}</div>
+      <div class="label">관련 부처·기관</div>
+      <div style="font-size:0.7rem;color:var(--gray);margin-top:2px">주관 ${primaryMinCount} + 협력 ${coopAgencyCount}</div>
     </div>
-    <div class="kpi-card danger" aria-label="기한 임박/초과 ${urgentCount + overdueCount}건">
-      <div class="value">${urgentCount + overdueCount}</div>
+    <div class="kpi-card danger" aria-label="기한 임박/초과 ${overdueCount}건">
+      <div class="value">${overdueCount}</div>
       <div class="label">기한 임박/초과</div>
     </div>
   `;
@@ -2730,11 +2753,21 @@ function renderOverview() {
     t.recommendations.forEach(r => {
       const level = classifyDeadline(r.deadline);
       if (level === 'overdue' || level === 'critical') {
+        // 전체 내용에서 복수 부처 추출
+        var allMins = [];
+        if (r.content) {
+          _MINS_RE_EXTRACT.lastIndex = 0;
+          var mm;
+          while ((mm = _MINS_RE_EXTRACT.exec(r.content)) !== null) {
+            var mName = mm[2] ? mm[1] + '(' + mm[2] + ')' : mm[1];
+            if (allMins.indexOf(mName) === -1) allMins.push(mName);
+          }
+        }
         urgentItems.push({
           task_id: t.id,
           task_number: t.number,
           task_title: t.title,
-          ministry: r.ministry,
+          ministry: allMins.length > 0 ? allMins.join(', ') : r.ministry,
           deadline_label: r.deadline_label || r.deadline || '',
           level: level
         });
@@ -2819,14 +2852,20 @@ function renderTaskGrid(tasks) {
   let html = '';
   tasks.forEach(t => {
     const recCount = t.recommendations ? t.recommendations.length : 0;
-    const ministries = [...new Set(t.recommendations.map(r => r.ministry))];
+    const ministriesAll = [];
+    t.recommendations.forEach(function(r) {
+      var ms = extractMinistries(r.content);
+      (ms ? ms.split(', ') : [r.ministry]).forEach(function(m) {
+        if (m && ministriesAll.indexOf(m) === -1) ministriesAll.push(m);
+      });
+    });
     const dlStatus = getTaskDeadlineStatus(t);
     const dlClass = (dlStatus === 'overdue' || dlStatus === 'critical') ? ' deadline-overdue' : dlStatus === 'urgent' ? ' deadline-urgent' : '';
 
     html += '<div class="task-card axis-' + t.policy_axis_id + dlClass + '" onclick="openTaskModal(' + t.id + ')" tabindex="0" role="button" aria-label="과제 ' + escapeHtml(t.title) + '">';
     html += '<div class="task-number">과제 ' + t.number + ' | ' + escapeHtml(t.strategic_area_name) + '</div>';
     html += '<div class="task-title">' + (q ? highlightText(t.title, q) : escapeHtml(t.title)) + '</div>';
-    html += '<div class="task-meta">' + recCount + '개 정책권고 | 담당: ' + ministries.slice(0, 3).join(', ') + (ministries.length > 3 ? ' 외 ' + (ministries.length - 3) + '개' : '') + '</div>';
+    html += '<div class="task-meta">' + recCount + '개 정책권고 | 담당: ' + ministriesAll.slice(0, 4).join(', ') + (ministriesAll.length > 4 ? ' 외 ' + (ministriesAll.length - 4) + '개' : '') + '</div>';
     html += '<div class="badges">';
     html += '<span class="badge badge-axis' + t.policy_axis_id + '">' + escapeHtml(t.policy_axis_name) + '</span>';
     html += '<span class="badge badge-count">' + recCount + '건</span>';
@@ -2887,7 +2926,7 @@ function renderRecListView(tasks) {
     html += '<div class="rec-list-meta">';
     html += '<div class="rec-list-meta-left">';
     html += '<span><strong>권고 ' + r.seq + '</strong></span>';
-    html += '<span class="badge badge-ministry">' + escapeHtml(r.ministry) + '</span>';
+    html += '<span class="badge badge-ministry">' + escapeHtml(extractMinistries(r.content) || r.ministry) + '</span>';
     html += renderDeadlineBadges(r);
     html += '<span class="badge badge-axis' + t.policy_axis_id + '">' + escapeHtml(t.policy_axis_name) + '</span>';
     html += '</div>';
@@ -2959,7 +2998,18 @@ function renderAlertItems() {
         + '</div>';
       recs.forEach(r => {
         const dl = r.deadline_label ? escapeHtml(r.deadline_label) : escapeHtml(r.deadline || '');
-        alertHtml += '<div class="arc-content"><strong>' + escapeHtml(r.ministry) + '</strong>'
+        // 전체 내용에서 복수 부처 추출
+        var recMins = [];
+        if (r.content) {
+          _MINS_RE_EXTRACT.lastIndex = 0;
+          var rmm;
+          while ((rmm = _MINS_RE_EXTRACT.exec(r.content)) !== null) {
+            var rmName = rmm[2] ? rmm[1] + '(' + rmm[2] + ')' : rmm[1];
+            if (recMins.indexOf(rmName) === -1) recMins.push(rmName);
+          }
+        }
+        var recMinStr = recMins.length > 0 ? recMins.join(', ') : r.ministry;
+        alertHtml += '<div class="arc-content"><strong>' + escapeHtml(recMinStr) + '</strong>'
           + (dl ? ' <span style="font-size:0.77rem;color:#856404">(' + dl + ')</span>' : '')
           + '<br>' + escapeHtml(r.content) + '</div>';
       });
@@ -3023,24 +3073,82 @@ function renderTasks() {
 // ============================================================
 // Rendering: Ministries (Enhanced with sorting and risk info)
 // ============================================================
+// 복수 부처 반영 권고 건수 동적 계산 (캐시)
+var _ministryRecCache = null;
+function getMinistryRecCounts() {
+  if (_ministryRecCache) return _ministryRecCache;
+  // { 부처명: { total, recs, urgent, overdue, leadTotal, coopTotal, coopRecs } }
+  var counts = {};
+  function ensureEntry(m) {
+    if (!counts[m]) counts[m] = { total: 0, recs: [], urgent: 0, overdue: 0, leadTotal: 0, coopTotal: 0, coopRecs: [] };
+  }
+  DATA.tasks.tasks.forEach(function(t) {
+    (t.recommendations || []).forEach(function(r) {
+      var ms = extractMinistries(r.content);
+      var leadList = ms ? ms.split(', ') : [r.ministry];
+      var riskLevel = classifyDeadline(r.deadline);
+      var isOverdue = riskLevel === 'overdue' || riskLevel === 'critical';
+      var isUrgent = riskLevel === 'urgent';
+      var recInfo = { task_id: t.id, task_title: t.title, task_number: t.number, content: r.content, deadline: r.deadline, deadline_label: r.deadline_label, status: r.status, seq: r.seq };
+      // 주관/공동주관 부처
+      var leadSet = new Set();
+      leadList.forEach(function(m) {
+        // "부처A(부처B)" 형태에서 부처명만 추출
+        var base = m.replace(/\(.+\)/, '');
+        leadSet.add(base);
+        var inner = m.match(/\((.+)\)/);
+        if (inner) leadSet.add(inner[1]);
+        ensureEntry(m);
+        counts[m].total++;
+        counts[m].leadTotal++;
+        counts[m].recs.push(recInfo);
+        if (isOverdue) counts[m].overdue++;
+        else if (isUrgent) counts[m].urgent++;
+      });
+      // 협력/협조/협의 부처 추출
+      var coopMins = extractCoopMinistries(r.content);
+      // r.ministry가 주어부에 없을 경우 leadSet에 추가하여 협력에서 제외
+      leadSet.add(r.ministry);
+      coopMins.forEach(function(cm) {
+        if (leadSet.has(cm)) return;
+        ensureEntry(cm);
+        counts[cm].total++;
+        counts[cm].coopTotal++;
+        counts[cm].coopRecs.push(recInfo);
+        if (isOverdue) counts[cm].overdue++;
+        else if (isUrgent) counts[cm].urgent++;
+      });
+    });
+  });
+  _ministryRecCache = counts;
+  return counts;
+}
+
 function renderMinistries() {
   const grid = document.getElementById('ministryGrid');
   let ministries = [...DATA.ministries.ministries];
 
-  // Calculate risk counts per ministry
+  // 복수 부처 반영 카운트 계산
+  const recCounts = getMinistryRecCounts();
+
+  // 각 부처의 카운트와 위험도를 업데이트
   const riskCounts = {};
   ministries.forEach(m => {
-    let urgent = 0, overdue = 0;
-    m.actions.forEach(a => {
-      if (a.is_overdue) overdue++;
-      else if (a.is_urgent) urgent++;
-    });
-    riskCounts[m.name] = { urgent, overdue };
+    const rc = recCounts[m.name];
+    if (rc) {
+      m._multiCount = rc.total;
+      riskCounts[m.name] = { urgent: rc.urgent, overdue: rc.overdue };
+    } else {
+      m._multiCount = m.recommendation_count;
+      let urgent = 0, overdue = 0;
+      m.actions.forEach(a => { if (a.is_overdue) overdue++; else if (a.is_urgent) urgent++; });
+      riskCounts[m.name] = { urgent, overdue };
+    }
   });
 
   // Sort
   if (STATE.ministrySortMode === 'count') {
-    ministries.sort((a, b) => b.recommendation_count - a.recommendation_count);
+    ministries.sort((a, b) => (b._multiCount || 0) - (a._multiCount || 0));
   } else if (STATE.ministrySortMode === 'urgent') {
     ministries.sort((a, b) => {
       const rA = riskCounts[a.name]; const rB = riskCounts[b.name];
@@ -3050,18 +3158,30 @@ function renderMinistries() {
     ministries.sort((a, b) => a.name.localeCompare(b.name, 'ko'));
   }
 
-  const maxCount = Math.max(...ministries.map(m => m.recommendation_count));
+  const maxCount = Math.max(...ministries.map(m => m._multiCount || m.recommendation_count));
 
   let html = '';
   ministries.forEach(m => {
-    const pct = (m.recommendation_count / maxCount * 100).toFixed(0);
+    const cnt = m._multiCount || m.recommendation_count;
+    const origCnt = m.recommendation_count;
+    const pct = (cnt / maxCount * 100).toFixed(0);
     const rc = riskCounts[m.name];
-    html += '<div class="ministry-card" onclick="selectMinistry(\'' + escapeHtml(m.name) + '\')" tabindex="0" role="button" aria-label="' + escapeHtml(m.name) + ' ' + m.recommendation_count + '건">';
+    html += '<div class="ministry-card" onclick="selectMinistry(\'' + escapeHtml(m.name) + '\')" tabindex="0" role="button" aria-label="' + escapeHtml(m.name) + ' ' + cnt + '건">';
     html += '<div class="ministry-name">' + escapeHtml(m.name) + '</div>';
     if (m.full_name && m.full_name !== m.name) {
       html += '<div style="font-size:0.78rem;color:var(--gray)">' + escapeHtml(m.full_name) + '</div>';
     }
-    html += '<div class="ministry-count">' + m.recommendation_count + '건 정책권고</div>';
+    html += '<div class="ministry-count">' + cnt + '건 정책권고';
+    if (cnt > origCnt) {
+      var rcData = recCounts[m.name];
+      var coopCnt = rcData ? rcData.coopTotal : 0;
+      var coCnt = cnt - origCnt - coopCnt;
+      var parts = ['주관 ' + origCnt];
+      if (coCnt > 0) parts.push('공동 ' + coCnt);
+      if (coopCnt > 0) parts.push('협력 ' + coopCnt);
+      html += ' <span style="font-size:0.75rem;color:var(--accent)">(' + parts.join(' + ') + ')</span>';
+    }
+    html += '</div>';
     html += '<div class="ministry-bar"><div class="ministry-bar-fill" style="width:' + pct + '%"></div></div>';
     if (rc.overdue > 0 || rc.urgent > 0) {
       html += '<div class="ministry-risk-info">';
@@ -3073,20 +3193,16 @@ function renderMinistries() {
   });
   grid.innerHTML = html;
 
-  // Co-implementing agencies section
-  const CO_AGENCIES = ['방사청','우주청','인사처','조달청','식약처','원안위','통계청','특허청','환경부','고용부','여가부','소방청','방통위','국표원','AI안전연구소'];
+  // Co-implementing agencies section — 동적으로 추출
   const primaryNames = new Set(DATA.ministries.ministries.map(m => m.name));
   const agencyMentions = {};
-  DATA.tasks.tasks.forEach(t => {
-    (t.recommendations || []).forEach(r => {
-      CO_AGENCIES.forEach(ag => {
-        if ((r.content || '').includes(ag) && !primaryNames.has(ag)) {
-          if (!agencyMentions[ag]) agencyMentions[ag] = { tasks: new Set(), recCount: 0 };
-          agencyMentions[ag].tasks.add(t.id);
-          agencyMentions[ag].recCount++;
-        }
-      });
-    });
+  Object.keys(recCounts).forEach(function(mName) {
+    if (!primaryNames.has(mName)) {
+      var rc2 = recCounts[mName];
+      var taskIds = new Set();
+      (rc2.recs || []).concat(rc2.coopRecs || []).forEach(function(r) { taskIds.add(r.task_id); });
+      agencyMentions[mName] = { tasks: taskIds, recCount: rc2.total, coopCount: rc2.coopTotal, leadCount: rc2.leadTotal };
+    }
   });
   const coAgencies = Object.entries(agencyMentions).sort((a, b) => b[1].recCount - a[1].recCount);
   if (coAgencies.length > 0) {
@@ -3097,7 +3213,12 @@ function renderMinistries() {
       const name = entry[0]; const info = entry[1];
       coHtml += '<div class="ministry-card" data-coagency="' + escapeHtml(name) + '" onclick="showCoAgency(this.dataset.coagency)" style="border-left:4px solid var(--info)">';
       coHtml += '<div class="ministry-name">' + escapeHtml(name) + '</div>';
-      coHtml += '<div class="ministry-count">' + info.recCount + '건 언급 · ' + info.tasks.size + '개 과제</div>';
+      var agParts = [];
+    if (info.leadCount > 0) agParts.push('주관 ' + info.leadCount);
+    if (info.coopCount > 0) agParts.push('협력 ' + info.coopCount);
+    coHtml += '<div class="ministry-count">' + info.recCount + '건 · ' + info.tasks.size + '개 과제'
+      + (agParts.length > 0 ? ' <span style="font-size:0.75rem;color:var(--info)">(' + agParts.join(' + ') + ')</span>' : '')
+      + '</div>';
       coHtml += '<div class="ministry-bar"><div class="ministry-bar-fill" style="width:' + Math.min(100, info.recCount * 10) + '%;background:var(--info)"></div></div>';
       coHtml += '</div>';
     });
@@ -3115,34 +3236,54 @@ function renderMinistries() {
 function showCoAgency(name) {
   const detail = document.getElementById('ministryDetail');
   detail.style.display = 'block';
+  const rc = getMinistryRecCounts()[name];
+  const totalCnt = rc ? rc.total : 0;
+  const leadCnt = rc ? rc.leadTotal : 0;
+  const coopCnt = rc ? rc.coopTotal : 0;
   const header = document.getElementById('ministryDetailHeader');
-  header.innerHTML = '<h3>' + escapeHtml(name) + ' (협력기관)</h3>' +
-    '<div style="font-size:0.9rem;color:var(--gray);margin-top:4px">주관부처가 아닌 협력기관으로 언급됨</div>';
+  var agHdrParts = [];
+  if (leadCnt > 0) agHdrParts.push('주관/공동주관 ' + leadCnt + '건');
+  if (coopCnt > 0) agHdrParts.push('협력 ' + coopCnt + '건');
+  header.innerHTML = '<h3>' + escapeHtml(name) + '</h3>' +
+    '<div style="font-size:0.9rem;color:var(--gray);margin-top:4px">총 ' + totalCnt + '건의 정책권고'
+    + (agHdrParts.length > 0 ? ' <span style="color:var(--info);font-size:0.85rem">(' + agHdrParts.join(' + ') + ')</span>' : '')
+    + '</div>';
+  // 협력 키 Set
+  var coopKeySet = new Set();
+  if (rc && rc.coopRecs) rc.coopRecs.forEach(function(r) { coopKeySet.add(r.task_id + '_' + r.seq); });
   const list = document.getElementById('ministryRecList');
   let html = '';
-  DATA.tasks.tasks.forEach(t => {
-    (t.recommendations || []).forEach(r => {
-      if ((r.content || '').includes(name)) {
-        const riskLevel = classifyDeadline(r.deadline);
-        const borderStyle = (riskLevel === 'overdue' || riskLevel === 'critical') ? 'border-left-color:#dc3545' :
-                            riskLevel === 'urgent' ? 'border-left-color:#fd7e14' : '';
-        const bmKey = t.id + '_' + r.seq;
-        const bmActive = STATE.bookmarks.has(String(bmKey)) ? ' bm-active' : '';
-        const bmHl = STATE.bookmarks.has(String(bmKey)) ? ' bm-highlighted' : '';
-        html += '<li class="rec-item' + bmHl + '" id="rec-li-' + bmKey + '" style="' + borderStyle + '">';
-        html += '<div class="rec-meta" style="justify-content:space-between">';
-        html += '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">';
-        html += '<span style="font-weight:600;white-space:nowrap">과제 ' + escapeHtml(t.number) + (r.seq ? ' · 권고 ' + r.seq : '') + '</span>';
-        html += '<span style="color:var(--gray);font-size:0.88em">' + escapeHtml(t.title) + '</span>';
-        html += '<span class="badge badge-ministry">' + escapeHtml(r.ministry) + '</span>';
-        html += renderDeadlineBadges(r);
-        html += '</div>';
-        html += '<button class="bookmark-btn' + bmActive + '" title="북마크" onclick="event.stopPropagation();toggleBookmark(' + t.id + ',' + r.seq + ')" aria-label="북마크 토글">&#9733;</button>';
-        html += '</div>';
-        html += '<div class="rec-content" onclick="openTaskModal(' + t.id + (r.seq ? ',' + r.seq : '') + ')" style="cursor:pointer">' + escapeHtml(r.content) + '</div>';
-        html += '</li>';
-      }
-    });
+  var seenKeys = new Set();
+  // 캐시 데이터 기반으로 표시
+  var allAgRecs = (rc ? rc.recs : []).concat(rc ? rc.coopRecs : []);
+  allAgRecs.forEach(function(rr) {
+    var key = rr.task_id + '_' + rr.seq;
+    if (seenKeys.has(key)) return;
+    seenKeys.add(key);
+    var t = DATA.tasks.tasks.find(function(tt) { return tt.id === rr.task_id; });
+    var r = t ? t.recommendations.find(function(rec) { return rec.seq === rr.seq; }) : null;
+    if (!t || !r) return;
+    var isCoop = coopKeySet.has(key);
+    const riskLevel = classifyDeadline(r.deadline);
+    const borderStyle = (riskLevel === 'overdue' || riskLevel === 'critical') ? 'border-left-color:#dc3545' :
+                        riskLevel === 'urgent' ? 'border-left-color:#fd7e14' : '';
+    const bmKey = t.id + '_' + r.seq;
+    const bmActive = STATE.bookmarks.has(String(bmKey)) ? ' bm-active' : '';
+    const bmHl = STATE.bookmarks.has(String(bmKey)) ? ' bm-highlighted' : '';
+    html += '<li class="rec-item' + bmHl + '" id="rec-li-' + bmKey + '" style="' + borderStyle + '">';
+    html += '<div class="rec-meta" style="justify-content:space-between">';
+    html += '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">';
+    html += '<span style="font-weight:600;white-space:nowrap">과제 ' + escapeHtml(t.number) + (r.seq ? ' · 권고 ' + r.seq : '') + '</span>';
+    html += '<span style="color:var(--gray);font-size:0.88em">' + escapeHtml(t.title) + '</span>';
+    if (isCoop) html += '<span class="badge" style="background:#e8f5e9;color:#2e7d32;font-size:0.72rem">협력</span>';
+    else html += '<span class="badge" style="background:#e3f2fd;color:var(--primary);font-size:0.72rem">주관/공동</span>';
+    html += '<span class="badge badge-ministry">' + escapeHtml(extractMinistries(r.content) || r.ministry) + '</span>';
+    html += renderDeadlineBadges(r);
+    html += '</div>';
+    html += '<button class="bookmark-btn' + bmActive + '" title="북마크" onclick="event.stopPropagation();toggleBookmark(' + t.id + ',' + r.seq + ')" aria-label="북마크 토글">&#9733;</button>';
+    html += '</div>';
+    html += '<div class="rec-content" onclick="openTaskModal(' + t.id + (r.seq ? ',' + r.seq : '') + ')" style="cursor:pointer">' + escapeHtml(r.content) + '</div>';
+    html += '</li>';
   });
   list.innerHTML = html || '<li style="padding:16px;color:var(--gray)">관련 권고 없음</li>';
   window.scrollTo({ top: detail.offsetTop - 80, behavior: 'smooth' });
@@ -3174,32 +3315,88 @@ function selectMinistry(name) {
   const detail = document.getElementById('ministryDetail');
   detail.style.display = 'block';
 
+  // 복수 부처 반영 권고 목록 수집
+  const recCounts = getMinistryRecCounts();
+  const rc = recCounts[name];
+  const totalCount = rc ? rc.total : m.recommendation_count;
+  const origCount = m.recommendation_count;
+  const coCount = totalCount - origCount;
+
+  const coopCount = rc ? rc.coopTotal : 0;
+  const coLeadCount = coCount - coopCount;
+
   const header = document.getElementById('ministryDetailHeader');
+  var hdrParts = ['주관 ' + origCount + '건'];
+  if (coLeadCount > 0) hdrParts.push('공동주관 ' + coLeadCount + '건');
+  if (coopCount > 0) hdrParts.push('협력 ' + coopCount + '건');
   header.innerHTML = '<h3>' + escapeHtml(m.full_name || m.name) + ' (' + escapeHtml(m.name) + ')</h3>'
     + '<div style="font-size:0.9rem;color:var(--gray);margin-top:4px">'
-    + '총 ' + m.recommendation_count + '건의 정책권고</div>';
+    + '총 ' + totalCount + '건의 정책권고'
+    + (coCount > 0 ? ' <span style="color:var(--accent);font-size:0.85rem">(' + hdrParts.join(' + ') + ')</span>' : '')
+    + '</div>';
 
   const list = document.getElementById('ministryRecList');
   let html = '';
-  const taskNumMap = {};
-  DATA.tasks.tasks.forEach(t => { taskNumMap[t.id] = t.number; });
-  m.actions.forEach((a, i) => {
+
+  // 주관 권고 task_id+seq Set 구축
+  const primaryKeys = new Set();
+  m.actions.forEach(a => {
+    const minTask = DATA.tasks.tasks.find(t => t.id === a.task_id);
+    const minRec = _findRecByContent(minTask, a.content);
+    const seq = minRec ? minRec.seq : 0;
+    primaryKeys.add(a.task_id + '_' + seq);
+  });
+
+  // 협력 권고 키 Set 구축
+  const coopKeys = new Set();
+  if (rc && rc.coopRecs) {
+    rc.coopRecs.forEach(function(r) { coopKeys.add(r.task_id + '_' + r.seq); });
+  }
+
+  // rc.recs + coopRecs에서 전체 권고를 순회하며 주관/공동/협력 구분
+  const allRecs = [];
+  const seen = new Set();
+  if (rc) {
+    // 주관/공동주관 권고
+    (rc.recs || []).forEach(function(r) {
+      var key = r.task_id + '_' + r.seq;
+      if (seen.has(key)) return;
+      seen.add(key);
+      allRecs.push({ task_id: r.task_id, task_title: r.task_title, task_number: r.task_number, content: r.content, deadline: r.deadline, deadline_label: r.deadline_label, seq: r.seq, role: primaryKeys.has(key) ? 'lead' : 'colead' });
+    });
+    // 협력 권고
+    (rc.coopRecs || []).forEach(function(r) {
+      var key = r.task_id + '_' + r.seq;
+      if (seen.has(key)) return;
+      seen.add(key);
+      allRecs.push({ task_id: r.task_id, task_title: r.task_title, task_number: r.task_number, content: r.content, deadline: r.deadline, deadline_label: r.deadline_label, seq: r.seq, role: 'coop' });
+    });
+  } else {
+    // 폴백: 캐시 없으면 기존 m.actions 사용
+    m.actions.forEach(a => {
+      const minTask = DATA.tasks.tasks.find(t => t.id === a.task_id);
+      const minRec = _findRecByContent(minTask, a.content);
+      const seq = minRec ? minRec.seq : 0;
+      allRecs.push({ task_id: a.task_id, task_title: a.task_title, task_number: minTask ? minTask.number : '', content: a.content, deadline: a.deadline, deadline_label: a.deadline_label, seq: seq, role: 'lead' });
+    });
+  }
+
+  allRecs.forEach(a => {
     const riskLevel = classifyDeadline(a.deadline);
     const borderStyle = (riskLevel === 'overdue' || riskLevel === 'critical') ? 'border-left-color:#dc3545' :
                         riskLevel === 'urgent' ? 'border-left-color:#fd7e14' : '';
-    const minTask = DATA.tasks.tasks.find(t => t.id === a.task_id);
-    const minRec = _findRecByContent(minTask, a.content);
-    const minSeq = minRec ? minRec.seq : 0;
-    const minBmKey = a.task_id + '_' + minSeq;
-    const minBmActive = minSeq && STATE.bookmarks.has(String(minBmKey)) ? ' bm-active' : '';
-    const minBmHl = minSeq && STATE.bookmarks.has(String(minBmKey)) ? ' bm-highlighted' : '';
-    html += '<li class="rec-item' + minBmHl + '" id="rec-li-' + minBmKey + '" onclick="openTaskModal(' + a.task_id + (minSeq ? ',' + minSeq : '') + ')" style="cursor:pointer;' + borderStyle + '" tabindex="0" role="button">';
+    const bmKey = a.task_id + '_' + a.seq;
+    const bmActive = a.seq && STATE.bookmarks.has(String(bmKey)) ? ' bm-active' : '';
+    const bmHl = a.seq && STATE.bookmarks.has(String(bmKey)) ? ' bm-highlighted' : '';
+    html += '<li class="rec-item' + bmHl + '" id="rec-li-' + bmKey + '" onclick="openTaskModal(' + a.task_id + (a.seq ? ',' + a.seq : '') + ')" style="cursor:pointer;' + borderStyle + '" tabindex="0" role="button">';
     html += '<div class="rec-meta" style="justify-content:space-between">';
     html += '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">';
-    const tNum = taskNumMap[a.task_id] ? escapeHtml(taskNumMap[a.task_id]) : '';
-    const seqLabel = minSeq ? ' · 권고 ' + minSeq : '';
+    const tNum = a.task_number ? escapeHtml(a.task_number) : '';
+    const seqLabel = a.seq ? ' · 권고 ' + a.seq : '';
     html += '<span style="font-weight:600;white-space:nowrap">과제 ' + tNum + seqLabel + '</span>';
     html += '<span style="color:var(--gray);font-size:0.88em">' + escapeHtml(a.task_title) + '</span>';
+    if (a.role === 'colead') html += '<span class="badge" style="background:#e3f2fd;color:var(--primary);font-size:0.72rem">공동주관</span>';
+    if (a.role === 'coop') html += '<span class="badge" style="background:#e8f5e9;color:#2e7d32;font-size:0.72rem">협력</span>';
     if (a.deadline_label) {
       const dlBadgeClass = (riskLevel === 'overdue' || riskLevel === 'critical') ? 'badge-overdue' : riskLevel === 'urgent' ? 'badge-urgent-deadline' : 'badge-deadline';
       html += '<span class="badge ' + dlBadgeClass + '">' + escapeHtml(a.deadline_label) + '</span>';
@@ -3207,7 +3404,7 @@ function selectMinistry(name) {
     if (riskLevel === 'critical') html += '<span style="color:var(--warning);font-weight:700">[기한 임박]</span>';
     if (riskLevel === 'overdue') html += '<span style="color:var(--danger);font-weight:700">[기한초과]</span>';
     html += '</div>';
-    if (minSeq) { html += '<button class="bookmark-btn' + minBmActive + '" title="북마크" onclick="event.stopPropagation();toggleBookmark(' + a.task_id + ',' + minSeq + ')" aria-label="북마크 토글">&#9733;</button>'; }
+    if (a.seq) { html += '<button class="bookmark-btn' + bmActive + '" title="북마크" onclick="event.stopPropagation();toggleBookmark(' + a.task_id + ',' + a.seq + ')" aria-label="북마크 토글">&#9733;</button>'; }
     html += '</div>';
     html += '<div class="rec-content">' + escapeHtml(truncate(a.content, 200)) + '</div>';
     html += '</li>';
@@ -3309,7 +3506,7 @@ function renderTimeline() {
     if (areaVal && String(t.strategic_area_id) !== areaVal) return;
 
     t.recommendations.forEach(r => {
-      if (ministryVal && r.ministry !== ministryVal) return;
+      if (ministryVal && r.ministry !== ministryVal && (extractMinistries(r.content) || '').indexOf(ministryVal) === -1) return;
       if (kwList.length > 0) {
         const matchTask = kwList.some(k => k === String(t.id));
         if (!matchTask) {
@@ -3333,7 +3530,7 @@ function renderTimeline() {
         taskNumber: t.number,
         taskTitle: t.title,
         areaName: t.strategic_area_name,
-        ministry: r.ministry,
+        ministry: extractMinistries(r.content) || r.ministry,
         recSeq: r.seq,
         content: r.content,
         deadline: r.deadline,
@@ -3444,10 +3641,14 @@ function renderTimeline() {
 
   document.getElementById('timelineGrid').innerHTML = html;
 
-  // Gantt 보기가 활성 상태이면 필터 적용하여 갱신
+  // Gantt/결과물 보기가 활성 상태이면 필터 적용하여 갱신
   var ganttEl = document.getElementById('ganttContainer');
   if (ganttEl && ganttEl.style.display !== 'none') {
     renderGanttView();
+  }
+  var delivEl = document.getElementById('delivContainer');
+  if (delivEl && delivEl.style.display !== 'none') {
+    renderDelivView();
   }
   updateURL();
 }
@@ -3853,7 +4054,7 @@ function renderRisk() {
 
         sectionsHtml += '<div class="ri-meta" style="margin-top:6px">';
         sectionsHtml += '<span>' + group.recs.length + '\uAC74 \uAD8C\uACE0</span>';
-        const mins = [...new Set(group.recs.map(r => r.ministry))];
+        const mins = []; group.recs.forEach(function(r) { var ms = extractMinistries(r.content); (ms ? ms.split(', ') : [r.ministry]).forEach(function(m) { if (m && mins.indexOf(m) === -1) mins.push(m); }); });
         sectionsHtml += '<span>\uB2F4\uB2F9: ' + mins.join(', ') + '</span>';
         if (group.recs[0].deadlineLabel) sectionsHtml += '<span>\uAE30\uD55C: ' + escapeHtml(group.recs[0].deadlineLabel) + '</span>';
         sectionsHtml += '</div>';
@@ -4409,7 +4610,7 @@ function renderSimilarityPairs() {
       }
       html += '<div class="sim-rec-row' + (isCommon ? ' common-min' : '') + '">';
       html += '<div class="sim-rec-meta">';
-      html += '<span class="badge badge-ministry">' + escapeHtml(r.ministry) + '</span>';
+      html += '<span class="badge badge-ministry">' + escapeHtml(extractMinistries(r.content) || r.ministry) + '</span>';
       html += dlBadge;
       if (isCommon) html += '<span style="color:var(--primary);font-weight:700;font-size:0.72rem">&#9733; 공통부처</span>';
       html += '</div>';
@@ -4434,7 +4635,7 @@ function renderSimilarityPairs() {
       }
       html += '<div class="sim-rec-row' + (isCommon ? ' common-min' : '') + '">';
       html += '<div class="sim-rec-meta">';
-      html += '<span class="badge badge-ministry">' + escapeHtml(r.ministry) + '</span>';
+      html += '<span class="badge badge-ministry">' + escapeHtml(extractMinistries(r.content) || r.ministry) + '</span>';
       html += dlBadge;
       if (isCommon) html += '<span style="color:var(--primary);font-weight:700;font-size:0.72rem">&#9733; 공통부처</span>';
       html += '</div>';
@@ -5263,7 +5464,7 @@ function renderGlobal() {
     accHtml += '</div>';
     accHtml += '<div class="coop-section-body">';
     tasks.forEach(t => {
-      const mins = [...new Set(t.recommendations.map(r => r.ministry))];
+      const mins = []; t.recommendations.forEach(function(r) { var ms = extractMinistries(r.content); (ms ? ms.split(', ') : [r.ministry]).forEach(function(m) { if (m && mins.indexOf(m) === -1) mins.push(m); }); });
       accHtml += '<div class="task-card axis-' + t.policy_axis_id + '" onclick="openTaskModal(' + t.id + ')" style="margin-top:8px">';
       accHtml += '<div class="task-number">\uACFC\uC81C ' + escapeHtml(t.number) + ' | ' + escapeHtml(t.strategic_area_name) + '</div>';
       accHtml += '<div class="task-title">' + escapeHtml(t.title) + '</div>';
@@ -5281,7 +5482,7 @@ function renderGlobal() {
     initHtml = '<div style="color:var(--gray);padding:12px">\uD574\uB2F9 \uACFC\uC81C \uC5C6\uC74C</div>';
   } else {
     area12Tasks.forEach(t => {
-      const mins = [...new Set(t.recommendations.map(r => r.ministry))];
+      const mins = []; t.recommendations.forEach(function(r) { var ms = extractMinistries(r.content); (ms ? ms.split(', ') : [r.ministry]).forEach(function(m) { if (m && mins.indexOf(m) === -1) mins.push(m); }); });
       initHtml += '<div class="task-card axis-3" onclick="openTaskModal(' + t.id + ')">';
       initHtml += '<div class="task-number">' + escapeHtml(t.number) + '</div>';
       initHtml += '<div class="task-title">' + escapeHtml(t.title) + '</div>';
@@ -5387,7 +5588,7 @@ function applyGlobalFilters() {
   let filtered = [...GLOBAL_TASKS];
 
   if (typeVal) filtered = filtered.filter(t => t._coopType === typeVal);
-  if (minVal) filtered = filtered.filter(t => t.recommendations.some(r => r.ministry === minVal));
+  if (minVal) filtered = filtered.filter(t => t.recommendations.some(r => r.ministry === minVal || (extractMinistries(r.content) || '').indexOf(minVal) !== -1));
 
   if (sortVal === 'deadline') {
     filtered.sort((a, b) => {
@@ -5414,7 +5615,7 @@ function applyGlobalFilters() {
   let html = '';
   filtered.forEach(t => {
     const meta = COOP_TYPES[t._coopType] || COOP_TYPES.other;
-    const mins = [...new Set(t.recommendations.map(r => r.ministry))];
+    const mins = []; t.recommendations.forEach(function(r) { var ms = extractMinistries(r.content); (ms ? ms.split(', ') : [r.ministry]).forEach(function(m) { if (m && mins.indexOf(m) === -1) mins.push(m); }); });
     html += '<div class="task-card axis-' + t.policy_axis_id + '" style="cursor:default">';
     html += '<div class="task-number" onclick="openTaskModal(' + t.id + ')" style="cursor:pointer">' + escapeHtml(t.number) + ' | ' + escapeHtml(t.strategic_area_name) + '</div>';
     html += '<div class="task-title" onclick="openTaskModal(' + t.id + ')" style="cursor:pointer">' + escapeHtml(t.title) + '</div>';
@@ -5431,7 +5632,7 @@ function applyGlobalFilters() {
         html += '<div style="padding:8px;background:#f8f9fa;border-radius:6px;border-left:3px solid ' + meta.color + ';margin-bottom:6px">';
         html += '<div style="font-size:0.78rem;color:var(--gray);margin-bottom:4px">';
         html += '<strong>권고 ' + r.seq + '</strong> &middot; ';
-        html += '<span class="badge badge-ministry">' + escapeHtml(r.ministry) + '</span>';
+        html += '<span class="badge badge-ministry">' + escapeHtml(extractMinistries(r.content) || r.ministry) + '</span>';
         html += renderDeadlineBadges(r);
         html += '</div>';
         html += '<div style="line-height:1.5;color:var(--dark);font-size:0.85rem">' + escapeHtml(r.content) + '</div>';
@@ -5566,7 +5767,7 @@ function renderStandards() {
         '<div onclick="openTaskModal(' + t.id + ')" style="cursor:pointer;padding:12px;background:white;border-radius:6px;border-left:3px solid ' + a5Color + '">' +
           '<div style="font-size:0.75rem;color:#666">○' + t.id + '</div>' +
           '<div style="font-weight:600;font-size:0.88rem;margin:4px 0">' + escapeHtml(t.title) + '</div>' +
-          '<div style="font-size:0.78rem;color:#666">' + [...new Set((t.recommendations || []).map(r => r.ministry).filter(Boolean))].slice(0, 3).join(', ') + '</div>' +
+          '<div style="font-size:0.78rem;color:#666">' + (function(t){ var ms=[]; (t.recommendations||[]).forEach(function(r){var x=extractMinistries(r.content);(x?x.split(', '):[r.ministry]).forEach(function(m){if(m&&ms.indexOf(m)===-1)ms.push(m);});}); return ms.slice(0,4).join(', '); })(t) + '</div>' +
         '</div>'
       ).join('') +
     '</div>';
@@ -5581,7 +5782,7 @@ function renderStandards() {
           '<div class="rec-list-meta">' +
             '<div class="rec-list-meta-left">' +
               '<span style="font-weight:600;cursor:pointer;color:var(--accent)" onclick="openTaskModal(' + r.taskId + ',' + r.seq + ')">과제 ' + escapeHtml(r.taskNumber) + ' · 권고 ' + r.seq + '</span>' +
-              '<span class="badge badge-ministry">' + escapeHtml(r.ministry) + '</span>' +
+              '<span class="badge badge-ministry">' + escapeHtml(extractMinistries(r.content) || r.ministry) + '</span>' +
               renderDeadlineBadges(r) +
             '</div>' +
             '<button class="bookmark-btn' + bmActive + '" title="북마크" onclick="toggleBookmark(' + r.taskId + ',' + r.seq + ')" aria-label="북마크 토글">&#9733;</button>' +
@@ -5629,7 +5830,7 @@ function renderStandards() {
               '<div class="rec-list-meta">' +
                 '<div class="rec-list-meta-left">' +
                   '<span style="font-weight:600;cursor:pointer;color:var(--accent)" onclick="openTaskModal(' + r.taskId + ',' + r.seq + ')">과제 ' + escapeHtml(r.taskNumber) + ' · 권고 ' + r.seq + '</span>' +
-                  '<span class="badge badge-ministry">' + escapeHtml(r.ministry) + '</span>' +
+                  '<span class="badge badge-ministry">' + escapeHtml(extractMinistries(r.content) || r.ministry) + '</span>' +
                   renderDeadlineBadges(r) +
                 '</div>' +
                 '<button class="bookmark-btn' + bmActive + '" title="북마크" onclick="toggleBookmark(' + r.taskId + ',' + r.seq + ')" aria-label="북마크 토글">&#9733;</button>' +
@@ -6064,7 +6265,7 @@ function renderGlobalRecListView(tasks) {
     html += '<div class="rec-list-meta">';
     html += '<div class="rec-list-meta-left">';
     html += '<span><strong>권고 ' + r.seq + '</strong></span>';
-    html += '<span class="badge badge-ministry">' + escapeHtml(r.ministry) + '</span>';
+    html += '<span class="badge badge-ministry">' + escapeHtml(extractMinistries(r.content) || r.ministry) + '</span>';
     html += renderDeadlineBadges(r);
     html += '<span class="badge" style="background:' + meta.color + ';color:white;font-size:0.72rem">' + meta.label + '</span>';
     html += '</div>';
@@ -7035,7 +7236,7 @@ function exportCSV() {
   DATA.tasks.tasks.forEach(function(t) {
     t.recommendations.forEach(function(r) {
       rows.push([t.id, '"'+t.title.replace(/"/g,'""')+'"', t.policy_axis_name, t.strategic_area_name,
-        r.ministry, r.deadline_label||r.deadline||'', r.status||'']);
+        extractMinistries(r.content)||r.ministry, r.deadline_label||r.deadline||'', r.status||'']);
     });
   });
   downloadCSV(rows, 'ai_action_plan_tasks.csv');
@@ -7048,7 +7249,7 @@ function exportRiskCSV() {
       var level = classifyDeadline(r.deadline);
       var dd = getDeadlineDate(r.deadline);
       var daysLeft = dd ? Math.ceil((dd - new Date()) / 86400000) : '';
-      rows.push([t.id, '"'+t.title.replace(/"/g,'""')+'"', r.ministry, r.deadline_label||r.deadline||'', level, daysLeft]);
+      rows.push([t.id, '"'+t.title.replace(/"/g,'""')+'"', extractMinistries(r.content)||r.ministry, r.deadline_label||r.deadline||'', level, daysLeft]);
     });
   });
   downloadCSV(rows, 'ai_action_plan_risk.csv');
@@ -7087,7 +7288,7 @@ function exportMarkdown() {
       t.recommendations.forEach(function(r) {
         var content = (r.content || '').replace(/\|/g, '∣').replace(/\n/g, ' ').trim();
         if (content.length > 200) content = content.slice(0, 200) + '…';
-        md += '| ' + r.seq + ' | ' + (r.ministry || '') + ' | ' + (r.deadline_label || r.deadline || '') + ' | ' + content + ' |\n';
+        md += '| ' + r.seq + ' | ' + (extractMinistries(r.content) || r.ministry || '') + ' | ' + (r.deadline_label || r.deadline || '') + ' | ' + content + ' |\n';
       });
       md += '\n';
     }
@@ -7432,7 +7633,7 @@ function runSimulation() {
   DATA.tasks.tasks.forEach(function(t) {
     t.recommendations.forEach(function(r) {
       if (r.deadline === quarter) {
-        directTasks.push({ id: t.id, title: t.title, ministry: r.ministry });
+        directTasks.push({ id: t.id, title: t.title, ministry: extractMinistries(r.content) || r.ministry });
       }
     });
   });
@@ -7546,6 +7747,263 @@ function printGantt() {
   w.document.close();
 }
 
+// ============================================================
+// 주무 부처 추출 (복수 부처 지원)
+// ============================================================
+var _MINS_LIST = '국가AI전략위|국가데이터처|과학기술혁신본부|과기정통부|행안부|산업부|복지부|교육부|국방부|법무부|외교부|기후부|개인정보위|국정원|경찰청|해수부|문체부|중기부|농식품부|국토부|환경부|방통위|공정위|관세청|방사청|고용부|소방청|국조실|여가부|인사처|조달청|병무청|금융위|국표원|노동부|국세청|우주청|기상청|질병청|원안위|식약처|지식재산처|재정경제부|성평등부|지방시대위원회|시도교육청|국교위|법원행정처|방미통위|기획예산처';
+var _MINS_RE_EXTRACT = new RegExp('(' + _MINS_LIST + ')(?:\\((?:및\\s*)?(' + _MINS_LIST + ')\\))?', 'g');
+
+function extractMinistries(content) {
+  if (!content) return '';
+  // 첫 문장 주어부: "~은/는 " 앞까지
+  var m = content.match(/^(.+?)[은는]\s/);
+  if (!m) return '';
+  var subj = m[1];
+  var found = [];
+  var mm;
+  _MINS_RE_EXTRACT.lastIndex = 0;
+  while ((mm = _MINS_RE_EXTRACT.exec(subj)) !== null) {
+    if (mm[2]) {
+      found.push(mm[1] + '(' + mm[2] + ')');
+    } else {
+      found.push(mm[1]);
+    }
+  }
+  return found.length > 1 ? found.join(', ') : '';
+}
+
+// 협력/협조/협의 부처 추출: 본문에서 주관 부처를 제외한 협력 부처 목록 반환
+function extractCoopMinistries(content) {
+  if (!content) return [];
+  // 주관 부처 추출 (주어부)
+  var leadSet = new Set();
+  var sm = content.match(/^(.+?)[은는]\s/);
+  if (sm) {
+    _MINS_RE_EXTRACT.lastIndex = 0;
+    var lm;
+    while ((lm = _MINS_RE_EXTRACT.exec(sm[1])) !== null) {
+      leadSet.add(lm[1]);
+      if (lm[2]) leadSet.add(lm[2]);
+    }
+  }
+  // 주관 부처가 없으면 r.ministry를 기본으로 사용 (호출 시 외부에서 추가)
+  // 전체 본문에서 모든 부처 추출
+  var allMins = [];
+  _MINS_RE_EXTRACT.lastIndex = 0;
+  var am;
+  while ((am = _MINS_RE_EXTRACT.exec(content)) !== null) {
+    if (am[2]) {
+      if (!leadSet.has(am[1]) && allMins.indexOf(am[1]) === -1) allMins.push(am[1]);
+      if (!leadSet.has(am[2]) && allMins.indexOf(am[2]) === -1) allMins.push(am[2]);
+    } else {
+      if (!leadSet.has(am[1]) && allMins.indexOf(am[1]) === -1) allMins.push(am[1]);
+    }
+  }
+  return allMins;
+}
+
+// ============================================================
+// 결과물 보기 (Deliverables View)
+// ============================================================
+function extractDeliverable(content) {
+  if (!content) return '';
+  // 협력/협조/협의 구문 제거 (부처명+와/과 협력하여 등)
+  var MINS_DL = '과기정통부|행안부|산업부|복지부|교육부|국방부|법무부|외교부|기후부|개인정보위|국정원|경찰청|해수부|문체부|중기부|농식품부|국토부|환경부|재정경제부|방통위|공정위|관세청|방사청|고용부|소방청|국조실|성평등부|여가부|인사처|조달청|병무청|금융위|방미통위|국가AI전략위|부총리인|국표원|노동부|국세청|국교위|시도교육청|기획예산처|국가데이터처|우주청|기상청|법원행정처|과학기술혁신본부|지방시대위원회';
+  var coopRe = new RegExp('(?:' + MINS_DL + ')(?:[,，·\\s]*(?:' + MINS_DL + '))*(?:[,，·\\s]*등)?\\s*(?:관계\\s*)?(?:부처|기관)?[와과]\\s*(?:협력|협조|협의)(?:하여|해)\\s*', 'g');
+  content = content.replace(coopRe, '');
+  var VERBS = '마련|수립|구축|확정|시행|추진|발표|설립|발의|도입|제출|실시|반영|개편|정비|운영|개정|확충|확보|신설|강화|개선|완료|조성|제정|공개|배포|적용|확대|발간|의무화|법제화|고도화|출범|착수|편성|이행|지정|선정|양성|배출|육성|설치|체결|가동|개시|투입|집행|지원|활성화|시범운영|상용화|준공|고시|발급|검증|점검|정립|개발|제시|정의|공포|인가|도출|분석|연계|시작|설계|공유|선도|확산|정례화|일원화|내재화|표준화|전환|배정|탐색|제공|기획|정착|구성|개방|촉진|보강|보완|조정|배포|정비';
+  var NOUNS = '방안|계획|전략|체계|기준|제도|가이드라인|로드맵|플랫폼|시스템|센터|프로그램|인프라|협의체|서비스|사업|연구소|위원회|모델|법률';
+  var MINS = MINS_DL;
+  var minsRe = new RegExp('(?:' + MINS + ')[는은과와,，\\s·()（）]*(?:등\\s*)?', 'g');
+
+  function _tr(t) {
+    if (!t) return '';
+    t = t.replace(minsRe, '');
+    var ps = [/^.*?(?:협력하여|협의하여|협조하여|연계하여|협력해|협조해|협의해)\s*/,
+      /^.*?(?:위해서?|위하여|위해)\s+/, /^.*?(?:통해서?|통하여)\s+/,
+      /^.*?(?:활용하여|기반으로|근거로|바탕으로)\s+/, /^.*?(?:할\s*)?수\s*있도록\s+/];
+    for (var i = 0; i < ps.length; i++) { var n = t.replace(ps[i], ''); if (n && n.length >= 3) t = n; }
+    t = t.replace(/^[은는이가을를의에서와로도만며고에게]\s+/, '');
+    t = t.replace(/^[가-힣][은는이가을를의에서와로도만며고·에게]\s*/, '');
+    t = t.replace(/^[,，\s·\-]+/, '');
+    t = t.replace(/\d+\)/g, '');
+    t = t.replace(/^수\s*있는\s+/, '');
+    if (t.indexOf('\u2018') < 0) {
+      var n = t.replace(/^.*?(?:하는|된|되는|할|위한|따른|기반한|통한|관한)\s+/, '');
+      if (n && n.length >= 4) t = n;
+    }
+    var q = t.match(/([\u2018][^\u2019]+[\u2019])\s*([\w가-힣·\-()]*)/);
+    if (q && q[0].length > 5) return q[0].trim();
+    if (t.length > 40) {
+      var p = t.split(/[,，]\s*/); t = p[p.length-1].trim();
+      if (t.length < 4 && p.length > 1) t = p[p.length-2].trim();
+    }
+    return t.trim();
+  }
+
+  var delivs = [];
+  // 1차: "목적어을/를 [기한] 동사한다/하고/하며" 패턴 반복 매칭
+  var pat = new RegExp('([^.。\\n]+?)[을를]\\s+(?:[\u2018\u2019\u0027`]?\\d{2}년\\s*(?:\\d분기\\s*)?(?:까지|내지|이내에?|내로?|내에|부터|에)\\s+)?(' + VERBS + ')(?:한다|하고|하며|하되|해야|하여야)', 'g');
+  var mm;
+  while ((mm = pat.exec(content)) !== null) {
+    var raw = mm[1], verb = mm[2];
+    var seps = ['한다. ', '한다.', '. ', '; '];
+    for (var s = 0; s < seps.length; s++) {
+      var idx = raw.lastIndexOf(seps[s]);
+      if (idx >= 0) { raw = raw.substring(idx + seps[s].length); break; }
+    }
+    var obj = _tr(raw);
+    if (obj.length > 3) delivs.push(obj + ' ' + verb);
+  }
+  // 2차: "X을/를 동사한다" (기한 없이)
+  if (!delivs.length) {
+    mm = content.match(new RegExp('([^.。\\n]{5,60}?)[을를]\\s*(' + VERBS + ')한다'));
+    if (mm) { var o = _tr(mm[1]); if (o.length > 3) delivs.push(o + ' ' + mm[2]); }
+  }
+  // 3차: "지속적으로 강화/확대한다"
+  if (!delivs.length) {
+    mm = content.match(new RegExp('([^.。\\n]{5,40}?)[을를]?\\s*(?:지속적으로|계속적으로|단계적으로)?\\s*(' + VERBS + ')한다'));
+    if (mm) { var o = _tr(mm[1]); if (o.length > 3) delivs.push(o + ' ' + mm[2]); }
+  }
+  // 4차: 인용부호
+  if (!delivs.length) {
+    mm = content.match(/[「｢]([^」｣]{3,45})[」｣]/);
+    if (mm) return mm[1].trim();
+    mm = content.match(/[\u2018]([^\u2019]{3,40})[\u2019]/);
+    if (mm && !/^\d{2}년/.test(mm[1])) return mm[1].trim();
+  }
+  // 5차: 핵심 명사구
+  if (!delivs.length) {
+    mm = content.substring(0, 200).match(new RegExp('([\\w가-힣·\\- ]{4,30}(?:' + NOUNS + '))'));
+    if (mm) { var o = _tr(mm[1]); if (o.length > 4) return o; }
+  }
+  if (delivs.length) {
+    var uniq = [];
+    for (var i = 0; i < delivs.length && uniq.length < 3; i++) {
+      var d = delivs[i], dup = false;
+      for (var j = 0; j < uniq.length; j++) {
+        if (d.indexOf(uniq[j]) >= 0) { uniq[j] = d; dup = true; break; }
+        if (uniq[j].indexOf(d) >= 0) { dup = true; break; }
+      }
+      if (!dup) uniq.push(d);
+    }
+    return uniq.join(', ');
+  }
+  return '';
+}
+
+function renderDelivView() {
+  var container = document.getElementById('delivContainer');
+  if (!container) return;
+
+  // 타임라인 필터 적용
+  var axisVal = (document.getElementById('tlFilterAxis') || {}).value || '';
+  var areaVal = (document.getElementById('tlFilterArea') || {}).value || '';
+  var ministryVal = (document.getElementById('tlFilterMinistry') || {}).value || '';
+  var kwVal = ((document.getElementById('tlFilterKeyword') || {}).value || '').trim().toLowerCase();
+  var kwList = kwVal ? parseKeywords(kwVal) : [];
+
+  var quarters = ['26Q1','26Q2','26Q3','26Q4','27+'];
+  var axisColors = {1:'#1565c0', 2:'#6a1b9a', 3:'#2e7d32'};
+  var rows = [];
+
+  DATA.tasks.tasks.forEach(function(t) {
+    if (axisVal && String(t.policy_axis_id) !== axisVal) return;
+    if (areaVal && String(t.strategic_area_id) !== areaVal) return;
+
+    t.recommendations.forEach(function(r) {
+      if (ministryVal && r.ministry !== ministryVal && (extractMinistries(r.content) || '').indexOf(ministryVal) === -1) return;
+      if (kwList.length > 0) {
+        var matchTask = kwList.some(function(k) { return k === String(t.id); });
+        if (!matchTask) {
+          var hay = (t.title + ' ' + (r.content || '')).toLowerCase();
+          if (!kwList.every(function(k) { return hay.indexOf(k) !== -1; })) return;
+        }
+      }
+      var dl = (r.deadline || '').toUpperCase();
+      var qIdx = quarters.indexOf(dl === '25Q4' ? '26Q1' : dl);
+      if (qIdx === -1 && dl) qIdx = 4; // 27+
+      var riskLevel = classifyDeadline(r.deadline);
+      var deliverable = extractDeliverable(r.content || '');
+
+      rows.push({
+        taskId: t.id, taskNumber: t.number, recSeq: r.seq,
+        title: t.title, content: r.content || '',
+        ministry: r.ministry, axis: t.policy_axis_id,
+        deadline: r.deadline || '미정', qIdx: qIdx,
+        riskLevel: riskLevel, deliverable: deliverable,
+        noDeadline: !dl
+      });
+    });
+  });
+
+  // 정렬: 분기순 → 과제번호순
+  rows.sort(function(a,b) {
+    if (a.noDeadline !== b.noDeadline) return a.noDeadline ? 1 : -1;
+    return (a.qIdx - b.qIdx) || (a.taskId - b.taskId) || (a.recSeq - b.recSeq);
+  });
+
+  var hasFilter = axisVal || areaVal || ministryVal || kwVal;
+  var html = '';
+
+  // 통계 바
+  var withDeliv = rows.filter(function(r) { return r.deliverable; }).length;
+  html += '<div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;flex-wrap:wrap">';
+  html += '<span style="font-size:0.82rem;font-weight:600;color:var(--primary)">총 ' + rows.length + '건 권고사항</span>';
+  html += '<span style="font-size:0.78rem;color:var(--text-muted,var(--gray))">목표 결과물 추출: ' + withDeliv + '건</span>';
+  if (hasFilter) html += '<span style="font-size:0.8rem;color:var(--primary);margin-left:auto;font-weight:600">필터 적용됨</span>';
+  html += '<button onclick="printDelivView()" style="padding:3px 10px;border-radius:14px;border:1px solid var(--border);background:var(--card-bg,white);color:var(--text,var(--dark));font-size:0.78rem;cursor:pointer;margin-left:auto">🖨 인쇄</button>';
+  html += '</div>';
+
+  // 테이블
+  html += '<div style="max-height:75vh;overflow:auto"><table class="deliv-table"><thead><tr>';
+  html += '<th style="width:70px">과제</th>';
+  html += '<th style="width:60px">기한</th>';
+  html += '<th style="width:120px">부처</th>';
+  html += '<th>권고 내용</th>';
+  html += '<th style="width:280px">목표 결과물</th>';
+  html += '</tr></thead><tbody>';
+
+  if (rows.length === 0) {
+    html += '<tr><td colspan="5" style="text-align:center;padding:40px;color:var(--text-muted,var(--gray))">필터 조건에 해당하는 권고사항이 없습니다.</td></tr>';
+  } else {
+    rows.forEach(function(g) {
+      var isOverdue = g.riskLevel === 'overdue' || g.riskLevel === 'critical';
+      var isUrgent = g.riskLevel === 'urgent';
+      var axColor = axisColors[g.axis] || '#546e7a';
+      var dlColor = isOverdue ? '#dc3545' : isUrgent ? '#fd7e14' : 'var(--text-muted,var(--gray))';
+      var dlBg = isOverdue ? '#dc354510' : isUrgent ? '#fd7e1410' : '';
+      html += '<tr data-overdue="' + isOverdue + '" data-urgent="' + isUrgent + '" style="cursor:pointer" onclick="openTaskModal(' + g.taskId + ',' + g.recSeq + ')">';
+      html += '<td><span style="color:' + axColor + ';font-weight:700">' + g.taskNumber + '</span><span style="color:var(--text-muted,var(--gray));font-size:0.72rem">-' + g.recSeq + '</span></td>';
+      html += '<td style="white-space:nowrap;font-size:0.78rem;font-weight:600;color:' + dlColor + ';' + (dlBg ? 'background:' + dlBg : '') + '">' + g.deadline + '</td>';
+      html += '<td><span class="badge badge-ministry" style="font-size:0.75rem">' + escapeHtml(extractMinistries(g.content) || g.ministry) + '</span></td>';
+      html += '<td style="font-size:0.78rem;color:var(--text,var(--dark));max-width:400px">' + escapeHtml(g.content.length > 120 ? g.content.substring(0, 120) + '…' : g.content) + '</td>';
+      html += '<td>';
+      if (g.deliverable) {
+        html += '<div class="deliv-output"><strong>📋</strong> ' + escapeHtml(g.deliverable) + '</div>';
+      } else {
+        html += '<span style="color:var(--text-muted,var(--gray));font-size:0.75rem;font-style:italic">—</span>';
+      }
+      html += '</td>';
+      html += '</tr>';
+    });
+  }
+  html += '</tbody></table></div>';
+  container.innerHTML = html;
+}
+
+function printDelivView() {
+  var container = document.getElementById('delivContainer');
+  if (!container) return;
+  var w = window.open('', '_blank');
+  w.document.write('<!DOCTYPE html><html><head><meta charset="utf-8"><title>결과물 보기 - AI 행동계획</title>');
+  w.document.write('<style>body{font-family:-apple-system,sans-serif;padding:20px;font-size:12px}table{width:100%;border-collapse:collapse}th,td{padding:6px 8px;border:1px solid #ddd;text-align:left;font-size:11px}th{background:#f5f5f5;font-weight:700}.deliv-output{background:#f0f4ff;padding:3px 6px;border-radius:4px;font-size:11px}.deliv-output strong{color:#1565c0}@media print{body{padding:0}}</style>');
+  w.document.write('</head><body><h2>AI 행동계획 - 목표 결과물 현황</h2>');
+  w.document.write(container.querySelector('table').outerHTML);
+  w.document.write('<script>window.onload=function(){window.print();}<\/script></body></html>');
+  w.document.close();
+}
+
 function renderGanttView() {
   var container = document.getElementById('ganttContainer');
   if (!container) return;
@@ -7567,7 +8025,7 @@ function renderGanttView() {
     if (areaVal && String(t.strategic_area_id) !== areaVal) return;
 
     t.recommendations.forEach(function(r) {
-      if (ministryVal && r.ministry !== ministryVal) return;
+      if (ministryVal && r.ministry !== ministryVal && (extractMinistries(r.content) || '').indexOf(ministryVal) === -1) return;
       if (kwList.length > 0) {
         var matchTask = kwList.some(function(k) { return k === String(t.id); });
         if (!matchTask) {
@@ -7644,10 +8102,11 @@ function renderGanttView() {
       var barStyle = g.noDeadline ? 'background:repeating-linear-gradient(45deg,' + color + ',' + color + ' 4px,transparent 4px,transparent 8px);opacity:0.7' : 'background:' + color;
       var label = g.taskNumber + '-' + g.recSeq;
       var deadlineInfo = g.noDeadline ? ' [기한미정]' : ' [' + g.deadline + ']';
-      var tooltipText = '#' + label + ' ' + g.title + ' | ' + g.ministry + deadlineInfo + ' | ' + g.content.substring(0, 80);
+      var ganttMins = extractMinistries(g.content) || g.ministry;
+      var tooltipText = '#' + label + ' ' + g.title + ' | ' + ganttMins + deadlineInfo + ' | ' + g.content.substring(0, 80);
       html += '<div class="gantt-row" style="' + (_ganttExpand ? 'align-items:flex-start' : '') + '">';
       if (_ganttExpand) {
-        var ganttLabel = '<strong style="flex-shrink:0">' + label + '</strong> <span style="font-size:0.72rem;color:var(--text-muted,var(--gray))">' + g.ministry + (g.noDeadline ? ' · 미정' : '') + '</span><div style="white-space:normal;line-height:1.4;margin-top:2px;font-weight:400;color:var(--text,var(--dark))">' + (g.content || g.ministry) + '</div>';
+        var ganttLabel = '<strong style="flex-shrink:0">' + label + '</strong> <span style="font-size:0.72rem;color:var(--text-muted,var(--gray))">' + ganttMins + (g.noDeadline ? ' · 미정' : '') + '</span><div style="white-space:normal;line-height:1.4;margin-top:2px;font-weight:400;color:var(--text,var(--dark))">' + (g.content || g.ministry) + '</div>';
         html += '<div class="gantt-label" style="white-space:normal;height:auto" title="' + tooltipText.replace(/"/g, '&quot;') + '">' + ganttLabel + '</div>';
       } else {
         var contentSnip = g.content.length > 45 ? g.content.substring(0, 45) + '…' : g.content;
@@ -7669,19 +8128,22 @@ function renderGanttView() {
 function setTlViewMode(mode) {
   var grid = document.getElementById('timelineGrid');
   var gantt = document.getElementById('ganttContainer');
+  var deliv = document.getElementById('delivContainer');
   var btnGrid = document.getElementById('tlViewGrid');
   var btnGantt = document.getElementById('tlViewGantt');
+  var btnDeliv = document.getElementById('tlViewDeliv');
+  var inactiveStyle = function(btn) { btn.style.background = 'white'; btn.style.color = 'var(--gray)'; btn.style.borderColor = 'var(--border)'; };
+  var activeStyle = function(btn) { btn.style.background = 'var(--primary)'; btn.style.color = 'white'; btn.style.borderColor = 'var(--primary)'; };
+  inactiveStyle(btnGrid); inactiveStyle(btnGantt); inactiveStyle(btnDeliv);
+  grid.style.display = 'none'; gantt.style.display = 'none'; deliv.style.display = 'none';
   if (mode === 'gantt') {
-    grid.style.display = 'none';
-    gantt.style.display = 'block';
-    btnGrid.style.background = 'white'; btnGrid.style.color = 'var(--gray)'; btnGrid.style.borderColor = 'var(--border)';
-    btnGantt.style.background = 'var(--primary)'; btnGantt.style.color = 'white'; btnGantt.style.borderColor = 'var(--primary)';
+    gantt.style.display = 'block'; activeStyle(btnGantt);
     renderGanttView();
+  } else if (mode === 'deliv') {
+    deliv.style.display = 'block'; activeStyle(btnDeliv);
+    renderDelivView();
   } else {
-    grid.style.display = 'grid';
-    gantt.style.display = 'none';
-    btnGrid.style.background = 'var(--primary)'; btnGrid.style.color = 'white'; btnGrid.style.borderColor = 'var(--primary)';
-    btnGantt.style.background = 'white'; btnGantt.style.color = 'var(--gray)'; btnGantt.style.borderColor = 'var(--border)';
+    grid.style.display = 'grid'; activeStyle(btnGrid);
   }
   updateURL();
 }
@@ -7801,7 +8263,7 @@ function showCompare(id1, id2) {
     t.recommendations.forEach(function(r, i) {
       var dl = classifyDeadline(r.deadline);
       var color = dl === 'overdue' ? 'var(--danger)' : dl === 'critical' ? 'var(--warning)' : 'var(--gray)';
-      html += '<div style="padding:6px 0;border-bottom:1px solid var(--border);font-size:0.82rem"><span style="color:' + color + ';font-weight:600">[' + (r.deadline_label||r.deadline||'') + ']</span> ' + r.ministry + ': ' + (r.content||'').slice(0, 150) + (r.content && r.content.length > 150 ? '…' : '') + '</div>';
+      html += '<div style="padding:6px 0;border-bottom:1px solid var(--border);font-size:0.82rem"><span style="color:' + color + ';font-weight:600">[' + (r.deadline_label||r.deadline||'') + ']</span> ' + (extractMinistries(r.content) || r.ministry) + ': ' + (r.content||'').slice(0, 150) + (r.content && r.content.length > 150 ? '…' : '') + '</div>';
     });
     html += '</div></div>';
     return html;
