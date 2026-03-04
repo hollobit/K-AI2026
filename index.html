@@ -1972,13 +1972,27 @@ const DL_ORDER = ['25Q4','26Q1','26Q2','26Q3','26Q4','27Q1','27Q2','27Q3','27Q4'
 function extractDeadlines(rec) {
   const content = rec.content || '';
   const primary = rec.deadline || '';
-  const pat = /[''](\d{2})년\s*(\d)분기/g;
   const seen = new Set();
   const result = [];
   let m;
+  // 1) 'NN년 N분기' 패턴
+  const pat = /['\u2018\u2019](\d{2})년\s*(\d)분기/g;
   while ((m = pat.exec(content)) !== null) {
     const code = m[1] + 'Q' + m[2];
     const label = "'" + m[1] + '년 ' + m[2] + '분기';
+    if (!seen.has(code)) { seen.add(code); result.push({ deadline: code, deadline_label: label }); }
+  }
+  // 2) 'NN년까지/내/에' → NNQ4 (연말), 'NN년부터' → NNQ1 (연초) — 26~30년만
+  const patYear = /['\u2018\u2019](2[6-9]|30)년\s*(까지|부터|내|에)/g;
+  while ((m = patYear.exec(content)) !== null) {
+    // 바로 앞에 'N분기'가 있으면 이미 위에서 처리됨 → 건너뛰기
+    const before = content.substring(Math.max(0, m.index - 8), m.index);
+    if (/\d분기\s*$/.test(before)) continue;
+    const suffix = m[2];
+    const q = (suffix === '부터') ? '1' : '4';
+    const code = m[1] + 'Q' + q;
+    const labelSuffix = (suffix === '부터') ? '1분기~' : '4분기';
+    const label = "'" + m[1] + '년 ' + labelSuffix;
     if (!seen.has(code)) { seen.add(code); result.push({ deadline: code, deadline_label: label }); }
   }
   // primary가 content에 없으면 rec의 원본 label로 추가
@@ -2413,7 +2427,7 @@ function applyFilters() {
     if (axisVal && String(t.policy_axis_id) !== axisVal) return false;
     if (areaVal && String(t.strategic_area_id) !== areaVal) return false;
     if (ministryVal) {
-      const hasMinistry = t.recommendations.some(r => r.ministry === ministryVal || (extractMinistries(r.content) || '').indexOf(ministryVal) !== -1);
+      const hasMinistry = t.recommendations.some(r => r.ministry === ministryVal || (extractMinistries(r.content) || '').indexOf(ministryVal) !== -1 || extractCoopMinistries(r.content).indexOf(ministryVal) !== -1);
       if (!hasMinistry) return false;
     }
     if (deadlineVal) {
@@ -2961,9 +2975,7 @@ function renderAlertItems() {
       const label = item.level === 'overdue'
         ? '<span style="background:#ffcdd2;color:#b71c1c;font-weight:700;padding:1px 6px;border-radius:4px;font-size:0.8rem;margin-right:4px">[기한초과]</span>'
         : '<span style="background:#fff3e0;color:#e65100;font-weight:700;padding:1px 6px;border-radius:4px;font-size:0.8rem;margin-right:4px">[기한 임박]</span>';
-      const dlBadge = item.deadline_label
-        ? '<span style="font-size:0.78rem;color:var(--gray);margin-right:6px">' + escapeHtml(item.deadline_label) + '</span>'
-        : '';
+      const dlBadge = renderDeadlineBadges(item);
       const ministry = '<span style="font-size:0.8rem;color:var(--gray)"> — ' + escapeHtml(item.ministry) + '</span>';
       alertHtml += '<div class="alert-item" onclick="openTaskModal(' + item.task_id + ')" tabindex="0" role="button">'
         + label + dlBadge + escapeHtml(item.task_number) + ' ' + escapeHtml(item.task_title) + ministry + '</div>';
@@ -2997,7 +3009,7 @@ function renderAlertItems() {
         + '<span class="arc-title" style="font-weight:600">' + escapeHtml(task.task_number) + ' ' + escapeHtml(task.task_title) + '</span>'
         + '</div>';
       recs.forEach(r => {
-        const dl = r.deadline_label ? escapeHtml(r.deadline_label) : escapeHtml(r.deadline || '');
+        var dlBadges = renderDeadlineBadges(r);
         // 전체 내용에서 복수 부처 추출
         var recMins = [];
         if (r.content) {
@@ -3010,7 +3022,7 @@ function renderAlertItems() {
         }
         var recMinStr = recMins.length > 0 ? recMins.join(', ') : _normalizeMinName(r.ministry);
         alertHtml += '<div class="arc-content"><strong>' + escapeHtml(recMinStr) + '</strong>'
-          + (dl ? ' <span style="font-size:0.77rem;color:#856404">(' + dl + ')</span>' : '')
+          + (dlBadges ? ' ' + dlBadges : '')
           + '<br>' + escapeHtml(r.content) + '</div>';
       });
       alertHtml += '</div>';
@@ -3048,7 +3060,14 @@ function renderTasks() {
   DATA.tasks.tasks.forEach(t => {
     axes[t.policy_axis_id] = t.policy_axis_name;
     areas[t.strategic_area_id] = t.strategic_area_name;
-    t.recommendations.forEach(r => mins.add(r.ministry));
+    t.recommendations.forEach(r => {
+      mins.add(r.ministry);
+      // 복수 주관·협력 부처도 필터 목록에 포함
+      var leads = extractMinistries(r.content);
+      if (leads) leads.split(', ').forEach(function(m) { mins.add(m); });
+      var coops = extractCoopMinistries(r.content);
+      if (coops) coops.forEach(function(m) { mins.add(m); });
+    });
   });
 
   axisSelect.innerHTML = '<option value="">전체 정책축</option>';
@@ -3264,10 +3283,11 @@ function showCoAgency(name) {
   var agHdrParts = [];
   if (leadCnt > 0) agHdrParts.push('주관/공동주관 ' + leadCnt + '건');
   if (coopCnt > 0) agHdrParts.push('협력 ' + coopCnt + '건');
-  header.innerHTML = '<h3>' + escapeHtml(name) + '</h3>' +
+  header.innerHTML = '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px"><div><h3>' + escapeHtml(name) + '</h3>' +
     '<div style="font-size:0.9rem;color:var(--gray);margin-top:4px">총 ' + totalCnt + '건의 정책권고'
     + (agHdrParts.length > 0 ? ' <span style="color:var(--info);font-size:0.85rem">(' + agHdrParts.join(' + ') + ')</span>' : '')
-    + '</div>';
+    + '</div></div>'
+    + '<button onclick="printMinistryDetail()" style="flex-shrink:0;padding:6px 16px;border-radius:16px;border:1px solid #ccc;background:#f5f5f5;color:#333;font-size:0.82rem;cursor:pointer;white-space:nowrap;font-weight:600">🖨 인쇄</button></div>';
   // 협력 키 Set
   var coopKeySet = new Set();
   if (rc && rc.coopRecs) rc.coopRecs.forEach(function(r) { coopKeySet.add(r.task_id + '_' + r.seq); });
@@ -3349,11 +3369,12 @@ function selectMinistry(name) {
   var hdrParts = [];
   if (leadCntH > 0) hdrParts.push('주관 ' + leadCntH + '건');
   if (coopCntH > 0) hdrParts.push('협력 ' + coopCntH + '건');
-  header.innerHTML = '<h3>' + escapeHtml(m.full_name || m.name) + ' (' + escapeHtml(m.name) + ')</h3>'
+  header.innerHTML = '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px"><div><h3>' + escapeHtml(m.full_name || m.name) + ' (' + escapeHtml(m.name) + ')</h3>'
     + '<div style="font-size:0.9rem;color:var(--gray);margin-top:4px">'
     + '총 ' + totalCount + '건의 정책권고'
     + (hdrParts.length > 1 ? ' <span style="color:var(--accent);font-size:0.85rem">(' + hdrParts.join(' + ') + ')</span>' : '')
-    + '</div>';
+    + '</div></div>'
+    + '<button onclick="printMinistryDetail()" style="flex-shrink:0;padding:6px 16px;border-radius:16px;border:1px solid #ccc;background:#f5f5f5;color:#333;font-size:0.82rem;cursor:pointer;white-space:nowrap;font-weight:600">🖨 인쇄</button></div>';
 
   const list = document.getElementById('ministryRecList');
   let html = '';
@@ -3417,10 +3438,7 @@ function selectMinistry(name) {
     html += '<span style="color:var(--gray);font-size:0.88em">' + escapeHtml(a.task_title) + '</span>';
     if (a.role === 'colead') html += '<span class="badge" style="background:#e3f2fd;color:var(--primary);font-size:0.72rem">공동주관</span>';
     if (a.role === 'coop') html += '<span class="badge" style="background:#e8f5e9;color:#2e7d32;font-size:0.72rem">협력</span>';
-    if (a.deadline_label) {
-      const dlBadgeClass = (riskLevel === 'overdue' || riskLevel === 'critical') ? 'badge-overdue' : riskLevel === 'urgent' ? 'badge-urgent-deadline' : 'badge-deadline';
-      html += '<span class="badge ' + dlBadgeClass + '">' + escapeHtml(a.deadline_label) + '</span>';
-    }
+    html += renderDeadlineBadges(a);
     if (riskLevel === 'critical') html += '<span style="color:var(--warning);font-weight:700">[기한 임박]</span>';
     if (riskLevel === 'overdue') html += '<span style="color:var(--danger);font-weight:700">[기한초과]</span>';
     html += '</div>';
@@ -3432,6 +3450,76 @@ function selectMinistry(name) {
   list.innerHTML = html;
 
   detail.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function printMinistryDetail() {
+  var header = document.getElementById('ministryDetailHeader');
+  var list = document.getElementById('ministryRecList');
+  if (!header || !list) return;
+  var w = window.open('', '_blank');
+  w.document.write('<!DOCTYPE html><html><head><meta charset="utf-8"><title>부처별 정책권고 - AI 행동계획</title>');
+  w.document.write('<style>');
+  w.document.write('body{font-family:-apple-system,"Noto Sans KR",sans-serif;padding:24px;color:#222;line-height:1.6}');
+  w.document.write('h2{margin:0 0 4px;font-size:1.3rem}');
+  w.document.write('.subtitle{font-size:0.9rem;color:#666;margin-bottom:16px}');
+  w.document.write('.rec-item{border:1px solid #ddd;border-left:4px solid #1565c0;border-radius:6px;padding:10px 14px;margin-bottom:10px;page-break-inside:avoid}');
+  w.document.write('.rec-item.coop{border-left-color:#2e7d32}');
+  w.document.write('.rec-item.overdue{border-left-color:#dc3545}');
+  w.document.write('.rec-item.urgent{border-left-color:#fd7e14}');
+  w.document.write('.rec-meta{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:6px;font-size:0.82rem}');
+  w.document.write('.badge{display:inline-block;padding:1px 7px;border-radius:10px;font-size:0.72rem;font-weight:600}');
+  w.document.write('.badge-lead{background:#e3f2fd;color:#1565c0}');
+  w.document.write('.badge-colead{background:#e3f2fd;color:#1565c0}');
+  w.document.write('.badge-coop{background:#e8f5e9;color:#2e7d32}');
+  w.document.write('.badge-dl{padding:1px 6px;border-radius:8px;font-size:0.72rem}');
+  w.document.write('.badge-dl-safe{background:#e3f2fd;color:#1565c0}');
+  w.document.write('.badge-dl-overdue{background:#dc3545;color:white}');
+  w.document.write('.badge-dl-urgent{background:#fd7e14;color:white}');
+  w.document.write('.rec-content{font-size:0.85rem;color:#333}');
+  w.document.write('.task-label{font-weight:700;white-space:nowrap}.task-title{color:#666;font-size:0.85rem}');
+  w.document.write('@media print{body{padding:0}.rec-item{break-inside:avoid}}');
+  w.document.write('</style></head><body>');
+  // 헤더 (인쇄 버튼 제외)
+  var hdr = header.cloneNode(true);
+  var btn = hdr.querySelector('button');
+  if (btn) btn.remove();
+  var h3 = hdr.querySelector('h3');
+  if (h3) w.document.write('<h2>' + h3.innerHTML + '</h2>');
+  var sub = hdr.querySelector('div');
+  if (sub) w.document.write('<div class="subtitle">' + sub.innerHTML + '</div>');
+  // 권고 목록
+  var items = list.querySelectorAll('.rec-item, li');
+  items.forEach(function(li) {
+    var isCoop = li.innerHTML.indexOf('협력</span>') !== -1;
+    var isOverdue = li.style.borderLeftColor === 'rgb(220, 53, 69)';
+    var isUrgent = li.style.borderLeftColor === 'rgb(253, 126, 20)';
+    var cls = isCoop ? ' coop' : '';
+    if (isOverdue) cls += ' overdue';
+    else if (isUrgent) cls += ' urgent';
+    // 메타
+    var meta = li.querySelector('.rec-meta');
+    var content = li.querySelector('.rec-content');
+    w.document.write('<div class="rec-item' + cls + '">');
+    if (meta) {
+      w.document.write('<div class="rec-meta">');
+      var spans = meta.querySelectorAll('div:first-child > span, div:first-child > .badge');
+      spans.forEach(function(sp) {
+        var txt = sp.textContent.trim();
+        if (!txt) return;
+        var bg = sp.style.background || '';
+        if (bg.indexOf('e3f2fd') !== -1) w.document.write('<span class="badge badge-lead">' + txt + '</span> ');
+        else if (bg.indexOf('e8f5e9') !== -1) w.document.write('<span class="badge badge-coop">' + txt + '</span> ');
+        else if (sp.classList.contains('badge-overdue') || sp.classList.contains('badge-urgent-deadline')) w.document.write('<span class="badge badge-dl badge-dl-overdue">' + txt + '</span> ');
+        else if (sp.classList.contains('badge-deadline') || sp.classList.contains('badge')) w.document.write('<span class="badge badge-dl badge-dl-safe">' + txt + '</span> ');
+        else w.document.write('<span class="' + (sp.style.fontWeight === '600' ? 'task-label' : 'task-title') + '">' + txt + '</span> ');
+      });
+      w.document.write('</div>');
+    }
+    if (content) w.document.write('<div class="rec-content">' + content.textContent + '</div>');
+    w.document.write('</div>');
+  });
+  w.document.write('<script>window.onload=function(){window.print();}<\/script></body></html>');
+  w.document.close();
 }
 
 // ============================================================
@@ -3470,9 +3558,17 @@ function _initTimelineFilters() {
   const arSel = document.getElementById('tlFilterArea');
   if (arSel) areas.forEach(([id, name]) => arSel.add(new Option(name, String(id))));
 
-  const ministries = [...new Set(
-    DATA.tasks.tasks.flatMap(t => t.recommendations.map(r => r.ministry).filter(Boolean))
-  )].sort();
+  const minSet = new Set();
+  DATA.tasks.tasks.forEach(function(t) {
+    t.recommendations.forEach(function(r) {
+      if (r.ministry) minSet.add(r.ministry);
+      var leads = extractMinistries(r.content);
+      if (leads) leads.split(', ').forEach(function(m) { minSet.add(m); });
+      var coops = extractCoopMinistries(r.content);
+      if (coops) coops.forEach(function(m) { minSet.add(m); });
+    });
+  });
+  const ministries = [...minSet].sort();
   const minSel = document.getElementById('tlFilterMinistry');
   if (minSel) ministries.forEach(m => minSel.add(new Option(m, m)));
 }
@@ -3526,7 +3622,7 @@ function renderTimeline() {
     if (areaVal && String(t.strategic_area_id) !== areaVal) return;
 
     t.recommendations.forEach(r => {
-      if (ministryVal && r.ministry !== ministryVal && (extractMinistries(r.content) || '').indexOf(ministryVal) === -1) return;
+      if (ministryVal && r.ministry !== ministryVal && (extractMinistries(r.content) || '').indexOf(ministryVal) === -1 && extractCoopMinistries(r.content).indexOf(ministryVal) === -1) return;
       if (kwList.length > 0) {
         const matchTask = kwList.some(k => k === String(t.id));
         if (!matchTask) {
@@ -3535,17 +3631,8 @@ function renderTimeline() {
         }
       }
 
-      let qKey = 'none';
-      if (r.deadline) {
-        const dl = r.deadline.toUpperCase();
-        if (dl === '25Q4' || dl === '26Q1') qKey = '26Q1';
-        else if (dl === '26Q2') qKey = '26Q2';
-        else if (dl === '26Q3') qKey = '26Q3';
-        else if (dl === '26Q4') qKey = '26Q4';
-        else qKey = '27+';
-      }
-
-      quarters[qKey].push({
+      const dls = extractDeadlines(r);
+      const baseItem = {
         taskId: t.id,
         taskNumber: t.number,
         taskTitle: t.title,
@@ -3555,8 +3642,33 @@ function renderTimeline() {
         content: r.content,
         deadline: r.deadline,
         deadlineLabel: r.deadline_label,
-        riskLevel: r.deadline ? classifyDeadline(r.deadline) : 'safe'
-      });
+        riskLevel: r.deadline ? classifyDeadline(r.deadline) : 'safe',
+        allDeadlines: dls,
+        rec: r
+      };
+
+      // 복수 기한: 각 분기에 배치 (중복 허용)
+      const placedKeys = new Set();
+      if (dls.length > 0) {
+        dls.forEach(function(dl) {
+          const code = dl.deadline.toUpperCase();
+          let qKey;
+          if (code === '25Q4' || code === '26Q1') qKey = '26Q1';
+          else if (code === '26Q2') qKey = '26Q2';
+          else if (code === '26Q3') qKey = '26Q3';
+          else if (code === '26Q4') qKey = '26Q4';
+          else qKey = '27+';
+          if (!placedKeys.has(qKey)) {
+            placedKeys.add(qKey);
+            quarters[qKey].push(Object.assign({}, baseItem, {
+              riskLevel: classifyDeadline(dl.deadline)
+            }));
+          }
+        });
+      } else {
+        // 기한 미정
+        quarters['none'].push(baseItem);
+      }
       totalCount++;
     });
   });
@@ -3649,6 +3761,8 @@ function renderTimeline() {
         html += '<span class="tl-ministry">' + escapeHtml(item.ministry) + '</span>';
         html += '<span style="font-size:0.7rem;color:var(--gray)">과제 ' + escapeHtml(String(item.taskNumber)) + ' · 권고 ' + escapeHtml(String(item.recSeq)) + '</span>';
         if (riskBadge) html += riskBadge;
+        // 복수 기한 배지 표시
+        if (item.rec) html += renderDeadlineBadges(item.rec);
         html += '</div>';
         html += '<div style="font-size:0.82rem;font-weight:600;color:var(--dark);line-height:1.35' + (titleOnly ? '' : ';margin-bottom:3px') + '">' + escapeHtml(truncate(item.taskTitle, titleOnly ? 45 : 38)) + '</div>';
         if (!titleOnly && recSnip) html += '<div style="font-size:0.75rem;color:#666;line-height:1.4">' + escapeHtml(recSnip) + '</div>';
@@ -4619,7 +4733,7 @@ function renderSimilarityPairs() {
     p.taskA.recommendations.forEach(function(r) {
       const isCommon = commonMinSet.has(r.ministry);
       const riskLevel = classifyDeadline(r.deadline);
-      const dlBadge = r.deadline_label ? '<span class="badge badge-deadline" style="font-size:0.7rem">' + escapeHtml(r.deadline_label) + '</span>' : '';
+      const dlBadge = renderDeadlineBadges(r);
       // Highlight common keywords in content
       let content = escapeHtml(r.content);
       if (p.commonKeywords && p.commonKeywords.length > 0) {
@@ -4645,7 +4759,7 @@ function renderSimilarityPairs() {
     html += '<div class="sim-cmp-col-hdr" style="background:' + colColorB + '">' + escapeHtml(p.taskB.number) + ' ' + escapeHtml(p.taskB.title.substring(0, 30)) + (p.taskB.title.length > 30 ? '...' : '') + '</div>';
     p.taskB.recommendations.forEach(function(r) {
       const isCommon = commonMinSet.has(r.ministry);
-      const dlBadge = r.deadline_label ? '<span class="badge badge-deadline" style="font-size:0.7rem">' + escapeHtml(r.deadline_label) + '</span>' : '';
+      const dlBadge = renderDeadlineBadges(r);
       let content = escapeHtml(r.content);
       if (p.commonKeywords && p.commonKeywords.length > 0) {
         p.commonKeywords.slice(0, 6).forEach(function(kw) {
@@ -6418,7 +6532,7 @@ function renderBookmarkPanel() {
       html += '</span></div>';
       html += '<div class="bm-item-meta">';
       html += '<span class="badge badge-ministry">' + escapeHtml(rec.ministry) + '</span>';
-      if (rec.deadline_label) html += '<span class="badge badge-deadline">' + escapeHtml(rec.deadline_label) + '</span>';
+      html += renderDeadlineBadges(rec);
       html += '<span style="color:var(--gray)">권고 ' + seq + '</span>';
       html += '</div>';
       html += '<div class="bm-item-content">' + escapeHtml(rec.content) + '</div>';
@@ -6453,16 +6567,26 @@ function printBookmarks() {
       totalCount++;
       const riskLevel = classifyDeadline(rec.deadline);
       const borderColor = (riskLevel === 'overdue' || riskLevel === 'critical') ? '#dc3545' : riskLevel === 'urgent' ? '#fd7e14' : '#1B5FA4';
-      const deadlineText = rec.deadline_label ? rec.deadline_label : '기한 미정';
-      const dlStyle = (riskLevel === 'overdue' || riskLevel === 'critical')
-        ? 'background:#fde8e8;color:#b91c1c;border:1px solid #f5c6c6'
-        : riskLevel === 'urgent'
-          ? 'background:#fff3e0;color:#c05900;border:1px solid #ffcc80'
-          : riskLevel === 'caution'
-            ? 'background:#fffde7;color:#7a6000;border:1px solid #ffe082'
-            : rec.deadline_label
-              ? 'background:#e8f5e9;color:#2e7d32;border:1px solid #a5d6a7'
-              : 'background:#f0f0f0;color:#666;border:1px solid #ccc';
+      function dlStyleFor(lvl, hasLabel) {
+        if (lvl === 'overdue' || lvl === 'critical') return 'background:#fde8e8;color:#b91c1c;border:1px solid #f5c6c6';
+        if (lvl === 'urgent') return 'background:#fff3e0;color:#c05900;border:1px solid #ffcc80';
+        if (lvl === 'caution') return 'background:#fffde7;color:#7a6000;border:1px solid #ffe082';
+        if (hasLabel) return 'background:#e8f5e9;color:#2e7d32;border:1px solid #a5d6a7';
+        return 'background:#f0f0f0;color:#666;border:1px solid #ccc';
+      }
+      var allDls = extractDeadlines(rec);
+      var dlBadgesHtml = '';
+      if (allDls.length > 0) {
+        dlBadgesHtml = allDls.map(function(dl, i) {
+          var lvl = classifyDeadline(dl.deadline);
+          var sty = dlStyleFor(lvl, true);
+          if (dl.deadline !== (rec.deadline || '')) sty += ';opacity:0.72;font-size:0.85em';
+          return '<span class="bm-print-deadline" style="' + sty + '">' + escapeHtml(dl.deadline_label) + '</span>';
+        }).join(' ');
+      } else {
+        var sty = dlStyleFor(riskLevel, !!rec.deadline_label);
+        dlBadgesHtml = '<span class="bm-print-deadline" style="' + sty + '">' + escapeHtml(rec.deadline_label || '기한 미정') + '</span>';
+      }
       itemsHtml +=
         '<div class="bm-print-item" style="border-left-color:' + borderColor + '">' +
           '<div class="bm-print-task">' +
@@ -6472,7 +6596,7 @@ function printBookmarks() {
           '<div class="bm-print-meta">' +
             '<span class="bm-print-seq">권고 ' + seq + '</span>' +
             '<span class="bm-print-ministry">' + escapeHtml(rec.ministry || '') + '</span>' +
-            '<span class="bm-print-deadline" style="' + dlStyle + '">' + escapeHtml(deadlineText) + '</span>' +
+            dlBadgesHtml +
           '</div>' +
           '<div class="bm-print-content">' + escapeHtml(rec.content) + '</div>' +
         '</div>';
@@ -7256,7 +7380,7 @@ function exportCSV() {
   DATA.tasks.tasks.forEach(function(t) {
     t.recommendations.forEach(function(r) {
       rows.push([t.id, '"'+t.title.replace(/"/g,'""')+'"', t.policy_axis_name, t.strategic_area_name,
-        extractMinistries(r.content)||r.ministry, r.deadline_label||r.deadline||'', r.status||'']);
+        extractMinistries(r.content)||r.ministry, (function(){ var ds=extractDeadlines(r); return ds.length>0 ? ds.map(function(d){return d.deadline_label}).join(' / ') : r.deadline_label||r.deadline||''; })(), r.status||'']);
     });
   });
   downloadCSV(rows, 'ai_action_plan_tasks.csv');
@@ -7269,7 +7393,9 @@ function exportRiskCSV() {
       var level = classifyDeadline(r.deadline);
       var dd = getDeadlineDate(r.deadline);
       var daysLeft = dd ? Math.ceil((dd - new Date()) / 86400000) : '';
-      rows.push([t.id, '"'+t.title.replace(/"/g,'""')+'"', extractMinistries(r.content)||r.ministry, r.deadline_label||r.deadline||'', level, daysLeft]);
+      var dlsExport = extractDeadlines(r);
+      var dlExportText = dlsExport.length > 0 ? dlsExport.map(function(d){return d.deadline_label}).join(' / ') : r.deadline_label||r.deadline||'';
+      rows.push([t.id, '"'+t.title.replace(/"/g,'""')+'"', extractMinistries(r.content)||r.ministry, dlExportText, level, daysLeft]);
     });
   });
   downloadCSV(rows, 'ai_action_plan_risk.csv');
@@ -7308,7 +7434,9 @@ function exportMarkdown() {
       t.recommendations.forEach(function(r) {
         var content = (r.content || '').replace(/\|/g, '∣').replace(/\n/g, ' ').trim();
         if (content.length > 200) content = content.slice(0, 200) + '…';
-        md += '| ' + r.seq + ' | ' + (extractMinistries(r.content) || _normalizeMinName(r.ministry) || '') + ' | ' + (r.deadline_label || r.deadline || '') + ' | ' + content + ' |\n';
+        var mdDls = extractDeadlines(r);
+        var mdDlText = mdDls.length > 0 ? mdDls.map(function(d){return d.deadline_label}).join(', ') : (r.deadline_label || r.deadline || '');
+        md += '| ' + r.seq + ' | ' + (extractMinistries(r.content) || _normalizeMinName(r.ministry) || '') + ' | ' + mdDlText + ' | ' + content + ' |\n';
       });
       md += '\n';
     }
@@ -7770,47 +7898,86 @@ function printGantt() {
 // ============================================================
 // 주무 부처 추출 (복수 부처 지원)
 // ============================================================
-var _MINS_LIST = '국가AI전략위|국가데이터처|과학기술혁신본부|과기정통부|행안부|산업부|복지부|교육부|국방부|법무부|외교부|기후부|개인정보위|국정원|경찰청|해수부|문체부|중기부|농식품부|국토부|환경부|방통위|공정위|관세청|방사청|고용부|소방청|국조실|여가부|인사처|조달청|병무청|금융위|국표원|노동부|국세청|우주청|기상청|질병청|원안위|식약처|지식재산처|재정경제부|성평등부|지방시대위원회|시도교육청|국교위|법원행정처|방미통위|기획예산처';
+var _MINS_LIST = '국가AI전략위|국가데이터처|과학기술혁신본부|과기정통부|행안부|산업부|복지부|교육부|국방부|법무부|외교부|기후부|개인정보위|국정원|경찰청|해수부|문체부|중기부|농식품부|국토부|환경부|방통위|공정위|관세청|방사청|고용부|소방청|국조실|여가부|인사처|조달청|병무청|금융위|국표원|노동부|국세청|우주청|기상청|질병청|원안위|식약처|지식재산처|재정경제부|성평등부|지방시대위원회|시도교육청|국교위|법원행정처|방미통위|기획예산처|감사원';
 var _MINS_RE_EXTRACT = new RegExp('(' + _MINS_LIST + ')(?:\\((?:및\\s*)?(' + _MINS_LIST + ')\\))?', 'g');
 // 부처명 별칭 통합: 독립 추출된 이름을 정규 이름으로 병합
 var _MIN_ALIAS = { '국표원': '산업부(국표원)' };
 function _normalizeMinName(name) { return _MIN_ALIAS[name] || name; }
 
-function extractMinistries(content) {
-  if (!content) return '';
-  // 첫 문장 주어부: "~은/는 " 앞까지
-  var m = content.match(/^(.+?)[은는]\s/);
-  if (!m) return '';
-  var subj = m[1];
-  var found = [];
-  var mm;
+// 전체 본문에서 주어절(~은/는)에 등장하는 부처를 모두 추출하는 내부 함수
+function _extractAllSubjectMinistries(content) {
+  if (!content) return [];
+  var minsWithPos = [];
   _MINS_RE_EXTRACT.lastIndex = 0;
-  while ((mm = _MINS_RE_EXTRACT.exec(subj)) !== null) {
-    var name;
-    if (mm[2]) {
-      name = mm[1] + '(' + mm[2] + ')';
-    } else {
-      name = _normalizeMinName(mm[1]);
-    }
-    if (found.indexOf(name) === -1) found.push(name);
+  var mm;
+  while ((mm = _MINS_RE_EXTRACT.exec(content)) !== null) {
+    var name = mm[2] ? mm[1] + '(' + mm[2] + ')' : _normalizeMinName(mm[1]);
+    minsWithPos.push({ name: name, start: mm.index, end: mm.index + mm[0].length });
   }
-  return found.length > 1 ? found.join(', ') : '';
+  var found = [];
+  // Phase 1: 부처명 + (선택적 괄호 설명) + 주격조사 패턴
+  for (var i = 0; i < minsWithPos.length; i++) {
+    var m = minsWithPos[i];
+    var after = content.substring(m.end, m.end + 50);
+    // 비부처 괄호 설명 건너뛰기: 예) 우주청(우주기상 관련 요소)이
+    var hadParen = false;
+    var skipParen = after.match(/^\([^)]*\)\s*/);
+    if (skipParen) { after = after.substring(skipParen[0].length); hadParen = true; }
+    // 은/는은 항상 검사, 이/가는 괄호 설명 뒤에서만 (관형절 오탐 방지)
+    var particleRe = hadParen ? /^\s*[은는이가]/ : /^\s*[은는]/;
+    if (particleRe.test(after)) {
+      if (found.indexOf(m.name) === -1) found.push(m.name);
+      // 앞쪽 쉼표/와/과 리스트도 주관
+      for (var j = i - 1; j >= 0; j--) {
+        var between = content.substring(minsWithPos[j].end, minsWithPos[j + 1].start);
+        // 괄호 설명 제거 후 연결자 검사
+        between = between.replace(/\([^)]*\)/g, '');
+        if (/^[,，·\s]*(와|과|및)?\s*$/.test(between)) {
+          if (found.indexOf(minsWithPos[j].name) === -1) found.push(minsWithPos[j].name);
+        } else { break; }
+      }
+    }
+  }
+  // Phase 2: "부처A, 부처B 등 (관계/예산 심의) 부처/기관[은는이가]" 패턴
+  var etcPat = /등\s*(?:[가-힣\s]{0,20})?(?:부처|기관|부서)\s*[은는이가]/g;
+  var em;
+  while ((em = etcPat.exec(content)) !== null) {
+    var etcIdx = em.index;
+    var sentStart = content.lastIndexOf('. ', etcIdx);
+    sentStart = sentStart === -1 ? 0 : sentStart + 2;
+    // 같은 절 내에서 "등" 앞에 등장하는 모든 부처를 주관으로 추가
+    for (var i = 0; i < minsWithPos.length; i++) {
+      if (minsWithPos[i].start >= sentStart && minsWithPos[i].end <= etcIdx) {
+        if (found.indexOf(minsWithPos[i].name) === -1) found.push(minsWithPos[i].name);
+      }
+    }
+  }
+  // Phase 3: "를 포함한/중심으로 (관계) 부처/기관[은는이가]" 패턴
+  var inclPat = /를\s*(?:포함한|중심으로)\s*(?:[가-힣\s]{0,20})?(?:부처|기관)\s*[은는이가]/g;
+  var im;
+  while ((im = inclPat.exec(content)) !== null) {
+    var inclIdx = im.index;
+    var sentStart2 = content.lastIndexOf('. ', inclIdx);
+    sentStart2 = sentStart2 === -1 ? 0 : sentStart2 + 2;
+    for (var i = 0; i < minsWithPos.length; i++) {
+      if (minsWithPos[i].start >= sentStart2 && minsWithPos[i].end <= inclIdx) {
+        if (found.indexOf(minsWithPos[i].name) === -1) found.push(minsWithPos[i].name);
+      }
+    }
+  }
+  return found;
 }
 
-// 협력/협조/협의 부처 추출: 본문에서 주관 부처를 제외한 협력 부처 목록 반환
+function extractMinistries(content) {
+  if (!content) return '';
+  var found = _extractAllSubjectMinistries(content);
+  return found.length > 0 ? found.join(', ') : '';
+}
+
+// 협력/협조/협의 부처 추출: 본문에서 주관 부처를 제외한 나머지 부처 반환
 function extractCoopMinistries(content) {
   if (!content) return [];
-  // 주관 부처 추출 (주어부) — 정규화 적용
-  var leadSet = new Set();
-  var sm = content.match(/^(.+?)[은는]\s/);
-  if (sm) {
-    _MINS_RE_EXTRACT.lastIndex = 0;
-    var lm;
-    while ((lm = _MINS_RE_EXTRACT.exec(sm[1])) !== null) {
-      var ln = lm[2] ? lm[1] + '(' + lm[2] + ')' : _normalizeMinName(lm[1]);
-      leadSet.add(ln);
-    }
-  }
+  var leadSet = new Set(_extractAllSubjectMinistries(content));
   // 전체 본문에서 모든 부처 추출
   var allMins = [];
   _MINS_RE_EXTRACT.lastIndex = 0;
@@ -7932,7 +8099,7 @@ function renderDelivView() {
     if (areaVal && String(t.strategic_area_id) !== areaVal) return;
 
     t.recommendations.forEach(function(r) {
-      if (ministryVal && r.ministry !== ministryVal && (extractMinistries(r.content) || '').indexOf(ministryVal) === -1) return;
+      if (ministryVal && r.ministry !== ministryVal && (extractMinistries(r.content) || '').indexOf(ministryVal) === -1 && extractCoopMinistries(r.content).indexOf(ministryVal) === -1) return;
       if (kwList.length > 0) {
         var matchTask = kwList.some(function(k) { return k === String(t.id); });
         if (!matchTask) {
@@ -7952,7 +8119,7 @@ function renderDelivView() {
         ministry: r.ministry, axis: t.policy_axis_id,
         deadline: r.deadline || '미정', qIdx: qIdx,
         riskLevel: riskLevel, deliverable: deliverable,
-        noDeadline: !dl
+        noDeadline: !dl, rec: r
       });
     });
   });
@@ -7995,7 +8162,7 @@ function renderDelivView() {
       var dlBg = isOverdue ? '#dc354510' : isUrgent ? '#fd7e1410' : '';
       html += '<tr data-overdue="' + isOverdue + '" data-urgent="' + isUrgent + '" style="cursor:pointer" onclick="openTaskModal(' + g.taskId + ',' + g.recSeq + ')">';
       html += '<td><span style="color:' + axColor + ';font-weight:700">' + g.taskNumber + '</span><span style="color:var(--text-muted,var(--gray));font-size:0.72rem">-' + g.recSeq + '</span></td>';
-      html += '<td style="white-space:nowrap;font-size:0.78rem;font-weight:600;color:' + dlColor + ';' + (dlBg ? 'background:' + dlBg : '') + '">' + g.deadline + '</td>';
+      html += '<td style="font-size:0.78rem;font-weight:600;color:' + dlColor + ';' + (dlBg ? 'background:' + dlBg : '') + '">' + (g.rec ? renderDeadlineBadges(g.rec) : g.deadline) + '</td>';
       html += '<td><span class="badge badge-ministry" style="font-size:0.75rem">' + escapeHtml(extractMinistries(g.content) || g.ministry) + '</span></td>';
       html += '<td style="font-size:0.78rem;color:var(--text,var(--dark));max-width:400px">' + escapeHtml(g.content.length > 120 ? g.content.substring(0, 120) + '…' : g.content) + '</td>';
       html += '<td>';
@@ -8045,7 +8212,7 @@ function renderGanttView() {
     if (areaVal && String(t.strategic_area_id) !== areaVal) return;
 
     t.recommendations.forEach(function(r) {
-      if (ministryVal && r.ministry !== ministryVal && (extractMinistries(r.content) || '').indexOf(ministryVal) === -1) return;
+      if (ministryVal && r.ministry !== ministryVal && (extractMinistries(r.content) || '').indexOf(ministryVal) === -1 && extractCoopMinistries(r.content).indexOf(ministryVal) === -1) return;
       if (kwList.length > 0) {
         var matchTask = kwList.some(function(k) { return k === String(t.id); });
         if (!matchTask) {
@@ -8054,18 +8221,41 @@ function renderGanttView() {
         }
       }
       var dl = (r.deadline || '').toUpperCase();
+      var dls = extractDeadlines(r);
+      var dlToQIdx = function(code) {
+        var c = (code || '').toUpperCase();
+        if (c === '25Q4' || c === '26Q1') return 0;
+        if (c === '26Q2') return 1;
+        if (c === '26Q3') return 2;
+        if (c === '26Q4') return 3;
+        return 4; // 27+
+      };
       var qStart, qEnd;
-      if (!dl) { qStart = 0; qEnd = 4; } // 기한미정: 전체 일정
-      else if (dl === '25Q4' || dl === '26Q1') { qStart = 0; qEnd = 0; }
-      else if (dl === '26Q2') { qStart = 1; qEnd = 1; }
-      else if (dl === '26Q3') { qStart = 2; qEnd = 2; }
-      else if (dl === '26Q4') { qStart = 3; qEnd = 3; }
-      else { qStart = 4; qEnd = 4; }
+      // 복수 기한: 각 분기에 개별 바 표시용 인덱스 배열
+      var qBars = [];
+      if (!dl && dls.length === 0) { qStart = 0; qEnd = 4; } // 기한미정: 전체 일정
+      else if (dls.length > 0) {
+        var qIdxSet = {};
+        dls.forEach(function(d) {
+          var qi = dlToQIdx(d.deadline);
+          if (!qIdxSet[qi]) qIdxSet[qi] = [];
+          qIdxSet[qi].push(d.deadline_label);
+        });
+        var qIdxes = Object.keys(qIdxSet).map(Number).sort(function(a,b){return a-b;});
+        qStart = qIdxes[0]; qEnd = qIdxes[qIdxes.length - 1];
+        if (qIdxes.length > 1) {
+          qIdxes.forEach(function(qi) { qBars.push({ qIdx: qi, labels: qIdxSet[qi] }); });
+        }
+      } else {
+        qStart = dlToQIdx(dl); qEnd = qStart;
+      }
+      var dlLabel = dls.length > 0 ? dls.map(function(d) { return d.deadline_label; }).join(', ') : (r.deadline || '미정');
       ganttData.push({
         taskId: t.id, taskNumber: t.number, recSeq: r.seq,
         title: t.title, content: r.content || '',
         ministry: r.ministry, axis: t.policy_axis_id,
-        qStart: qStart, qEnd: qEnd, deadline: r.deadline || '미정', noDeadline: !dl
+        qStart: qStart, qEnd: qEnd, deadline: r.deadline || '미정',
+        deadlineLabel: dlLabel, noDeadline: !dl, multiDl: qBars.length > 1, qBars: qBars, rec: r
       });
     });
   });
@@ -8116,17 +8306,15 @@ function renderGanttView() {
         html += '</div>';
         prevTaskId = g.taskId;
       }
-      var left = (g.qStart / quarters.length * 100);
-      var width = ((g.qEnd - g.qStart + 1) / quarters.length * 100);
       var color = g.noDeadline ? '#9e9e9e' : (axisColors[g.axis] || '#546e7a');
-      var barStyle = g.noDeadline ? 'background:repeating-linear-gradient(45deg,' + color + ',' + color + ' 4px,transparent 4px,transparent 8px);opacity:0.7' : 'background:' + color;
       var label = g.taskNumber + '-' + g.recSeq;
-      var deadlineInfo = g.noDeadline ? ' [기한미정]' : ' [' + g.deadline + ']';
+      var deadlineInfo = g.noDeadline ? ' [기한미정]' : ' [' + g.deadlineLabel + ']';
       var ganttMins = extractMinistries(g.content) || g.ministry;
       var tooltipText = '#' + label + ' ' + g.title + ' | ' + ganttMins + deadlineInfo + ' | ' + g.content.substring(0, 80);
+      var dlBadgesHtml = g.rec ? renderDeadlineBadges(g.rec) : '';
       html += '<div class="gantt-row" style="' + (_ganttExpand ? 'align-items:flex-start' : '') + '">';
       if (_ganttExpand) {
-        var ganttLabel = '<strong style="flex-shrink:0">' + label + '</strong> <span style="font-size:0.72rem;color:var(--text-muted,var(--gray))">' + ganttMins + (g.noDeadline ? ' · 미정' : '') + '</span><div style="white-space:normal;line-height:1.4;margin-top:2px;font-weight:400;color:var(--text,var(--dark))">' + (g.content || g.ministry) + '</div>';
+        var ganttLabel = '<strong style="flex-shrink:0">' + label + '</strong> <span style="font-size:0.72rem;color:var(--text-muted,var(--gray))">' + ganttMins + (g.noDeadline ? ' · 미정' : '') + '</span>' + (dlBadgesHtml ? '<span style="margin-left:4px">' + dlBadgesHtml + '</span>' : '') + '<div style="white-space:normal;line-height:1.4;margin-top:2px;font-weight:400;color:var(--text,var(--dark))">' + (g.content || g.ministry) + '</div>';
         html += '<div class="gantt-label" style="white-space:normal;height:auto" title="' + tooltipText.replace(/"/g, '&quot;') + '">' + ganttLabel + '</div>';
       } else {
         var contentSnip = g.content.length > 45 ? g.content.substring(0, 45) + '…' : g.content;
@@ -8134,7 +8322,25 @@ function renderGanttView() {
         html += '<div class="gantt-label" title="' + tooltipText.replace(/"/g, '&quot;') + '">' + ganttLabel + '</div>';
       }
       html += '<div class="gantt-track">';
-      html += '<div class="gantt-bar" style="left:' + left + '%;width:' + width + '%;' + barStyle + '" onclick="openTaskModal(' + g.taskId + ',' + g.recSeq + ')" title="' + tooltipText.replace(/"/g, '&quot;') + '">' + label + '</div>';
+      if (g.qBars && g.qBars.length > 1) {
+        // 복수 기한: 각 분기에 개별 바 표시 + 연결 점선
+        var minQ = g.qBars[0].qIdx, maxQ = g.qBars[g.qBars.length - 1].qIdx;
+        var connLeft = (minQ / quarters.length * 100);
+        var connWidth = ((maxQ - minQ + 1) / quarters.length * 100);
+        html += '<div style="position:absolute;left:' + connLeft + '%;width:' + connWidth + '%;top:50%;height:0;border-top:2px dashed ' + color + '55;pointer-events:none"></div>';
+        g.qBars.forEach(function(bar, bi) {
+          var bLeft = (bar.qIdx / quarters.length * 100);
+          var bWidth = (1 / quarters.length * 100);
+          var bTip = '#' + label + ' ' + bar.labels.join(', ') + ' | ' + ganttMins;
+          html += '<div class="gantt-bar" style="left:' + bLeft + '%;width:' + bWidth + '%;background:' + color + (bi > 0 ? ';opacity:0.75' : '') + '" onclick="openTaskModal(' + g.taskId + ',' + g.recSeq + ')" title="' + bTip.replace(/"/g, '&quot;') + '">' + (bi === 0 ? label : bar.labels[0]) + '</div>';
+        });
+      } else {
+        // 단일 기한 또는 기한미정
+        var left = (g.qStart / quarters.length * 100);
+        var width = ((g.qEnd - g.qStart + 1) / quarters.length * 100);
+        var barStyle = g.noDeadline ? 'background:repeating-linear-gradient(45deg,' + color + ',' + color + ' 4px,transparent 4px,transparent 8px);opacity:0.7' : 'background:' + color;
+        html += '<div class="gantt-bar" style="left:' + left + '%;width:' + width + '%;' + barStyle + '" onclick="openTaskModal(' + g.taskId + ',' + g.recSeq + ')" title="' + tooltipText.replace(/"/g, '&quot;') + '">' + label + '</div>';
+      }
       html += '</div></div>';
     });
   }
@@ -8283,7 +8489,9 @@ function showCompare(id1, id2) {
     t.recommendations.forEach(function(r, i) {
       var dl = classifyDeadline(r.deadline);
       var color = dl === 'overdue' ? 'var(--danger)' : dl === 'critical' ? 'var(--warning)' : 'var(--gray)';
-      html += '<div style="padding:6px 0;border-bottom:1px solid var(--border);font-size:0.82rem"><span style="color:' + color + ';font-weight:600">[' + (r.deadline_label||r.deadline||'') + ']</span> ' + (extractMinistries(r.content) || _normalizeMinName(r.ministry)) + ': ' + (r.content||'').slice(0, 150) + (r.content && r.content.length > 150 ? '…' : '') + '</div>';
+      var allDlsC = extractDeadlines(r);
+      var dlText = allDlsC.length > 0 ? allDlsC.map(function(d) { return d.deadline_label; }).join(', ') : (r.deadline_label||r.deadline||'');
+      html += '<div style="padding:6px 0;border-bottom:1px solid var(--border);font-size:0.82rem"><span style="color:' + color + ';font-weight:600">[' + dlText + ']</span> ' + (extractMinistries(r.content) || _normalizeMinName(r.ministry)) + ': ' + (r.content||'').slice(0, 150) + (r.content && r.content.length > 150 ? '…' : '') + '</div>';
     });
     html += '</div></div>';
     return html;
