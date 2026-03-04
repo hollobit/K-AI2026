@@ -8332,14 +8332,17 @@ function renderGanttView() {
           var bLeft = (bar.qIdx / quarters.length * 100);
           var bWidth = (1 / quarters.length * 100);
           var bTip = '#' + label + ' ' + bar.labels.join(', ') + ' | ' + ganttMins;
-          html += '<div class="gantt-bar" style="left:' + bLeft + '%;width:' + bWidth + '%;background:' + color + (bi > 0 ? ';opacity:0.75' : '') + '" onclick="openTaskModal(' + g.taskId + ',' + g.recSeq + ')" title="' + bTip.replace(/"/g, '&quot;') + '">' + (bi === 0 ? label : bar.labels[0]) + '</div>';
+          var barText = bar.labels[0];
+          html += '<div class="gantt-bar" style="left:' + bLeft + '%;width:' + bWidth + '%;background:' + color + (bi > 0 ? ';opacity:0.75' : '') + '" onclick="openTaskModal(' + g.taskId + ',' + g.recSeq + ')" title="' + bTip.replace(/"/g, '&quot;') + '">' + barText + '</div>';
         });
       } else {
         // 단일 기한 또는 기한미정
         var left = (g.qStart / quarters.length * 100);
         var width = ((g.qEnd - g.qStart + 1) / quarters.length * 100);
         var barStyle = g.noDeadline ? 'background:repeating-linear-gradient(45deg,' + color + ',' + color + ' 4px,transparent 4px,transparent 8px);opacity:0.7' : 'background:' + color;
-        html += '<div class="gantt-bar" style="left:' + left + '%;width:' + width + '%;' + barStyle + '" onclick="openTaskModal(' + g.taskId + ',' + g.recSeq + ')" title="' + tooltipText.replace(/"/g, '&quot;') + '">' + label + '</div>';
+        var barText = g.noDeadline ? '미정' : g.deadlineLabel;
+        var barExtra = g.noDeadline ? ';color:#555;font-weight:600' : '';
+        html += '<div class="gantt-bar" style="left:' + left + '%;width:' + width + '%;' + barStyle + barExtra + '" onclick="openTaskModal(' + g.taskId + ',' + g.recSeq + ')" title="' + tooltipText.replace(/"/g, '&quot;') + '">' + barText + '</div>';
       }
       html += '</div></div>';
     });
