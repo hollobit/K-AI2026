@@ -1,0 +1,2142 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>도움말 & FAQ - 대한민국 AI 행동계획 2026 대시보드</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --primary: #003087;
+  --primary-light: #1B5FA4;
+  --primary-lighter: #2E74C0;
+  --accent: #0066CC;
+  --success: #28a745;
+  --warning: #fd7e14;
+  --danger: #dc3545;
+  --info: #17a2b8;
+  --gray: #6c757d;
+  --light: #f8f9fa;
+  --dark: #343a40;
+  --bg: #f0f4f8;
+  --card-bg: #ffffff;
+  --border: #dee2e6;
+  --shadow: 0 2px 8px rgba(0,0,0,0.1);
+  --radius: 8px;
+  --font: 'Noto Sans KR', sans-serif;
+  --text: #343a40;
+  --text-muted: #6c757d;
+  --table-hover: #f0f4ff;
+  --input-bg: #ffffff;
+  --header-gradient-start: #003087;
+  --header-gradient-end: #1B5FA4;
+}
+[data-theme="dark"] {
+  --primary: #4a9eff;
+  --primary-light: #3d8ce6;
+  --primary-lighter: #5ba8ff;
+  --accent: #5ba8ff;
+  --success: #4caf50;
+  --warning: #ffb74d;
+  --danger: #ef5350;
+  --info: #4dd0e1;
+  --gray: #9e9e9e;
+  --light: #2a2d35;
+  --dark: #e0e0e0;
+  --bg: #1a1d23;
+  --card-bg: #23272e;
+  --border: #3a3f4a;
+  --shadow: 0 2px 8px rgba(0,0,0,0.3);
+  --text: #e0e0e0;
+  --text-muted: #9e9e9e;
+  --table-hover: #2a3040;
+  --input-bg: #2a2d35;
+  --header-gradient-start: #0d1b2a;
+  --header-gradient-end: #1b2838;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: var(--font); background: var(--bg); color: var(--text); line-height: 1.6; }
+
+.header {
+  background: linear-gradient(135deg, var(--header-gradient-start) 0%, var(--header-gradient-end) 100%);
+  color: white; padding: 20px 24px;
+}
+.header h1 { font-size: 1.5rem; font-weight: 700; }
+.header .subtitle { font-size: 0.9rem; opacity: 0.85; margin-top: 4px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+
+.nav-tabs { background: var(--card-bg); border-bottom: 2px solid var(--border); display: flex; overflow-x: auto; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+.nav-tab { padding: 14px 20px; cursor: pointer; font-size: 0.9rem; font-weight: 500; border-bottom: 3px solid transparent; white-space: nowrap; color: var(--gray); transition: all 0.2s; user-select: none; }
+.nav-tab:hover { color: var(--primary); background: var(--table-hover); }
+.nav-tab.active { color: var(--primary); border-bottom-color: var(--primary); font-weight: 700; }
+
+.view { display: none; padding: 24px; max-width: 1200px; margin: 0 auto; }
+.view.active { display: block; }
+
+.card { background: var(--card-bg); border-radius: var(--radius); box-shadow: var(--shadow); padding: 24px; margin-bottom: 20px; border: 1px solid var(--border); }
+
+.theme-toggle { background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.35); color: white; width: 34px; height: 34px; border-radius: 50%; cursor: pointer; font-size: 1.1rem; display: flex; align-items: center; justify-content: center; transition: background 0.2s, transform 0.2s; flex-shrink: 0; }
+.theme-toggle:hover { background: rgba(255,255,255,0.28); transform: scale(1.1); }
+
+/* Persona Cards */
+.persona-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px; margin-bottom: 30px; }
+.persona-card { background: var(--card-bg); border: 2px solid var(--border); border-radius: 12px; padding: 24px; cursor: pointer; transition: all 0.3s; text-align: center; position: relative; overflow: hidden; }
+.persona-card:hover { transform: translateY(-4px); box-shadow: 0 8px 24px rgba(0,0,0,0.12); }
+.persona-card.selected { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(0,48,135,0.15); }
+.persona-card .icon { font-size: 3rem; margin-bottom: 12px; }
+.persona-card .title { font-size: 1.1rem; font-weight: 700; margin-bottom: 6px; color: var(--text); }
+.persona-card .desc { font-size: 0.85rem; color: var(--text-muted); }
+.persona-card .badge { position: absolute; top: 12px; right: 12px; background: var(--primary); color: white; padding: 2px 10px; border-radius: 12px; font-size: 0.72rem; font-weight: 600; }
+
+/* Scenario */
+.scenario-panel { display: none; animation: fadeIn 0.3s; }
+.scenario-panel.active { display: block; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+.scenario-group { margin-bottom: 28px; }
+.scenario-title { font-size: 1.05rem; font-weight: 700; color: var(--primary); margin-bottom: 16px; padding-bottom: 8px; border-bottom: 2px solid var(--primary); display: flex; align-items: center; gap: 8px; }
+.scenario-title .num { background: var(--primary); color: white; width: 28px; height: 28px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 0.85rem; flex-shrink: 0; }
+
+.step-list { list-style: none; padding: 0; }
+.step-item { display: flex; gap: 16px; margin-bottom: 16px; padding: 16px; background: var(--light); border-radius: var(--radius); border-left: 4px solid var(--primary); transition: background 0.2s; position: relative; }
+.step-item:hover { background: var(--table-hover); }
+.step-num { background: var(--primary); color: white; width: 32px; height: 32px; min-width: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.9rem; }
+.step-content { flex: 1; }
+.step-content h4 { font-size: 0.95rem; font-weight: 600; margin-bottom: 4px; }
+.step-content p { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 8px; }
+.step-link { display: inline-flex; align-items: center; gap: 4px; background: var(--primary); color: white; padding: 4px 14px; border-radius: 16px; font-size: 0.78rem; font-weight: 600; text-decoration: none; transition: opacity 0.2s; }
+.step-link:hover { opacity: 0.85; }
+
+.tip-box { background: #fff8e1; border: 1px solid #ffe082; border-left: 4px solid #f59e0b; border-radius: 6px; padding: 12px 16px; margin: 12px 0; font-size: 0.85rem; color: #5a4000; }
+[data-theme="dark"] .tip-box { background: #3a3520; border-color: #5a4a20; color: #ffe082; }
+
+/* FAQ */
+.faq-category { margin-bottom: 24px; }
+.faq-category-title { font-size: 1.1rem; font-weight: 700; color: var(--primary); margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+.faq-item { border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 8px; overflow: hidden; }
+.faq-q { padding: 14px 18px; cursor: pointer; font-weight: 600; font-size: 0.92rem; display: flex; justify-content: space-between; align-items: center; background: var(--card-bg); transition: background 0.2s; user-select: none; }
+.faq-q:hover { background: var(--table-hover); }
+.faq-q .arrow { transition: transform 0.3s; font-size: 0.8rem; color: var(--gray); }
+.faq-item.open .faq-q .arrow { transform: rotate(180deg); }
+.faq-a { padding: 0 18px; max-height: 0; overflow: hidden; transition: max-height 0.4s ease, padding 0.3s; font-size: 0.88rem; color: var(--text-muted); line-height: 1.7; }
+.faq-item.open .faq-a { padding: 14px 18px; max-height: 1500px; }
+.faq-a code { background: rgba(0,48,135,0.08); padding: 2px 6px; border-radius: 4px; font-size: 0.82rem; }
+[data-theme="dark"] .faq-a code { background: rgba(74,158,255,0.15); }
+.faq-a .link-btn { display: inline-flex; align-items: center; gap: 4px; color: var(--primary); font-weight: 600; text-decoration: none; font-size: 0.82rem; }
+.faq-a .link-btn:hover { text-decoration: underline; }
+
+/* System Map */
+.sysmap-container { position: relative; }
+.sysmap-node { background: var(--card-bg); border: 2px solid var(--border); border-radius: 10px; padding: 14px 18px; cursor: pointer; transition: all 0.3s; display: flex; align-items: center; gap: 10px; }
+.sysmap-node:hover { border-color: var(--primary); transform: scale(1.02); }
+.sysmap-node.highlighted { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(0,48,135,0.15); background: var(--table-hover); }
+.sysmap-node .icon { font-size: 1.3rem; }
+.sysmap-node .label { font-weight: 600; font-size: 0.9rem; }
+.sysmap-node .sub { font-size: 0.78rem; color: var(--text-muted); }
+
+.sysmap-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; margin-bottom: 20px; }
+
+.persona-filter-bar { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
+.persona-filter-btn { padding: 6px 16px; border: 2px solid var(--border); border-radius: 20px; background: var(--card-bg); cursor: pointer; font-size: 0.82rem; font-weight: 600; color: var(--text-muted); transition: all 0.2s; font-family: var(--font); }
+.persona-filter-btn:hover { border-color: var(--primary); color: var(--primary); }
+.persona-filter-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+
+/* Gantt mini preview */
+.gantt-preview { overflow-x: auto; margin: 16px 0; }
+.gantt-preview table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+.gantt-preview th, .gantt-preview td { padding: 6px 8px; border: 1px solid var(--border); text-align: center; white-space: nowrap; }
+.gantt-preview th { background: var(--primary); color: white; font-weight: 600; }
+.gantt-bar { height: 18px; border-radius: 9px; display: inline-block; min-width: 18px; }
+
+/* Manual */
+.manual-section { margin-bottom: 32px; }
+.manual-section h2 { font-size: 1.15rem; font-weight: 700; color: var(--primary); margin-bottom: 16px; padding-bottom: 8px; border-bottom: 2px solid var(--border); display: flex; align-items: center; gap: 8px; }
+.manual-section h3 { font-size: 1rem; font-weight: 600; margin: 16px 0 8px; }
+.manual-toc { background: var(--card-bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; margin-bottom: 24px; }
+.manual-toc a { display: block; padding: 6px 0; color: var(--primary); text-decoration: none; font-size: 0.9rem; border-bottom: 1px dotted var(--border); }
+.manual-toc a:last-child { border-bottom: none; }
+.manual-toc a:hover { font-weight: 600; }
+.manual-img-placeholder { background: var(--light); border: 2px dashed var(--border); border-radius: var(--radius); padding: 20px; text-align: center; color: var(--text-muted); font-size: 0.85rem; margin: 12px 0; }
+.manual-key { display: inline-block; background: var(--light); border: 1px solid var(--border); border-radius: 4px; padding: 2px 8px; font-size: 0.8rem; font-weight: 600; font-family: monospace; box-shadow: 0 1px 2px rgba(0,0,0,0.08); }
+
+/* Tour */
+.tour-step-card { background: var(--card-bg); border: 2px solid var(--border); border-radius: 12px; padding: 0; margin-bottom: 20px; overflow: hidden; transition: all 0.3s; cursor: pointer; }
+.tour-step-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.1); }
+.tour-step-card.active { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(0,48,135,0.12); }
+.tour-step-header { padding: 16px 20px; display: flex; align-items: center; gap: 14px; }
+.tour-step-num { background: var(--border); color: var(--text-muted); width: 40px; height: 40px; min-width: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1.1rem; transition: all 0.3s; }
+.tour-step-card.active .tour-step-num { background: var(--primary); color: white; }
+.tour-step-card.completed .tour-step-num { background: var(--success); color: white; }
+.tour-step-body { display: none; padding: 0 20px 20px; animation: fadeIn 0.3s; }
+.tour-step-card.active .tour-step-body { display: block; }
+.tour-progress { height: 6px; background: var(--light); border-radius: 3px; margin-bottom: 24px; overflow: hidden; }
+.tour-progress-fill { height: 100%; background: linear-gradient(90deg, var(--primary), var(--accent)); border-radius: 3px; transition: width 0.5s; }
+.tour-btn { padding: 8px 20px; border: none; border-radius: 20px; font-size: 0.85rem; font-weight: 600; cursor: pointer; font-family: var(--font); transition: all 0.2s; }
+.tour-btn-primary { background: var(--primary); color: white; }
+.tour-btn-primary:hover { opacity: 0.88; }
+.tour-btn-secondary { background: var(--light); color: var(--text); border: 1px solid var(--border); }
+.tour-btn-secondary:hover { background: var(--table-hover); }
+.tour-sim { background: var(--light); border-radius: var(--radius); padding: 16px; margin: 12px 0; border: 1px solid var(--border); }
+.tour-sim-header { background: var(--primary); color: white; padding: 8px 14px; border-radius: 6px 6px 0 0; font-size: 0.78rem; font-weight: 600; }
+.tour-sim-body { background: var(--card-bg); border: 1px solid var(--border); border-top: none; border-radius: 0 0 6px 6px; padding: 14px; font-size: 0.82rem; }
+.tour-sim-tabs { display: flex; gap: 0; border-bottom: 2px solid var(--border); margin-bottom: 10px; }
+.tour-sim-tab { padding: 6px 14px; font-size: 0.75rem; color: var(--gray); border-bottom: 2px solid transparent; }
+.tour-sim-tab.active { color: var(--primary); border-bottom-color: var(--primary); font-weight: 600; }
+.tour-sim-kpi { display: inline-block; background: var(--light); border: 1px solid var(--border); border-radius: 6px; padding: 6px 12px; margin: 4px; font-size: 0.8rem; }
+.tour-sim-kpi strong { color: var(--primary); }
+
+/* Quick Reference Cards */
+.qr-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px; margin-bottom: 24px; }
+.qr-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; box-shadow: var(--shadow); break-inside: avoid; }
+.qr-card-header { padding: 14px 18px; color: white; font-weight: 700; font-size: 0.95rem; display: flex; align-items: center; gap: 8px; }
+.qr-card-body { padding: 16px 18px; }
+.qr-card-body ul { list-style: none; padding: 0; }
+.qr-card-body li { padding: 6px 0; border-bottom: 1px dotted var(--border); font-size: 0.84rem; display: flex; align-items: flex-start; gap: 8px; }
+.qr-card-body li:last-child { border-bottom: none; }
+.qr-card-body .qr-icon { flex-shrink: 0; width: 20px; text-align: center; }
+.qr-shortcut-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
+.qr-shortcut { display: flex; align-items: center; gap: 10px; padding: 8px 12px; background: var(--light); border-radius: 6px; font-size: 0.82rem; }
+.qr-shortcut .key { background: var(--card-bg); border: 1px solid var(--border); border-radius: 4px; padding: 3px 8px; font-family: monospace; font-size: 0.78rem; font-weight: 600; box-shadow: 0 1px 2px rgba(0,0,0,0.06); white-space: nowrap; }
+@media print {
+  .qr-grid { grid-template-columns: repeat(2, 1fr); }
+  .qr-card { box-shadow: none; border: 1px solid #ccc; }
+}
+
+/* Print */
+@media print { .header, .nav-tabs, .theme-toggle, .step-link { break-inside: avoid; } }
+@media (max-width: 768px) {
+  .persona-grid { grid-template-columns: 1fr; }
+  .qr-grid { grid-template-columns: 1fr; }
+  .view { padding: 16px; }
+  .header h1 { font-size: 1.2rem; }
+}
+</style>
+</head>
+<body>
+<header class="header">
+  <h1>도움말 & FAQ</h1>
+  <div class="subtitle">
+    <span>대한민국 AI 행동계획 2026 대시보드 사용 가이드</span>
+    <span style="display:inline-flex;gap:8px;align-items:center;flex-shrink:0">
+      <a href="index.html" style="display:inline-flex;align-items:center;gap:5px;background:rgba(255,255,255,0.15);color:white;padding:4px 14px;border-radius:5px;font-size:0.82rem;font-weight:600;text-decoration:none;border:1px solid rgba(255,255,255,0.35)">← 대시보드로 돌아가기</a>
+      <a href="aiact.html" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;gap:5px;background:rgba(100,220,180,0.18);color:#80ffcc;padding:4px 10px;border-radius:5px;font-size:0.78rem;font-weight:600;text-decoration:none;border:1px solid rgba(100,220,180,0.4)">AI기본법 연계</a>
+      <a href="sankey.html" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;gap:5px;background:rgba(255,200,60,0.18);color:#ffe87c;padding:4px 10px;border-radius:5px;font-size:0.78rem;font-weight:600;text-decoration:none;border:1px solid rgba(255,210,80,0.4)">Sankey 흐름도</a>
+      <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="다크/라이트 모드 전환">🌙</button>
+    </span>
+  </div>
+</header>
+
+<nav class="nav-tabs" id="navTabs">
+  <div class="nav-tab active" data-view="guide" onclick="switchView('guide')">🎯 역할별 가이드</div>
+  <div class="nav-tab" data-view="manual" onclick="switchView('manual')">📖 사용 매뉴얼</div>
+  <div class="nav-tab" data-view="faq" onclick="switchView('faq')">❓ FAQ</div>
+  <div class="nav-tab" data-view="tour" onclick="switchView('tour')">🚀 인터랙티브 투어</div>
+  <div class="nav-tab" data-view="quickref" onclick="switchView('quickref')">🃏 퀵 레퍼런스</div>
+  <div class="nav-tab" data-view="sysmap" onclick="switchView('sysmap')">🗺️ 시스템 맵</div>
+</nav>
+
+<main>
+
+<!-- ==================== TAB 1: PERSONA GUIDE ==================== -->
+<div class="view active" id="view-guide">
+
+  <div class="card" style="border-left:4px solid var(--primary);margin-bottom:24px">
+    <h2 style="font-size:1.15rem;margin-bottom:8px">🎯 사용자 역할을 선택하세요</h2>
+    <p style="font-size:0.88rem;color:var(--text-muted)">역할에 따라 맞춤 워크플로우와 추천 기능을 안내합니다. 카드를 클릭하면 해당 역할의 시나리오가 아래에 펼쳐집니다.</p>
+  </div>
+
+  <div class="persona-grid">
+    <div class="persona-card" onclick="selectPersona('ministry')">
+      <div class="badge">실무형</div>
+      <div class="icon">🏛️</div>
+      <div class="title">부처 담당자</div>
+      <div class="desc">우리 부처 담당 과제의 기한·권고사항을 파악하고, 이행 계획을 수립합니다</div>
+    </div>
+    <div class="persona-card" onclick="selectPersona('manager')">
+      <div class="badge">관리형</div>
+      <div class="icon">📊</div>
+      <div class="title">총괄 진도 관리자</div>
+      <div class="desc">99개 전체 과제의 진행 상황을 모니터링하고, 지연·위험 과제를 선제 관리합니다</div>
+    </div>
+    <div class="persona-card" onclick="selectPersona('committee')">
+      <div class="badge">전략형</div>
+      <div class="icon">🎖️</div>
+      <div class="title">AI전략위 위원</div>
+      <div class="desc">정책 방향을 검토하고, 글로벌 정합성·법령 이행 현황을 점검합니다</div>
+    </div>
+    <div class="persona-card" onclick="selectPersona('public')">
+      <div class="badge">탐색형</div>
+      <div class="icon">👤</div>
+      <div class="title">일반 사용자</div>
+      <div class="desc">AI 행동계획의 전체 구조를 이해하고, 관심 분야의 과제를 탐색합니다</div>
+    </div>
+  </div>
+
+  <!-- ===== PERSONA: 부처 담당자 ===== -->
+  <div class="scenario-panel" id="panel-ministry">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px">
+      <span style="font-size:2rem">🏛️</span>
+      <div>
+        <h2 style="font-size:1.2rem;margin-bottom:2px">부처 담당자를 위한 워크플로우</h2>
+        <p style="font-size:0.85rem;color:var(--text-muted)">담당 과제 파악 → 기한 확인 → 권고사항 이행 계획 수립까지</p>
+      </div>
+    </div>
+
+    <!-- Scenario 1 -->
+    <div class="scenario-group">
+      <div class="scenario-title"><span class="num">1</span> 우리 부처 담당 과제와 기한 한눈에 파악하기</div>
+      <ul class="step-list">
+        <li class="step-item">
+          <div class="step-num">1</div>
+          <div class="step-content">
+            <h4>부처별 현황 탭에서 우리 부처 선택</h4>
+            <p>31개 부처 목록에서 소속 부처를 클릭하면, 담당 과제 수·전략분야 분포·기한별 분류가 한눈에 표시됩니다.</p>
+            <a class="step-link" href="index.html?view=ministries">부처별 현황 바로가기 →</a>
+          </div>
+        </li>
+        <li class="step-item">
+          <div class="step-num">2</div>
+          <div class="step-content">
+            <h4>과제별 추진기한과 위험도 확인</h4>
+            <p>각 과제 카드에 표시된 <code>기한초과</code> <code>긴급</code> <code>주의</code> 배지로 우선순위를 즉시 파악합니다. D-Day 카운트다운이 실시간으로 계산됩니다.</p>
+          </div>
+        </li>
+        <li class="step-item">
+          <div class="step-num">3</div>
+          <div class="step-content">
+            <h4>과제 클릭 → 상세 모달에서 정책권고 전문 확인</h4>
+            <p>각 과제 내 포함된 정책권고사항의 세부 내용, 관련 참고자료·각주까지 모두 확인할 수 있습니다.</p>
+            <a class="step-link" href="index.html?view=tasks">과제별 상세 바로가기 →</a>
+          </div>
+        </li>
+      </ul>
+      <div class="tip-box">💡 <strong>팁</strong>: 과제 모달에서 ★ 북마크를 눌러 중요 과제를 저장하면, 헤더의 ★ 북마크 버튼으로 언제든 모아볼 수 있습니다.</div>
+    </div>
+
+    <!-- Scenario 2 -->
+    <div class="scenario-group">
+      <div class="scenario-title"><span class="num">2</span> 기한별 권고사항 타임라인으로 일정 관리하기</div>
+      <ul class="step-list">
+        <li class="step-item">
+          <div class="step-num">1</div>
+          <div class="step-content">
+            <h4>추진기한 타임라인 탭 → 부처 필터 적용</h4>
+            <p>타임라인 탭 상단의 <strong>부처 필터</strong>에서 소속 부처를 선택하면, 해당 부처가 담당하는 권고사항만 분기별로 표시됩니다.</p>
+            <a class="step-link" href="index.html?view=timeline">타임라인 바로가기 →</a>
+          </div>
+        </li>
+        <li class="step-item">
+          <div class="step-num">2</div>
+          <div class="step-content">
+            <h4>분기별 Gantt 형태의 일정 파악</h4>
+            <p>26Q1(1~3월) / 26Q2(4~6월) / 26Q3(7~9월) / 26Q4(10~12월) 컬럼에 권고사항이 배치되어, 분기별 업무량과 마감 시점을 직관적으로 파악합니다.</p>
+            <div class="gantt-preview">
+              <table>
+                <tr><th style="width:25%">과제</th><th>26Q1</th><th>26Q2</th><th>26Q3</th><th>26Q4</th><th>27+</th></tr>
+                <tr><td style="text-align:left;font-weight:600">과제 ①</td><td><span class="gantt-bar" style="background:#dc3545;width:80%">&nbsp;</span></td><td></td><td></td><td></td><td></td></tr>
+                <tr><td style="text-align:left;font-weight:600">과제 ②</td><td></td><td><span class="gantt-bar" style="background:#fd7e14;width:80%">&nbsp;</span></td><td><span class="gantt-bar" style="background:#fd7e14;width:60%">&nbsp;</span></td><td></td><td></td></tr>
+                <tr><td style="text-align:left;font-weight:600">과제 ③</td><td></td><td></td><td></td><td><span class="gantt-bar" style="background:#28a745;width:80%">&nbsp;</span></td><td><span class="gantt-bar" style="background:#28a745;width:40%">&nbsp;</span></td></tr>
+              </table>
+            </div>
+          </div>
+        </li>
+        <li class="step-item">
+          <div class="step-num">3</div>
+          <div class="step-content">
+            <h4>타임라인 항목 클릭 → 해당 권고사항으로 자동 이동</h4>
+            <p>타임라인의 각 항목을 클릭하면 과제 상세 모달이 열리며, 해당 권고사항 위치로 자동 스크롤됩니다. 노란색 하이라이트로 위치를 쉽게 찾을 수 있습니다.</p>
+          </div>
+        </li>
+        <li class="step-item">
+          <div class="step-num">4</div>
+          <div class="step-content">
+            <h4>키워드 필터로 특정 주제의 기한 집중 파악</h4>
+            <p>키워드 필터에 <code>AI안전</code>, <code>데이터</code>, <code>인재</code> 등을 입력하면 해당 주제 관련 권고사항만 추려서 기한별로 확인할 수 있습니다.</p>
+            <a class="step-link" href="index.html?view=timeline&keyword=AI안전">예시: 'AI안전' 키워드 →</a>
+          </div>
+        </li>
+      </ul>
+      <div class="tip-box">💡 <strong>팁</strong>: 타임라인에서 같은 과제에 마우스를 올리면 모든 분기의 해당 과제 항목이 동일 색상으로 하이라이트됩니다. 한 과제가 여러 분기에 걸쳐 있는지 한눈에 확인하세요.</div>
+    </div>
+
+    <!-- Scenario 3 -->
+    <div class="scenario-group">
+      <div class="scenario-title"><span class="num">3</span> 마감 임박 과제 우선 대응하기</div>
+      <ul class="step-list">
+        <li class="step-item">
+          <div class="step-num">1</div>
+          <div class="step-content">
+            <h4>위험 관리 탭에서 긴급 과제 확인</h4>
+            <p>D-Day 기반 복합위험도(기한 40% + 부처과부하 30% + 선행의존 30%)로 산정된 위험 등급을 확인합니다. <span style="color:#dc3545;font-weight:600">기한초과</span>, <span style="color:#e74c3c;font-weight:600">긴급</span>, <span style="color:#fd7e14;font-weight:600">주의</span> 순서로 우선 대응합니다.</p>
+            <a class="step-link" href="index.html?view=risk">위험 관리 바로가기 →</a>
+          </div>
+        </li>
+        <li class="step-item">
+          <div class="step-num">2</div>
+          <div class="step-content">
+            <h4>부처별 위험 현황 히트맵 확인</h4>
+            <p>우리 부처가 담당하는 과제 중 위험도가 높은 과제가 몇 건인지, 다른 부처 대비 부담 수준을 히트맵으로 비교합니다.</p>
+          </div>
+        </li>
+        <li class="step-item">
+          <div class="step-num">3</div>
+          <div class="step-content">
+            <h4>연관 과제 확인 → 선행 과제 파악</h4>
+            <p>위험 과제의 선행 과제가 아직 미완료인 경우 연쇄 지연 위험이 있습니다. 연관 과제 탭에서 의존 관계를 확인하세요.</p>
+            <a class="step-link" href="index.html?view=relations">연관 과제 바로가기 →</a>
+          </div>
+        </li>
+      </ul>
+    </div>
+
+    <!-- Scenario 4 -->
+    <div class="scenario-group">
+      <div class="scenario-title"><span class="num">4</span> 유사 과제 파악 → 부처 간 협업 포인트 찾기</div>
+      <ul class="step-list">
+        <li class="step-item">
+          <div class="step-num">1</div>
+          <div class="step-content">
+            <h4>유사/중복 분석 탭에서 과제별 보기</h4>
+            <p>TF-IDF 코사인 유사도 기반으로 우리 과제와 내용이 유사한 타 부처 과제를 확인합니다. 유사도 임계값 슬라이더를 조절해 정밀도를 높일 수 있습니다.</p>
+            <a class="step-link" href="index.html?view=similarity">유사/중복 분석 바로가기 →</a>
+          </div>
+        </li>
+        <li class="step-item">
+          <div class="step-num">2</div>
+          <div class="step-content">
+            <h4>공통 키워드·부처 확인 → 협업 대상 식별</h4>
+            <p>유사 과제 쌍의 공통 키워드(형광펜 하이라이트)와 공통 부처를 확인하여, 협업이 필요한 부처와 주제를 특정합니다.</p>
+          </div>
+        </li>
+      </ul>
+    </div>
+
+    <!-- Scenario 5 -->
+    <div class="scenario-group">
+      <div class="scenario-title"><span class="num">5</span> AI기본법 의무 사항과 과제 연계 확인하기</div>
+      <ul class="step-list">
+        <li class="step-item">
+          <div class="step-num">1</div>
+          <div class="step-content">
+            <h4>AI기본법 연계 페이지 → 과제-법령 매핑 탭</h4>
+            <p>담당 과제가 AI기본법·시행령의 어떤 조항과 연결되는지 확인합니다. 강제의무/노력의무 구분 배지로 법적 구속력을 즉시 파악할 수 있습니다.</p>
+            <a class="step-link" href="aiact.html">AI기본법 연계 바로가기 →</a>
+          </div>
+        </li>
+        <li class="step-item">
+          <div class="step-num">2</div>
+          <div class="step-content">
+            <h4>이행 일정 타임라인 확인</h4>
+            <p>AI기본법 시행일(2026.1.22)부터 유예 기간 종료(2026.7.21)까지, 법령 시행 일정과 행동계획 과제 기한의 겹침을 확인합니다.</p>
+          </div>
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ===== PERSONA: 총괄 진도 관리자 ===== -->
+  <div class="scenario-panel" id="panel-manager">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px">
+      <span style="font-size:2rem">📊</span>
+      <div>
+        <h2 style="font-size:1.2rem;margin-bottom:2px">총괄 진도 관리자를 위한 워크플로우</h2>
+        <p style="font-size:0.85rem;color:var(--text-muted)">전체 현황 파악 → 지연 과제 식별 → 부처별 이행률 점검 → 보고서 작성까지</p>
+      </div>
+    </div>
+
+    <!-- Scenario 1 -->
+    <div class="scenario-group">
+      <div class="scenario-title"><span class="num">1</span> 전체 99개 과제 현황 브리핑 자료 만들기</div>
+      <ul class="step-list">
+        <li class="step-item">
+          <div class="step-num">1</div>
+          <div class="step-content">
+            <h4>종합 현황판에서 KPI 카드 확인</h4>
+            <p>99개 과제 / 326개 정책권고 / 31개 부처 / 12대 전략분야의 전체 현황을 KPI 카드로 한눈에 파악합니다. 기한초과·임박 과제 알림 패널도 함께 확인하세요.</p>
+            <a class="step-link" href="index.html?view=overview">종합 현황판 바로가기 →</a>
+          </div>
+        </li>
+        <li class="step-item">
+          <div class="step-num">2</div>
+          <div class="step-content">
+            <h4>정책 키워드 워드 클라우드로 핵심 주제 파악</h4>
+            <p>종합 현황판의 워드 클라우드에서 <strong>가장 빈번하게 등장하는 정책 키워드</strong>를 확인하여 브리핑의 핵심 메시지를 도출합니다.</p>
+          </div>
+        </li>
+        <li class="step-item">
+          <div class="step-num">3</div>
+          <div class="step-content">
+            <h4>정책축별·전략분야별 분포 차트 캡처</h4>
+            <p><strong>내보내기</strong> 버튼으로 현재 화면을 PNG/PDF로 저장하여 브리핑 자료에 활용합니다.</p>
+          </div>
+        </li>
+      </ul>
+    </div>
+
+    <!-- Scenario 2 -->
+    <div class="scenario-group">
+      <div class="scenario-title"><span class="num">2</span> 분기별 마감 과제 총괄 관리하기</div>
+      <ul class="step-list">
+        <li class="step-item">
+          <div class="step-num">1</div>
+          <div class="step-content">
+            <h4>타임라인 탭에서 분기별 권고사항 분포 확인</h4>
+            <p>상단 차트에서 각 분기별 정책권고 수를 한눈에 봅니다. 26Q1에 집중된 과제가 많으면 자원 배분 재검토가 필요할 수 있습니다.</p>
+            <a class="step-link" href="index.html?view=timeline">타임라인 바로가기 →</a>
+          </div>
+        </li>
+        <li class="step-item">
+          <div class="step-num">2</div>
+          <div class="step-content">
+            <h4>정책축·전략분야 필터로 분야별 기한 점검</h4>
+            <p>정책축 필터(AI 고속도로 / AI 대전환 / AI와 함께)와 전략분야 필터를 조합하여, 특정 분야의 분기별 과제 밀집도를 확인합니다.</p>
+          </div>
+        </li>
+        <li class="step-item">
+          <div class="step-num">3</div>
+          <div class="step-content">
+            <h4>위험 관리 탭과 교차 확인</h4>
+            <p>타임라인에서 파악한 분기별 현황을 위험 관리 탭의 D-Day 카운트다운과 교차 검증합니다. 복합위험도가 높은 과제를 우선 관리 대상으로 지정합니다.</p>
+            <a class="step-link" href="index.html?view=risk">위험 관리 바로가기 →</a>
+          </div>
+        </li>
+      </ul>
+      <div class="tip-box">💡 <strong>팁</strong>: 타임라인에서 "과제 제목만" 뷰 모드로 전환하면 한 화면에 더 많은 항목을 볼 수 있어 전체 조감에 유리합니다.</div>
+    </div>
+
+    <!-- Scenario 3 -->
+    <div class="scenario-group">
+      <div class="scenario-title"><span class="num">3</span> 부처별 이행 부담 균형 점검하기</div>
+      <ul class="step-list">
+        <li class="step-item">
+          <div class="step-num">1</div>
+          <div class="step-content">
+            <h4>부처별 현황 탭 → 과제 수 정렬</h4>
+            <p>부처별 담당 과제 수 정렬 기능으로 어느 부처에 과제가 집중되어 있는지 확인합니다. 기한임박 순 정렬로 긴급도도 함께 파악합니다.</p>
+            <a class="step-link" href="index.html?view=ministries">부처별 현황 바로가기 →</a>
+          </div>
+        </li>
+        <li class="step-item">
+          <div class="step-num">2</div>
+          <div class="step-content">
+            <h4>유사/중복 분석 → 부처 중복 배정 현황 확인</h4>
+            <p>동일 부처가 유사한 내용의 과제를 중복으로 맡고 있는지 확인합니다. 중복이 심한 경우 과제 통합이나 역할 재조정을 검토합니다.</p>
+            <a class="step-link" href="index.html?view=similarity">유사/중복 분석 바로가기 →</a>
+          </div>
+        </li>
+        <li class="step-item">
+          <div class="step-num">3</div>
+          <div class="step-content">
+            <h4>Sankey 흐름도로 정책축→전략분야→과제→부처 흐름 파악</h4>
+            <p>3대 정책축에서 12대 전략분야, 99개 과제, 31개 부처까지 이어지는 4단계 흐름을 시각적으로 확인합니다. 특정 부처에 흐름이 집중되는 병목을 발견할 수 있습니다.</p>
+            <a class="step-link" href="sankey.html" target="_blank">Sankey 흐름도 →</a>
+          </div>
+        </li>
+      </ul>
+    </div>
+
+    <!-- Scenario 4 -->
+    <div class="scenario-group">
+      <div class="scenario-title"><span class="num">4</span> 키워드별 기한·부처 교차 분석하기</div>
+      <ul class="step-list">
+        <li class="step-item">
+          <div class="step-num">1</div>
+          <div class="step-content">
+            <h4>전역 검색에서 정책 키워드로 AND 검색</h4>
+            <p>헤더 검색창에 <code>반도체 인프라</code>, <code>AI 안전 가이드라인</code> 등 복수 키워드를 입력하면 AND 조건으로 관련 과제·참고자료·글로벌 사례를 한 번에 검색합니다.</p>
+          </div>
+        </li>
+        <li class="step-item">
+          <div class="step-num">2</div>
+          <div class="step-content">
+            <h4>타임라인 키워드 필터 + URL 파라미터 활용</h4>
+            <p><code>index.html?view=timeline&keyword=데이터</code> 형태의 URL로 특정 키워드의 타임라인 뷰를 즉시 열 수 있습니다. 보고서에 직접 링크로 활용 가능합니다.</p>
+            <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px">
+              <a class="step-link" href="index.html?view=timeline&keyword=데이터">데이터 →</a>
+              <a class="step-link" href="index.html?view=timeline&keyword=인재">인재 →</a>
+              <a class="step-link" href="index.html?view=timeline&keyword=안전">안전 →</a>
+              <a class="step-link" href="index.html?view=timeline&keyword=반도체">반도체 →</a>
+              <a class="step-link" href="index.html?view=timeline&keyword=글로벌">글로벌 →</a>
+            </div>
+          </div>
+        </li>
+      </ul>
+    </div>
+
+    <!-- Scenario 5 -->
+    <div class="scenario-group">
+      <div class="scenario-title"><span class="num">5</span> 과제 간 연쇄 지연 위험 사전 점검하기</div>
+      <ul class="step-list">
+        <li class="step-item">
+          <div class="step-num">1</div>
+          <div class="step-content">
+            <h4>연관 과제 탭 → Force-directed 네트워크 그래프</h4>
+            <p>99개 과제의 연관 관계를 인터랙티브 그래프로 확인합니다. 노드를 드래그하고, 클릭하면 해당 과제의 선행·병행·후행 과제 목록이 표시됩니다.</p>
+            <a class="step-link" href="index.html?view=relations">연관 과제 바로가기 →</a>
+          </div>
+        </li>
+        <li class="step-item">
+          <div class="step-num">2</div>
+          <div class="step-content">
+            <h4>선행 과제 지연 시 → 연쇄 영향 범위 파악</h4>
+            <p>위험 관리 탭에서 기한초과/긴급인 과제를 확인한 뒤, 연관 과제 탭에서 해당 과제를 선택하면 후행 과제 목록으로 연쇄 지연 범위를 추정합니다.</p>
+          </div>
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ===== PERSONA: AI전략위 위원 ===== -->
+  <div class="scenario-panel" id="panel-committee">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px">
+      <span style="font-size:2rem">🎖️</span>
+      <div>
+        <h2 style="font-size:1.2rem;margin-bottom:2px">AI전략위 위원을 위한 워크플로우</h2>
+        <p style="font-size:0.85rem;color:var(--text-muted)">거시적 정책 방향 검토 → 글로벌 정합성 → 법령 이행 점검 → 의사결정 지원</p>
+      </div>
+    </div>
+
+    <!-- Scenario 1 -->
+    <div class="scenario-group">
+      <div class="scenario-title"><span class="num">1</span> 3대 정책축별 과제 기한 분포 전략 검토</div>
+      <ul class="step-list">
+        <li class="step-item">
+          <div class="step-num">1</div>
+          <div class="step-content">
+            <h4>종합 현황판 → 정책축별 과제 분포 차트</h4>
+            <p>"AI 고속도로"(인프라), "AI 대전환"(산업), "AI와 함께"(사회) 3대 축의 과제 수·기한 분포를 비교합니다. 특정 축에 단기 과제가 편중되어 있는지 확인합니다.</p>
+            <a class="step-link" href="index.html?view=overview">종합 현황판 바로가기 →</a>
+          </div>
+        </li>
+        <li class="step-item">
+          <div class="step-num">2</div>
+          <div class="step-content">
+            <h4>타임라인에서 정책축별 필터 적용</h4>
+            <p>정책축 필터를 하나씩 선택하며 각 축의 분기별 과제 밀도를 비교합니다. 예: "AI 고속도로"의 인프라 과제가 26Q1에 집중되어 있다면 조기 이행 압박이 높음을 의미합니다.</p>
+            <a class="step-link" href="index.html?view=timeline">타임라인 바로가기 →</a>
+          </div>
+        </li>
+      </ul>
+    </div>
+
+    <!-- Scenario 2 -->
+    <div class="scenario-group">
+      <div class="scenario-title"><span class="num">2</span> 글로벌 정합성 점검 — 한국 vs 세계 비교</div>
+      <ul class="step-list">
+        <li class="step-item">
+          <div class="step-num">1</div>
+          <div class="step-content">
+            <h4>글로벌 정책 비교 탭 → 120개 사례 분석</h4>
+            <p>미국(22)·EU(20)·영국(16)·프랑스(13)·중국(10) 등 25개국의 120개 AI 정책 사례를 국가별·분류별로 탐색합니다. 차트 클릭으로 필터가 자동 적용됩니다.</p>
+            <a class="step-link" href="index.html?view=globalcomp">글로벌 정책 비교 바로가기 →</a>
+          </div>
+        </li>
+        <li class="step-item">
+          <div class="step-num">2</div>
+          <div class="step-content">
+            <h4>한국↔글로벌 매핑 비교 모달</h4>
+            <p>한국 전략분야와 해외 사례의 매핑 테이블에서 행을 클릭하면, 한국 과제와 해외 사례를 2열로 비교하는 상세 모달이 열립니다.</p>
+          </div>
+        </li>
+        <li class="step-item">
+          <div class="step-num">3</div>
+          <div class="step-content">
+            <h4>글로벌 협력 탭 → 국제 협력 과제 현황</h4>
+            <p>G7·G20·OECD·UN 등 다자기구 관련 과제와 양자 협력 현황을 확인합니다.</p>
+            <a class="step-link" href="index.html?view=global">글로벌 협력 바로가기 →</a>
+          </div>
+        </li>
+      </ul>
+    </div>
+
+    <!-- Scenario 3 -->
+    <div class="scenario-group">
+      <div class="scenario-title"><span class="num">3</span> AI기본법 이행 현황 점검하기</div>
+      <ul class="step-list">
+        <li class="step-item">
+          <div class="step-num">1</div>
+          <div class="step-content">
+            <h4>AI기본법 연계 페이지 → 법령 체계 전체 구조 확인</h4>
+            <p>AI기본법(법률 제21311호)·시행령(대통령령 제36053호)·가이드라인 5종의 핵심 조문과 강제의무/노력의무를 구분합니다.</p>
+            <a class="step-link" href="aiact.html">AI기본법 연계 바로가기 →</a>
+          </div>
+        </li>
+        <li class="step-item">
+          <div class="step-num">2</div>
+          <div class="step-content">
+            <h4>과제-법령 매핑 → 법적 의무와 행동계획의 정합성 확인</h4>
+            <p>SA5(AI 규제혁신) 과제 ID 31~35가 법령 조문과 어떻게 연결되는지, 거버넌스 과제(ID 8, 63, 82)와 전략위원회 규정(제7조)의 정합성을 확인합니다.</p>
+          </div>
+        </li>
+        <li class="step-item">
+          <div class="step-num">3</div>
+          <div class="step-content">
+            <h4>이행 일정 타임라인으로 법령 시행 일정 대비 과제 기한 확인</h4>
+            <p>법률 시행(2026.1.22) → 시행령(1.24) → 판단 가이드라인(2.13) → 유예기간 종료(7.21) 일정과 행동계획 과제 기한의 겹침을 확인합니다.</p>
+          </div>
+        </li>
+      </ul>
+    </div>
+
+    <!-- Scenario 4 -->
+    <div class="scenario-group">
+      <div class="scenario-title"><span class="num">4</span> 위험 과제 의사결정 — 우선순위 조정</div>
+      <ul class="step-list">
+        <li class="step-item">
+          <div class="step-num">1</div>
+          <div class="step-content">
+            <h4>위험 관리 탭 → 복합위험도 Top 과제 파악</h4>
+            <p>기한(40%) + 부처과부하(30%) + 선행의존(30%)으로 산정된 복합위험도 기준, 최고위험 과제부터 점검합니다.</p>
+            <a class="step-link" href="index.html?view=risk">위험 관리 바로가기 →</a>
+          </div>
+        </li>
+        <li class="step-item">
+          <div class="step-num">2</div>
+          <div class="step-content">
+            <h4>연관 과제 네트워크에서 영향 범위 확인</h4>
+            <p>위험 과제를 연관 과제 그래프에서 선택하여, 해당 과제가 지연될 경우 영향받는 후행 과제의 범위를 파악합니다.</p>
+          </div>
+        </li>
+        <li class="step-item">
+          <div class="step-num">3</div>
+          <div class="step-content">
+            <h4>표준화 현황 탭 → 법·제도 정비 과제의 선행 여부 확인</h4>
+            <p>표준·인증 관련 과제가 제때 이행되지 않으면 후속 산업화 과제에 영향을 줍니다. 표준화 로드맵과 행동계획 기한의 정합성을 점검합니다.</p>
+            <a class="step-link" href="index.html?view=standards">표준화 현황 바로가기 →</a>
+          </div>
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ===== PERSONA: 일반 사용자 ===== -->
+  <div class="scenario-panel" id="panel-public">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px">
+      <span style="font-size:2rem">👤</span>
+      <div>
+        <h2 style="font-size:1.2rem;margin-bottom:2px">일반 사용자를 위한 워크플로우</h2>
+        <p style="font-size:0.85rem;color:var(--text-muted)">AI 행동계획 전체 이해 → 관심 분야 탐색 → AI기본법 영향 확인</p>
+      </div>
+    </div>
+
+    <!-- Scenario 1 -->
+    <div class="scenario-group">
+      <div class="scenario-title"><span class="num">1</span> AI 행동계획 전체 구조 빠르게 이해하기</div>
+      <ul class="step-list">
+        <li class="step-item">
+          <div class="step-num">1</div>
+          <div class="step-content">
+            <h4>종합 현황판에서 전체 구조 파악</h4>
+            <p><strong>3대 정책축</strong>(AI 고속도로·AI 대전환·AI와 함께) → <strong>12대 전략분야</strong> → <strong>99개 실천과제</strong> → <strong>326개 정책권고</strong>의 체계를 이해합니다.</p>
+            <a class="step-link" href="index.html?view=overview">종합 현황판 바로가기 →</a>
+          </div>
+        </li>
+        <li class="step-item">
+          <div class="step-num">2</div>
+          <div class="step-content">
+            <h4>Sankey 흐름도로 정책 흐름 시각화</h4>
+            <p>정책축 → 전략분야 → 과제 → 부처의 4단계 흐름을 한눈에 봅니다. 노드를 클릭하면 상세 내용이 슬라이드 패널로 표시됩니다.</p>
+            <a class="step-link" href="sankey.html" target="_blank">Sankey 흐름도 →</a>
+          </div>
+        </li>
+        <li class="step-item">
+          <div class="step-num">3</div>
+          <div class="step-content">
+            <h4>워드 클라우드와 키워드로 주요 주제 파악</h4>
+            <p>종합 현황판의 정책 키워드 워드 클라우드에서 <strong>빈도 높은 키워드</strong>를 통해 이 행동계획이 어떤 주제에 집중하는지 직관적으로 파악합니다.</p>
+          </div>
+        </li>
+      </ul>
+    </div>
+
+    <!-- Scenario 2 -->
+    <div class="scenario-group">
+      <div class="scenario-title"><span class="num">2</span> 관심 분야 과제 찾기</div>
+      <ul class="step-list">
+        <li class="step-item">
+          <div class="step-num">1</div>
+          <div class="step-content">
+            <h4>전역 검색으로 관심 키워드 검색</h4>
+            <p>헤더 검색창(단축키: <code>Ctrl+F</code>)에 관심 키워드를 입력합니다. 예: <code>의료</code>, <code>교육</code>, <code>자율주행</code>, <code>반도체</code> 등. 자동완성이 관련 과제를 제안합니다.</p>
+          </div>
+        </li>
+        <li class="step-item">
+          <div class="step-num">2</div>
+          <div class="step-content">
+            <h4>검색 결과에서 과제·글로벌 사례 함께 확인</h4>
+            <p>검색하면 <strong>관련 과제</strong>와 함께 <strong>글로벌 사례</strong>(120개 중 매칭)도 함께 표시됩니다. 한국 정책과 해외 정책을 비교할 수 있습니다.</p>
+          </div>
+        </li>
+        <li class="step-item">
+          <div class="step-num">3</div>
+          <div class="step-content">
+            <h4>타임라인에서 관심 분야의 추진 일정 확인</h4>
+            <p>관심 키워드의 과제들이 언제까지 추진되는지 타임라인 뷰에서 분기별로 확인합니다.</p>
+            <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px">
+              <a class="step-link" href="index.html?view=timeline&keyword=의료">의료 →</a>
+              <a class="step-link" href="index.html?view=timeline&keyword=교육">교육 →</a>
+              <a class="step-link" href="index.html?view=timeline&keyword=자율주행">자율주행 →</a>
+              <a class="step-link" href="index.html?view=timeline&keyword=스타트업">스타트업 →</a>
+            </div>
+          </div>
+        </li>
+      </ul>
+    </div>
+
+    <!-- Scenario 3 -->
+    <div class="scenario-group">
+      <div class="scenario-title"><span class="num">3</span> AI기본법이 나에게 미치는 영향 확인하기</div>
+      <ul class="step-list">
+        <li class="step-item">
+          <div class="step-num">1</div>
+          <div class="step-content">
+            <h4>AI기본법 연계 페이지 → 사업자 의무 체크리스트</h4>
+            <p>AI 사업자라면 6단계 체크리스트를 통해 의무 사항을 하나씩 점검할 수 있습니다. 체크 상태는 브라우저에 저장되어 다음 방문 시에도 유지됩니다.</p>
+            <a class="step-link" href="aiact.html">AI기본법 체크리스트 →</a>
+          </div>
+        </li>
+        <li class="step-item">
+          <div class="step-num">2</div>
+          <div class="step-content">
+            <h4>고영향AI 해당 여부 확인</h4>
+            <p>13개 고영향AI 분야(에너지·보건의료·교육·채용·대출심사 등)에 해당하는지 확인합니다. 해당 시 투명성 고지의무·영향평가·사업자 6대 책무가 적용됩니다.</p>
+          </div>
+        </li>
+      </ul>
+    </div>
+
+    <!-- Scenario 4 -->
+    <div class="scenario-group">
+      <div class="scenario-title"><span class="num">4</span> 글로벌 AI 정책 동향 탐색하기</div>
+      <ul class="step-list">
+        <li class="step-item">
+          <div class="step-num">1</div>
+          <div class="step-content">
+            <h4>글로벌 정책 비교 탭 → 국가별·분류별 탐색</h4>
+            <p>25개국 120개 AI 정책 사례를 카드/리스트 뷰로 탐색합니다. 국가별 차트 막대를 클릭하면 해당 국가 사례만 필터됩니다.</p>
+            <a class="step-link" href="index.html?view=globalcomp">글로벌 정책 비교 →</a>
+          </div>
+        </li>
+        <li class="step-item">
+          <div class="step-num">2</div>
+          <div class="step-content">
+            <h4>사례 카드 클릭 → 상세 모달에서 배경·이행방안·권고사항 확인</h4>
+            <p>각 사례의 정책 배경, 핵심 이행방안, 정책권고사항 전문을 확인하고, 원문 링크로 출처를 검증할 수 있습니다.</p>
+          </div>
+        </li>
+      </ul>
+    </div>
+  </div>
+
+</div>
+
+<!-- ==================== TAB 2: MANUAL ==================== -->
+<div class="view" id="view-manual">
+
+  <div class="card" style="border-left:4px solid var(--accent);margin-bottom:24px">
+    <h2 style="font-size:1.15rem;margin-bottom:8px">📖 대시보드 사용 매뉴얼</h2>
+    <p style="font-size:0.88rem;color:var(--text-muted)">AI 행동계획 2026 대시보드의 모든 기능을 상세하게 설명합니다. 목차를 클릭하면 해당 섹션으로 이동합니다.</p>
+  </div>
+
+  <!-- TOC -->
+  <div class="manual-toc">
+    <h3 style="font-size:0.95rem;font-weight:700;margin-bottom:10px">📑 목차</h3>
+    <a href="#m-overview">1. 대시보드 개요</a>
+    <a href="#m-nav">2. 화면 구성과 네비게이션</a>
+    <a href="#m-search">3. 전역 검색 활용법</a>
+    <a href="#m-timeline">4. 타임라인과 기한 관리</a>
+    <a href="#m-risk">5. 위험 관리와 복합위험도</a>
+    <a href="#m-analysis">6. 분석 기능 (유사도·연관·표준화)</a>
+    <a href="#m-global">7. 글로벌 정책 비교</a>
+    <a href="#m-aiact">8. AI기본법 연계 (aiact.html)</a>
+    <a href="#m-sankey">9. Sankey 흐름도</a>
+    <a href="#m-export">10. 내보내기·인쇄·북마크</a>
+    <a href="#m-shortcuts">11. 키보드 단축키·URL 파라미터</a>
+    <a href="#m-data">12. 데이터 출처와 한계</a>
+  </div>
+
+  <!-- Section 1 -->
+  <div class="manual-section" id="m-overview">
+    <h2>1. 대시보드 개요</h2>
+    <div class="card">
+      <p>대한민국 AI 행동계획 2026 대시보드는 <strong>대통령직속 국가인공지능전략위원회</strong>가 발표한 AI 행동계획의 99개 실천과제와 326개 정책권고를 종합 분석하는 도구입니다.</p>
+      <h3>데이터 구조</h3>
+      <table style="width:100%;border-collapse:collapse;font-size:0.85rem;margin:12px 0">
+        <tr style="background:var(--primary);color:white"><th style="padding:8px;text-align:left">단위</th><th style="padding:8px;text-align:center">수량</th><th style="padding:8px;text-align:left">설명</th></tr>
+        <tr><td style="padding:8px;border:1px solid var(--border)">정책축</td><td style="padding:8px;text-align:center;border:1px solid var(--border)">3</td><td style="padding:8px;border:1px solid var(--border)">AI 고속도로 / AI 대전환 / AI와 함께</td></tr>
+        <tr style="background:var(--light)"><td style="padding:8px;border:1px solid var(--border)">전략분야</td><td style="padding:8px;text-align:center;border:1px solid var(--border)">12</td><td style="padding:8px;border:1px solid var(--border)">AI반도체, 데이터, 컴퓨팅, 인재, 규제혁신 등</td></tr>
+        <tr><td style="padding:8px;border:1px solid var(--border)">실천과제</td><td style="padding:8px;text-align:center;border:1px solid var(--border)">99</td><td style="padding:8px;border:1px solid var(--border)">각 전략분야별 구체 이행 과제</td></tr>
+        <tr style="background:var(--light)"><td style="padding:8px;border:1px solid var(--border)">정책권고</td><td style="padding:8px;text-align:center;border:1px solid var(--border)">326</td><td style="padding:8px;border:1px solid var(--border)">과제별 세부 권고사항 (각각 추진기한 별도 지정)</td></tr>
+        <tr><td style="padding:8px;border:1px solid var(--border)">주관부처</td><td style="padding:8px;text-align:center;border:1px solid var(--border)">31</td><td style="padding:8px;border:1px solid var(--border)">과기정통부, 산업부, 교육부 등</td></tr>
+      </table>
+      <h3>추진기한 체계</h3>
+      <table style="width:100%;border-collapse:collapse;font-size:0.85rem;margin:12px 0">
+        <tr style="background:var(--primary);color:white"><th style="padding:8px">기한 코드</th><th style="padding:8px">마감일</th><th style="padding:8px">의미</th></tr>
+        <tr><td style="padding:8px;text-align:center;border:1px solid var(--border)">26Q1</td><td style="padding:8px;text-align:center;border:1px solid var(--border)">2026. 3. 31</td><td style="padding:8px;border:1px solid var(--border)">2026년 1분기 말</td></tr>
+        <tr style="background:var(--light)"><td style="padding:8px;text-align:center;border:1px solid var(--border)">26Q2</td><td style="padding:8px;text-align:center;border:1px solid var(--border)">2026. 6. 30</td><td style="padding:8px;border:1px solid var(--border)">2026년 2분기 말</td></tr>
+        <tr><td style="padding:8px;text-align:center;border:1px solid var(--border)">26Q3</td><td style="padding:8px;text-align:center;border:1px solid var(--border)">2026. 9. 30</td><td style="padding:8px;border:1px solid var(--border)">2026년 3분기 말</td></tr>
+        <tr style="background:var(--light)"><td style="padding:8px;text-align:center;border:1px solid var(--border)">26Q4</td><td style="padding:8px;text-align:center;border:1px solid var(--border)">2026. 12. 31</td><td style="padding:8px;border:1px solid var(--border)">2026년 4분기 말</td></tr>
+        <tr><td style="padding:8px;text-align:center;border:1px solid var(--border)">27+</td><td style="padding:8px;text-align:center;border:1px solid var(--border)">2027년 이후</td><td style="padding:8px;border:1px solid var(--border)">중장기 과제</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- Section 2 -->
+  <div class="manual-section" id="m-nav">
+    <h2>2. 화면 구성과 네비게이션</h2>
+    <div class="card">
+      <h3>페이지 구성</h3>
+      <p>대시보드는 3개의 독립 HTML 페이지로 구성됩니다:</p>
+      <ul style="margin:12px 0;padding-left:20px;font-size:0.88rem">
+        <li style="margin-bottom:6px"><strong>index.html</strong> (메인 대시보드) — 11개 탭으로 구성, 모든 핵심 분석 기능 포함</li>
+        <li style="margin-bottom:6px"><strong>aiact.html</strong> (AI기본법 연계) — 법령·가이드라인 분석 및 과제 매핑, 6개 탭</li>
+        <li style="margin-bottom:6px"><strong>sankey.html</strong> (Sankey 흐름도) — 정책축→전략분야→과제→부처 4단계 흐름 시각화</li>
+      </ul>
+      <h3>11개 탭 상세</h3>
+      <table style="width:100%;border-collapse:collapse;font-size:0.84rem;margin:12px 0">
+        <tr style="background:var(--primary);color:white"><th style="padding:8px">번호</th><th style="padding:8px;text-align:left">탭명</th><th style="padding:8px;text-align:left">핵심 기능</th><th style="padding:8px">단축키</th></tr>
+        <tr><td style="padding:6px 8px;text-align:center;border:1px solid var(--border)">1</td><td style="padding:6px 8px;border:1px solid var(--border)">종합 현황판</td><td style="padding:6px 8px;border:1px solid var(--border)">KPI 카드, 알림 패널, 워드클라우드, 정책축·전략분야 차트, 진척률</td><td style="padding:6px 8px;text-align:center;border:1px solid var(--border)"><span class="manual-key">1</span></td></tr>
+        <tr style="background:var(--light)"><td style="padding:6px 8px;text-align:center;border:1px solid var(--border)">2</td><td style="padding:6px 8px;border:1px solid var(--border)">과제별 상세</td><td style="padding:6px 8px;border:1px solid var(--border)">99개 과제 카드, 필터(정책축/전략분야/기한/부처), 상세 모달, 글로벌 사례 검색 결과</td><td style="padding:6px 8px;text-align:center;border:1px solid var(--border)"><span class="manual-key">2</span></td></tr>
+        <tr><td style="padding:6px 8px;text-align:center;border:1px solid var(--border)">3</td><td style="padding:6px 8px;border:1px solid var(--border)">부처별 현황</td><td style="padding:6px 8px;border:1px solid var(--border)">31개 부처, 정렬(과제수/기한임박/가나다), 협력기관 표시, 위험 배지</td><td style="padding:6px 8px;text-align:center;border:1px solid var(--border)"><span class="manual-key">3</span></td></tr>
+        <tr style="background:var(--light)"><td style="padding:6px 8px;text-align:center;border:1px solid var(--border)">4</td><td style="padding:6px 8px;border:1px solid var(--border)">추진기한 타임라인</td><td style="padding:6px 8px;border:1px solid var(--border)">분기별 Gantt형 일정, 4중 필터(정책축/전략분야/부처/키워드), 차트 연동, 뷰 모드 전환</td><td style="padding:6px 8px;text-align:center;border:1px solid var(--border)"><span class="manual-key">4</span></td></tr>
+        <tr><td style="padding:6px 8px;text-align:center;border:1px solid var(--border)">5</td><td style="padding:6px 8px;border:1px solid var(--border)">참고/각주</td><td style="padding:6px 8px;border:1px solid var(--border)">참고자료 25건, 각주 91건, 독립 검색, 하이라이팅</td><td style="padding:6px 8px;text-align:center;border:1px solid var(--border)"><span class="manual-key">5</span></td></tr>
+        <tr style="background:var(--light)"><td style="padding:6px 8px;text-align:center;border:1px solid var(--border)">6</td><td style="padding:6px 8px;border:1px solid var(--border)">위험 관리</td><td style="padding:6px 8px;border:1px solid var(--border)">복합위험도(기한40+부처30+선행30), D-Day 배너, 부처별 히트맵, KPI 카드</td><td style="padding:6px 8px;text-align:center;border:1px solid var(--border)"><span class="manual-key">6</span></td></tr>
+        <tr><td style="padding:6px 8px;text-align:center;border:1px solid var(--border)">7</td><td style="padding:6px 8px;border:1px solid var(--border)">유사/중복 분석</td><td style="padding:6px 8px;border:1px solid var(--border)">TF-IDF 코사인 유사도, 임계값 슬라이더, 쌍별/과제별 보기, 공통 키워드 하이라이팅</td><td style="padding:6px 8px;text-align:center;border:1px solid var(--border)"><span class="manual-key">7</span></td></tr>
+        <tr style="background:var(--light)"><td style="padding:6px 8px;text-align:center;border:1px solid var(--border)">8</td><td style="padding:6px 8px;border:1px solid var(--border)">연관 과제</td><td style="padding:6px 8px;border:1px solid var(--border)">Force-directed 네트워크 그래프, 노드 드래그, 선행/병행/후행 분류, 연관도 점수</td><td style="padding:6px 8px;text-align:center;border:1px solid var(--border)"><span class="manual-key">8</span></td></tr>
+        <tr><td style="padding:6px 8px;text-align:center;border:1px solid var(--border)">9</td><td style="padding:6px 8px;border:1px solid var(--border)">글로벌 협력</td><td style="padding:6px 8px;border:1px solid var(--border)">다자/양자/컨소시엄/이니셔티브/ODA/표준화 분류, 세계지도, 부처별 차트</td><td style="padding:6px 8px;text-align:center;border:1px solid var(--border)"><span class="manual-key">9</span></td></tr>
+        <tr style="background:var(--light)"><td style="padding:6px 8px;text-align:center;border:1px solid var(--border)">10</td><td style="padding:6px 8px;border:1px solid var(--border)">표준화 현황</td><td style="padding:6px 8px;border:1px solid var(--border)">법제도/기술표준/안전신뢰/가이드라인/인증평가 분류, 로드맵</td><td style="padding:6px 8px;text-align:center;border:1px solid var(--border)"><span class="manual-key">0</span></td></tr>
+        <tr><td style="padding:6px 8px;text-align:center;border:1px solid var(--border)">11</td><td style="padding:6px 8px;border:1px solid var(--border)">글로벌 정책 비교</td><td style="padding:6px 8px;border:1px solid var(--border)">25개국 120개 사례, 카드/리스트 뷰, 차트 클릭 필터, 상세 모달, 한국↔글로벌 매핑</td><td style="padding:6px 8px;text-align:center;border:1px solid var(--border)">-</td></tr>
+      </table>
+      <h3>탭 전환 방법</h3>
+      <ul style="margin:12px 0;padding-left:20px;font-size:0.88rem">
+        <li style="margin-bottom:6px"><strong>클릭</strong>: 상단 탭 바에서 원하는 탭을 클릭</li>
+        <li style="margin-bottom:6px"><strong>단축키</strong>: 숫자키 <span class="manual-key">1</span>~<span class="manual-key">9</span>, <span class="manual-key">0</span>으로 탭 1~10 전환</li>
+        <li style="margin-bottom:6px"><strong>URL 파라미터</strong>: <code>index.html?view=timeline</code>으로 직접 접근</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Section 3 -->
+  <div class="manual-section" id="m-search">
+    <h2>3. 전역 검색 활용법</h2>
+    <div class="card">
+      <h3>검색 범위</h3>
+      <p>헤더의 검색창(<span class="manual-key">Ctrl</span>+<span class="manual-key">F</span>)은 다음 데이터를 동시에 검색합니다:</p>
+      <ul style="margin:12px 0;padding-left:20px;font-size:0.88rem">
+        <li style="margin-bottom:4px">99개 과제 (제목, 배경, 정책권고 내용)</li>
+        <li style="margin-bottom:4px">참고자료 25건, 각주 91건</li>
+        <li style="margin-bottom:4px">글로벌 120개 사례 (제목, 요약, 배경, 이행방안, 권고사항 전문)</li>
+      </ul>
+      <h3>AND 검색</h3>
+      <p>공백 또는 쉼표로 키워드를 구분하면 <strong>AND 조건</strong>으로 검색됩니다.</p>
+      <p>예: <code>반도체 인프라</code> → "반도체"와 "인프라" 모두 포함된 결과만 표시</p>
+      <h3>검색 결과 표시</h3>
+      <ul style="margin:12px 0;padding-left:20px;font-size:0.88rem">
+        <li style="margin-bottom:4px"><strong>과제별 상세 탭</strong>: 매칭 과제 카드 + 하단에 글로벌 사례 카드</li>
+        <li style="margin-bottom:4px"><strong>검색 카운트 바</strong>: "과제 N건 · 참고 N건 · 각주 N건 · 글로벌 사례 N건"</li>
+        <li style="margin-bottom:4px"><strong>검색어 하이라이팅</strong>: 매칭 키워드가 노란색으로 강조</li>
+        <li style="margin-bottom:4px"><strong>자동완성</strong>: 입력 시 관련 과제명·키워드 자동 제안</li>
+        <li style="margin-bottom:4px"><strong>최근 검색어</strong>: localStorage에 저장, 검색창 포커스 시 표시</li>
+      </ul>
+      <div class="tip-box">💡 <strong>팁</strong>: 검색 후 각 탭으로 이동하면 검색어가 자동으로 해당 탭의 필터에 동기화됩니다.</div>
+    </div>
+  </div>
+
+  <!-- Section 4 -->
+  <div class="manual-section" id="m-timeline">
+    <h2>4. 타임라인과 기한 관리</h2>
+    <div class="card">
+      <h3>타임라인 탭 (탭 4) — 분기별 일정 관리</h3>
+      <p>326개 정책권고가 추진기한별 분기 컬럼(26Q1 ~ 27+)에 배치되어, <strong>Gantt 차트</strong>처럼 일정을 파악할 수 있습니다.</p>
+
+      <h3>4중 필터 시스템</h3>
+      <table style="width:100%;border-collapse:collapse;font-size:0.85rem;margin:12px 0">
+        <tr style="background:var(--primary);color:white"><th style="padding:8px;text-align:left">필터</th><th style="padding:8px;text-align:left">설명</th><th style="padding:8px;text-align:left">사용 예</th></tr>
+        <tr><td style="padding:8px;border:1px solid var(--border)"><strong>정책축</strong></td><td style="padding:8px;border:1px solid var(--border)">3대 정책축 중 하나 선택</td><td style="padding:8px;border:1px solid var(--border)">"AI 고속도로" 인프라 과제만 보기</td></tr>
+        <tr style="background:var(--light)"><td style="padding:8px;border:1px solid var(--border)"><strong>전략분야</strong></td><td style="padding:8px;border:1px solid var(--border)">12대 전략분야 중 하나 선택</td><td style="padding:8px;border:1px solid var(--border)">"AI반도체" 분야 과제의 분기별 현황</td></tr>
+        <tr><td style="padding:8px;border:1px solid var(--border)"><strong>부처</strong></td><td style="padding:8px;border:1px solid var(--border)">31개 부처 중 하나 선택</td><td style="padding:8px;border:1px solid var(--border)">과기정통부 담당 권고사항만 보기</td></tr>
+        <tr style="background:var(--light)"><td style="padding:8px;border:1px solid var(--border)"><strong>키워드</strong></td><td style="padding:8px;border:1px solid var(--border)">자유 텍스트 검색 (AND 논리)</td><td style="padding:8px;border:1px solid var(--border)">"데이터 품질" 관련 권고만 보기</td></tr>
+      </table>
+      <p>필터는 AND 조건으로 조합됩니다. 필터 적용 시 상단 차트도 실시간 업데이트됩니다.</p>
+
+      <h3>뷰 모드 전환</h3>
+      <ul style="margin:12px 0;padding-left:20px;font-size:0.88rem">
+        <li style="margin-bottom:4px"><strong>전체 내용</strong>: 과제번호·권고번호·내용 스니펫·전략분야·기한 배지 모두 표시</li>
+        <li style="margin-bottom:4px"><strong>과제 제목만</strong>: 콤팩트 모드, 한 화면에 더 많은 항목 조감</li>
+      </ul>
+
+      <h3>인터랙션</h3>
+      <ul style="margin:12px 0;padding-left:20px;font-size:0.88rem">
+        <li style="margin-bottom:4px"><strong>항목 클릭</strong> → 해당 권고사항 위치로 자동 스크롤 + 노란 하이라이트</li>
+        <li style="margin-bottom:4px"><strong>같은 과제 호버</strong> → 모든 분기의 해당 과제 항목이 동일 파스텔 색상으로 하이라이트</li>
+        <li style="margin-bottom:4px"><strong>기한초과 항목</strong>: 빨간 배지 자동 표시</li>
+      </ul>
+
+      <h3>URL 파라미터로 직접 접근</h3>
+      <ul style="margin:12px 0;padding-left:20px;font-size:0.88rem">
+        <li style="margin-bottom:4px"><code>index.html?view=timeline&keyword=AI안전</code> — 키워드 필터 적용 상태로 진입</li>
+        <li style="margin-bottom:4px"><code>index.html?view=timeline&task=5</code> — 특정 과제 필터 적용</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Section 5 -->
+  <div class="manual-section" id="m-risk">
+    <h2>5. 위험 관리와 복합위험도</h2>
+    <div class="card">
+      <h3>복합위험도 산정 공식</h3>
+      <p>각 과제의 위험도는 3가지 요소의 <strong>가중 합산</strong>으로 산정됩니다:</p>
+      <table style="width:100%;border-collapse:collapse;font-size:0.85rem;margin:12px 0">
+        <tr style="background:var(--danger);color:white"><th style="padding:8px;text-align:left">요소</th><th style="padding:8px;text-align:center">가중치</th><th style="padding:8px;text-align:left">산정 기준</th></tr>
+        <tr><td style="padding:8px;border:1px solid var(--border)"><strong>기한 위험도</strong></td><td style="padding:8px;text-align:center;border:1px solid var(--border)">40%</td><td style="padding:8px;border:1px solid var(--border)">오늘 기준 D-Day 계산. 기한초과(D+) / 긴급(D-34) / 주의(D-120) / 관찰(D-240) / 여유</td></tr>
+        <tr style="background:var(--light)"><td style="padding:8px;border:1px solid var(--border)"><strong>부처 과부하</strong></td><td style="padding:8px;text-align:center;border:1px solid var(--border)">30%</td><td style="padding:8px;border:1px solid var(--border)">해당 부처의 긴급 과제 수가 평균 대비 과도한 경우 가중</td></tr>
+        <tr><td style="padding:8px;border:1px solid var(--border)"><strong>선행의존 위험</strong></td><td style="padding:8px;text-align:center;border:1px solid var(--border)">30%</td><td style="padding:8px;border:1px solid var(--border)">선행 과제 미완료 시 연쇄 지연 반영</td></tr>
+      </table>
+
+      <h3>위험 등급</h3>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;margin:12px 0">
+        <span style="background:#dc3545;color:white;padding:4px 12px;border-radius:12px;font-size:0.82rem;font-weight:600">기한초과 (D-Day 초과)</span>
+        <span style="background:#e74c3c;color:white;padding:4px 12px;border-radius:12px;font-size:0.82rem;font-weight:600">긴급 (34일 이내)</span>
+        <span style="background:#fd7e14;color:white;padding:4px 12px;border-radius:12px;font-size:0.82rem;font-weight:600">주의 (120일 이내)</span>
+        <span style="background:#ffc107;color:#333;padding:4px 12px;border-radius:12px;font-size:0.82rem;font-weight:600">관찰 (240일 이내)</span>
+        <span style="background:#28a745;color:white;padding:4px 12px;border-radius:12px;font-size:0.82rem;font-weight:600">여유 (240일 초과)</span>
+      </div>
+
+      <h3>주요 UI 요소</h3>
+      <ul style="margin:12px 0;padding-left:20px;font-size:0.88rem">
+        <li style="margin-bottom:4px"><strong>D-Day 배너</strong>: 각 분기별 마감까지 남은 일수 실시간 표시</li>
+        <li style="margin-bottom:4px"><strong>KPI 카드</strong>: 기한초과/긴급/주의 과제 수 요약</li>
+        <li style="margin-bottom:4px"><strong>부처별 위험 히트맵</strong>: 부처×위험등급 매트릭스</li>
+        <li style="margin-bottom:4px"><strong>고위험 부처 경보</strong>: 과부하 부처 자동 감지·배너 표시</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Section 6 -->
+  <div class="manual-section" id="m-analysis">
+    <h2>6. 분석 기능</h2>
+    <div class="card">
+      <h3>탭 7: 유사/중복 분석 — TF-IDF 코사인 유사도</h3>
+      <ul style="margin:12px 0;padding-left:20px;font-size:0.88rem">
+        <li style="margin-bottom:4px"><strong>알고리즘</strong>: 과제 텍스트에서 불용어 제거 → TF-IDF 벡터 생성 → 코사인 유사도 계산</li>
+        <li style="margin-bottom:4px"><strong>보정</strong>: 같은 전략분야(+15%), 공통 부처(+10%)</li>
+        <li style="margin-bottom:4px"><strong>임계값</strong>: 슬라이더(30~90%)로 정밀도 조절</li>
+        <li style="margin-bottom:4px"><strong>보기 모드</strong>: 쌍별 보기(과제 A↔B 비교) / 과제별 보기(한 과제의 모든 유사 과제)</li>
+        <li style="margin-bottom:4px"><strong>비동기 계산</strong>: 진행률 바 표시, UI 블로킹 방지</li>
+      </ul>
+
+      <h3>탭 8: 연관 과제 — Force-directed 네트워크 그래프</h3>
+      <ul style="margin:12px 0;padding-left:20px;font-size:0.88rem">
+        <li style="margin-bottom:4px"><strong>연관도 산정</strong>: 직접언급(50) + 참고자료(40) + 키워드(20) + 부처(20) + 전략분야(20) = 최대 150점 → 0~100점 정규화</li>
+        <li style="margin-bottom:4px"><strong>관계 분류</strong>: 선행·병행·후행 (기한 비교 + 정책축/전략분야 순서 기반)</li>
+        <li style="margin-bottom:4px"><strong>물리 시뮬레이션</strong>: 500프레임 자동 정지, 노드 드래그 가능</li>
+        <li style="margin-bottom:4px"><strong>뷰 모드</strong>: 에고 네트워크(특정 과제 중심) / 전체 조감도</li>
+      </ul>
+
+      <h3>탭 10: 표준화 현황</h3>
+      <ul style="margin:12px 0;padding-left:20px;font-size:0.88rem">
+        <li style="margin-bottom:4px">5개 유형: 법·제도 정비 / 기술 표준 / 안전·신뢰 기준 / 가이드라인·지침 / 평가·인증 체계</li>
+        <li style="margin-bottom:4px">전략분야 5(AI 규제혁신) 전체 과제 자동 포함</li>
+        <li style="margin-bottom:4px">키워드 기반 필터링: 표준, KS, ISO, ITU, 인증, 안전 등</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Section 7 -->
+  <div class="manual-section" id="m-global">
+    <h2>7. 글로벌 정책 비교</h2>
+    <div class="card">
+      <h3>데이터 출처</h3>
+      <p>NIA(한국지능정보사회진흥원) 2025-10호 「2025 글로벌 AI 정책 동향」 보고서에서 추출한 <strong>25개국/기구 120개 핵심 사례</strong>입니다.</p>
+
+      <h3>탭 11 주요 기능</h3>
+      <ul style="margin:12px 0;padding-left:20px;font-size:0.88rem">
+        <li style="margin-bottom:4px"><strong>카드 뷰 ↔ 리스트 뷰</strong>: 보기 모드 전환 (⊞/☰ 버튼)</li>
+        <li style="margin-bottom:4px"><strong>국가별 차트 클릭</strong> → 해당 국가 필터 자동 적용</li>
+        <li style="margin-bottom:4px"><strong>분류별 도넛 차트 클릭</strong> → 해당 분류 필터 자동 적용</li>
+        <li style="margin-bottom:4px"><strong>날짜 정렬</strong>: 기본순 / 오래된 순 / 최신 순</li>
+        <li style="margin-bottom:4px"><strong>상세 모달</strong>: 정책 배경·핵심 이행방안·정책 권고사항·원문 링크</li>
+        <li style="margin-bottom:4px"><strong>한국↔글로벌 매핑</strong>: 전략분야별 한국 과제와 해외 사례 2열 비교</li>
+        <li style="margin-bottom:4px"><strong>국기 이모지</strong>: 25개국/기구에 국기 자동 표시</li>
+      </ul>
+
+      <h3>탭 9 글로벌 협력 탭과의 차이</h3>
+      <ul style="margin:12px 0;padding-left:20px;font-size:0.88rem">
+        <li style="margin-bottom:4px"><strong>탭 9 (글로벌 협력)</strong>: 국내 99개 과제 중 글로벌 협력 관련 과제 필터링 + 동향 섹션</li>
+        <li style="margin-bottom:4px"><strong>탭 11 (글로벌 정책 비교)</strong>: 해외 120개 사례 원문 기반 분석 + 한국 과제 매핑</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Section 8 -->
+  <div class="manual-section" id="m-aiact">
+    <h2>8. AI기본법 연계 (aiact.html)</h2>
+    <div class="card">
+      <p>별도 페이지(<a href="aiact.html" target="_blank" style="color:var(--primary)">aiact.html</a>)에서 인공지능기본법·시행령·가이드라인 5종과 행동계획의 연계를 분석합니다.</p>
+      <h3>6개 탭 구성</h3>
+      <ul style="margin:12px 0;padding-left:20px;font-size:0.88rem">
+        <li style="margin-bottom:4px"><strong>📋 법령 체계</strong>: 핵심 조문 카드, 강제의무/노력의무 배지, 주요 정의</li>
+        <li style="margin-bottom:4px"><strong>📚 가이드라인 5종</strong>: 판단·책무·영향평가·안전성·투명성 가이드라인 요약</li>
+        <li style="margin-bottom:4px"><strong>🔗 과제-법령 매핑</strong>: 과제 ID ↔ 법령 조문 연결, 클릭 시 조항 원문 모달</li>
+        <li style="margin-bottom:4px"><strong>✅ 사업자 의무 체크리스트</strong>: 26개 항목, localStorage 저장, 완료율 프로그레스바</li>
+        <li style="margin-bottom:4px"><strong>⏰ 이행 일정</strong>: 법령 시행 타임라인 (2026.1.22 ~ 7.21)</li>
+        <li style="margin-bottom:4px"><strong>⚠️ 주요 고려사항</strong>: 적용 제외 범위, 중복 규제 최소화, 글로벌 정합성</li>
+      </ul>
+      <h3>주요 수치</h3>
+      <ul style="margin:12px 0;padding-left:20px;font-size:0.88rem">
+        <li style="margin-bottom:4px">최첨단AI 안전성 확보 기준: <strong>10²⁶ FLOPs</strong></li>
+        <li style="margin-bottom:4px">국내대리인 지정 기준: 매출 1조원 / AI매출 100억원 / 일이용자 100만명</li>
+        <li style="margin-bottom:4px">고영향AI 13개 분야: 에너지·보건의료·교육·채용·대출심사 등</li>
+        <li style="margin-bottom:4px">안전사고 보고: 24시간(1단계) → 7일(2단계) → 15일(3단계)</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Section 9 -->
+  <div class="manual-section" id="m-sankey">
+    <h2>9. Sankey 흐름도</h2>
+    <div class="card">
+      <p>별도 페이지(<a href="sankey.html" target="_blank" style="color:var(--primary)">sankey.html</a>)에서 D3.js 기반 4단계 Sankey 다이어그램을 제공합니다.</p>
+      <h3>흐름 구조</h3>
+      <p style="font-size:0.95rem;font-weight:600;margin:12px 0;text-align:center">정책축(3) → 전략분야(12) → 과제(99) → 부처(31)</p>
+      <h3>인터랙션</h3>
+      <ul style="margin:12px 0;padding-left:20px;font-size:0.88rem">
+        <li style="margin-bottom:4px"><strong>과제 노드 클릭</strong> → 슬라이드인 상세 패널 (배경·정책권고 전문·부처·기한)</li>
+        <li style="margin-bottom:4px"><strong>정책축/전략분야/부처 클릭</strong> → index.html 해당 필터로 딥링크 이동</li>
+        <li style="margin-bottom:4px"><strong>검색</strong>: AND 검색, 매칭 노드+연결선 3단계 강조 (직접/경로/비매칭)</li>
+        <li style="margin-bottom:4px"><strong>URL 파라미터</strong>: <code>sankey.html?task=5</code>로 특정 과제 강조</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Section 10 -->
+  <div class="manual-section" id="m-export">
+    <h2>10. 내보내기·인쇄·북마크</h2>
+    <div class="card">
+      <h3>내보내기</h3>
+      <p>헤더의 <strong>"내보내기"</strong> 버튼으로 현재 화면을 PNG 또는 PDF로 저장합니다.</p>
+      <h3>인쇄</h3>
+      <p><span class="manual-key">Ctrl</span>+<span class="manual-key">P</span>로 브라우저 인쇄. 인쇄 최적화 CSS가 적용되어 불필요한 UI 요소가 자동 숨김됩니다.</p>
+      <h3>북마크</h3>
+      <ul style="margin:12px 0;padding-left:20px;font-size:0.88rem">
+        <li style="margin-bottom:4px">과제 카드/모달에서 <strong>★ 버튼</strong>으로 북마크 토글</li>
+        <li style="margin-bottom:4px">헤더의 <strong>★ 북마크</strong> 버튼 → 슬라이드 패널에서 목록 확인</li>
+        <li style="margin-bottom:4px">데이터는 <strong>localStorage</strong>에 저장 (같은 브라우저에서 유지)</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Section 11 -->
+  <div class="manual-section" id="m-shortcuts">
+    <h2>11. 키보드 단축키·URL 파라미터</h2>
+    <div class="card">
+      <h3>키보드 단축키</h3>
+      <table style="width:100%;border-collapse:collapse;font-size:0.85rem;margin:12px 0">
+        <tr style="background:var(--primary);color:white"><th style="padding:8px;text-align:left">단축키</th><th style="padding:8px;text-align:left">기능</th></tr>
+        <tr><td style="padding:8px;border:1px solid var(--border)"><span class="manual-key">Ctrl</span>+<span class="manual-key">F</span></td><td style="padding:8px;border:1px solid var(--border)">전역 검색창 포커스</td></tr>
+        <tr style="background:var(--light)"><td style="padding:8px;border:1px solid var(--border)"><span class="manual-key">1</span>~<span class="manual-key">9</span>, <span class="manual-key">0</span></td><td style="padding:8px;border:1px solid var(--border)">탭 1~10 전환</td></tr>
+        <tr><td style="padding:8px;border:1px solid var(--border)"><span class="manual-key">←</span> / <span class="manual-key">→</span></td><td style="padding:8px;border:1px solid var(--border)">모달 내 이전/다음 과제 이동</td></tr>
+        <tr style="background:var(--light)"><td style="padding:8px;border:1px solid var(--border)"><span class="manual-key">Esc</span></td><td style="padding:8px;border:1px solid var(--border)">모달 닫기, 검색 초기화</td></tr>
+      </table>
+
+      <h3>URL 파라미터 전체 목록</h3>
+      <table style="width:100%;border-collapse:collapse;font-size:0.85rem;margin:12px 0">
+        <tr style="background:var(--primary);color:white"><th style="padding:8px;text-align:left">파라미터</th><th style="padding:8px;text-align:left">예시</th><th style="padding:8px;text-align:left">설명</th></tr>
+        <tr><td style="padding:8px;border:1px solid var(--border)"><code>view</code></td><td style="padding:8px;border:1px solid var(--border)"><code>?view=timeline</code></td><td style="padding:8px;border:1px solid var(--border)">특정 탭 직접 열기</td></tr>
+        <tr style="background:var(--light)"><td style="padding:8px;border:1px solid var(--border)"><code>task</code></td><td style="padding:8px;border:1px solid var(--border)"><code>?task=5</code></td><td style="padding:8px;border:1px solid var(--border)">과제 상세 모달 열기 또는 타임라인 필터</td></tr>
+        <tr><td style="padding:8px;border:1px solid var(--border)"><code>keyword</code></td><td style="padding:8px;border:1px solid var(--border)"><code>?view=timeline&keyword=AI안전</code></td><td style="padding:8px;border:1px solid var(--border)">타임라인 키워드 필터</td></tr>
+        <tr style="background:var(--light)"><td style="padding:8px;border:1px solid var(--border)"><code>axis</code></td><td style="padding:8px;border:1px solid var(--border)"><code>?axis=1</code></td><td style="padding:8px;border:1px solid var(--border)">정책축 필터 (1/2/3)</td></tr>
+        <tr><td style="padding:8px;border:1px solid var(--border)"><code>area</code></td><td style="padding:8px;border:1px solid var(--border)"><code>?area=5</code></td><td style="padding:8px;border:1px solid var(--border)">전략분야 필터 (1~12)</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- Section 12 -->
+  <div class="manual-section" id="m-data">
+    <h2>12. 데이터 출처와 한계</h2>
+    <div class="card">
+      <h3>데이터 출처</h3>
+      <table style="width:100%;border-collapse:collapse;font-size:0.85rem;margin:12px 0">
+        <tr style="background:var(--primary);color:white"><th style="padding:8px;text-align:left">데이터</th><th style="padding:8px;text-align:left">출처</th><th style="padding:8px;text-align:left">추출 방법</th></tr>
+        <tr><td style="padding:8px;border:1px solid var(--border)">99개 과제·326개 권고</td><td style="padding:8px;border:1px solid var(--border)">AI 행동계획 2026 PDF</td><td style="padding:8px;border:1px solid var(--border)">pypdf 텍스트 추출</td></tr>
+        <tr style="background:var(--light)"><td style="padding:8px;border:1px solid var(--border)">법령·가이드라인</td><td style="padding:8px;border:1px solid var(--border)">AI기본법·시행령·가이드라인 5종 PDF</td><td style="padding:8px;border:1px solid var(--border)">pypdf 텍스트 추출</td></tr>
+        <tr><td style="padding:8px;border:1px solid var(--border)">글로벌 120개 사례</td><td style="padding:8px;border:1px solid var(--border)">NIA 2025-10호 보고서</td><td style="padding:8px;border:1px solid var(--border)">pypdf + 목차 메타데이터</td></tr>
+      </table>
+      <div class="tip-box">⚠️ <strong>주의</strong>: PDF 자동 추출 과정에서 오류(hallucination)가 있을 수 있습니다. 이 대시보드는 공식 문서가 아닌 <strong>분석 참고용</strong>입니다. 정확한 내용은 반드시 원문 PDF를 확인하세요.</div>
+      <h3>기술 스택</h3>
+      <ul style="margin:12px 0;padding-left:20px;font-size:0.88rem">
+        <li style="margin-bottom:4px">순수 HTML/CSS/JavaScript (프레임워크 없음)</li>
+        <li style="margin-bottom:4px">Chart.js (차트 라이브러리, CDN)</li>
+        <li style="margin-bottom:4px">D3.js (Sankey 다이어그램, CDN)</li>
+        <li style="margin-bottom:4px">모든 데이터 인라인 (외부 서버 요청 없음, 오프라인 사용 가능)</li>
+        <li style="margin-bottom:4px">localStorage (북마크·진척률·체크리스트·다크모드 저장)</li>
+      </ul>
+    </div>
+  </div>
+
+</div>
+
+<!-- ==================== TAB 3: FAQ ==================== -->
+<div class="view" id="view-faq">
+
+  <div class="card" style="border-left:4px solid var(--warning);margin-bottom:24px">
+    <h2 style="font-size:1.15rem;margin-bottom:8px">❓ 자주 묻는 질문</h2>
+    <p style="font-size:0.88rem;color:var(--text-muted)">대시보드 사용 중 가장 많이 궁금해하시는 질문들을 정리했습니다. 질문을 클릭하면 답변이 펼쳐집니다.</p>
+  </div>
+
+  <!-- FAQ Category 1: 기한·일정 관련 -->
+  <div class="faq-category">
+    <div class="faq-category-title">📅 기한·일정 관련</div>
+
+    <div class="faq-item" onclick="toggleFaq(this)">
+      <div class="faq-q">Q. 과제별 추진기한은 어떻게 확인하나요?<span class="arrow">▼</span></div>
+      <div class="faq-a">
+        <p><strong>3가지 방법</strong>이 있습니다:</p>
+        <p>① <strong>과제별 상세 탭</strong>: 각 과제 카드의 상단에 기한 배지(26Q1~27+)가 표시됩니다. 카드를 클릭하면 모달에서 정책권고별 세부 기한을 확인할 수 있습니다.</p>
+        <p>② <strong>추진기한 타임라인 탭</strong>: 분기별 컬럼에 모든 권고사항이 시간순으로 배치되어 Gantt 차트처럼 일정을 파악할 수 있습니다.</p>
+        <p>③ <strong>위험 관리 탭</strong>: D-Day 카운트다운과 함께 기한초과·긴급·주의 등급으로 분류하여 우선순위를 즉시 파악할 수 있습니다.</p>
+        <a class="link-btn" href="index.html?view=timeline">→ 타임라인 탭으로 이동</a>
+      </div>
+    </div>
+
+    <div class="faq-item" onclick="toggleFaq(this)">
+      <div class="faq-q">Q. 특정 키워드와 관련된 과제의 기한을 한 번에 보고 싶어요<span class="arrow">▼</span></div>
+      <div class="faq-a">
+        <p><strong>타임라인 탭의 키워드 필터</strong>를 사용하세요. 예를 들어 "데이터"를 입력하면 데이터 관련 권고사항만 분기별로 표시됩니다.</p>
+        <p>URL 파라미터로 직접 접근도 가능합니다: <code>index.html?view=timeline&keyword=데이터</code></p>
+        <p>복수 키워드를 공백이나 쉼표로 구분하면 AND 검색됩니다.</p>
+        <a class="link-btn" href="index.html?view=timeline&keyword=데이터">→ '데이터' 키워드 타임라인</a>
+      </div>
+    </div>
+
+    <div class="faq-item" onclick="toggleFaq(this)">
+      <div class="faq-q">Q. 위험도(기한초과/긴급/주의)는 어떤 기준으로 산정되나요?<span class="arrow">▼</span></div>
+      <div class="faq-a">
+        <p><strong>복합위험도</strong>는 3가지 요소의 가중 합산입니다:</p>
+        <p>① <strong>기한 위험도 (40%)</strong>: 오늘 날짜 기준 D-Day 계산. 기한초과(D+), 긴급(D-34 이내), 주의(D-120 이내), 관찰(D-240 이내), 여유(그 이상).</p>
+        <p>② <strong>부처 과부하 (30%)</strong>: 해당 부처가 담당하는 긴급 과제 수가 많을수록 위험도 상승.</p>
+        <p>③ <strong>선행의존 (30%)</strong>: 이 과제의 선행 과제가 아직 미완료인 경우 연쇄 지연 위험 반영.</p>
+        <p>분기별 마감일: 26Q1→3/31, 26Q2→6/30, 26Q3→9/30, 26Q4→12/31</p>
+        <a class="link-btn" href="index.html?view=risk">→ 위험 관리 탭으로 이동</a>
+      </div>
+    </div>
+
+    <div class="faq-item" onclick="toggleFaq(this)">
+      <div class="faq-q">Q. 타임라인에서 같은 과제가 여러 분기에 나타나는 이유는?<span class="arrow">▼</span></div>
+      <div class="faq-a">
+        <p>하나의 과제 안에 <strong>여러 정책권고</strong>가 있고, 각 권고사항마다 추진기한이 다를 수 있습니다. 예를 들어 과제 ①에 권고 3개가 있다면, 1개는 26Q1, 2개는 26Q2에 배치될 수 있습니다.</p>
+        <p>타임라인에서 같은 과제 항목에 마우스를 올리면 <strong>모든 분기의 해당 과제 항목이 동일 색상으로 하이라이트</strong>되어 쉽게 구분됩니다.</p>
+      </div>
+    </div>
+
+    <div class="faq-item" onclick="toggleFaq(this)">
+      <div class="faq-q">Q. 이행 진척률은 어떻게 입력하나요?<span class="arrow">▼</span></div>
+      <div class="faq-a">
+        <p>종합 현황판에서 "✏️ 진척 입력" 버튼을 클릭하면 과제별 진행률을 입력할 수 있습니다. 입력한 데이터는 <strong>브라우저 localStorage</strong>에 저장되어 같은 브라우저에서 유지됩니다.</p>
+        <p>※ 공식 진척 관리 시스템이 아닌 개인 모니터링 용도입니다.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- FAQ Category 2: 검색·필터 -->
+  <div class="faq-category">
+    <div class="faq-category-title">🔍 검색·필터 기능</div>
+
+    <div class="faq-item" onclick="toggleFaq(this)">
+      <div class="faq-q">Q. 검색할 때 여러 키워드를 조합할 수 있나요?<span class="arrow">▼</span></div>
+      <div class="faq-a">
+        <p>네. <strong>공백 또는 쉼표</strong>로 키워드를 구분하면 <strong>AND 검색</strong>이 됩니다. 예: <code>반도체 인프라</code> → "반도체"와 "인프라" 모두 포함된 결과만 표시합니다.</p>
+        <p>검색 대상: 과제명·배경·정책권고·참고자료·각주 + 120개 글로벌 사례(배경·이행방안·권고사항 전문 포함)</p>
+      </div>
+    </div>
+
+    <div class="faq-item" onclick="toggleFaq(this)">
+      <div class="faq-q">Q. 차트를 클릭하면 필터가 적용되나요?<span class="arrow">▼</span></div>
+      <div class="faq-a">
+        <p>네, 여러 탭에서 <strong>차트 클릭 → 필터 자동 적용</strong> 기능을 지원합니다:</p>
+        <p>• <strong>글로벌 정책 비교 탭</strong>: 국가별 막대차트 / 분류별 도넛차트 클릭 시 해당 국가·분류로 필터 적용</p>
+        <p>• <strong>종합 현황판</strong>: 정책축·전략분야 차트 클릭 시 해당 항목으로 필터 이동</p>
+        <p>재클릭하면 필터가 해제(토글)됩니다.</p>
+      </div>
+    </div>
+
+    <div class="faq-item" onclick="toggleFaq(this)">
+      <div class="faq-q">Q. URL로 특정 탭이나 과제에 직접 접근할 수 있나요?<span class="arrow">▼</span></div>
+      <div class="faq-a">
+        <p>네, 다양한 <strong>URL 파라미터</strong>를 지원합니다:</p>
+        <p>• <code>index.html?view=timeline</code> — 특정 탭 직접 열기 (overview, tasks, ministries, timeline, risk 등)</p>
+        <p>• <code>index.html?view=timeline&keyword=AI안전</code> — 타임라인 탭 + 키워드 필터</p>
+        <p>• <code>index.html?view=timeline&task=5</code> — 타임라인 탭 + 특정 과제 필터</p>
+        <p>• <code>index.html?task=5</code> — 과제 상세 모달 직접 열기</p>
+        <p>• <code>index.html?axis=1</code> — 정책축별 필터 적용</p>
+        <p>• <code>index.html?area=5</code> — 전략분야별 필터 적용</p>
+        <p>이 URL들을 보고서나 이메일에 <strong>직접 링크</strong>로 활용할 수 있습니다.</p>
+      </div>
+    </div>
+
+    <div class="faq-item" onclick="toggleFaq(this)">
+      <div class="faq-q">Q. 북마크 기능은 어떻게 사용하나요?<span class="arrow">▼</span></div>
+      <div class="faq-a">
+        <p>과제 카드나 모달에서 <strong>★ 버튼</strong>을 클릭하면 북마크됩니다. 헤더의 <strong>"★ 북마크"</strong> 버튼을 클릭하면 슬라이드 패널에서 북마크한 과제 목록을 확인할 수 있습니다.</p>
+        <p>북마크 데이터는 브라우저 localStorage에 저장되어 같은 브라우저에서 유지됩니다.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- FAQ Category 3: 분석 기능 -->
+  <div class="faq-category">
+    <div class="faq-category-title">📊 분석 기능</div>
+
+    <div class="faq-item" onclick="toggleFaq(this)">
+      <div class="faq-q">Q. 유사도 분석은 어떤 알고리즘을 사용하나요?<span class="arrow">▼</span></div>
+      <div class="faq-a">
+        <p><strong>TF-IDF 코사인 유사도</strong>를 사용합니다. 각 과제의 제목·배경·정책권고 텍스트에서 범용 불용어를 제거한 뒤, TF-IDF 벡터를 생성하고 코사인 유사도를 계산합니다.</p>
+        <p>추가 보정: 같은 전략분야(+15%), 공통 부처(+10%)일 경우 유사도에 가중치를 부여합니다.</p>
+        <p>유사도 임계값은 슬라이더(30~90%)로 조절할 수 있습니다.</p>
+        <a class="link-btn" href="index.html?view=similarity">→ 유사/중복 분석 탭으로 이동</a>
+      </div>
+    </div>
+
+    <div class="faq-item" onclick="toggleFaq(this)">
+      <div class="faq-q">Q. 연관 과제 네트워크 그래프에서 노드와 엣지는 무엇을 의미하나요?<span class="arrow">▼</span></div>
+      <div class="faq-a">
+        <p><strong>노드</strong> = 99개 과제 (정책축별 색상 구분)</p>
+        <p><strong>엣지(연결선)</strong> = 과제 간 연관 관계 (두께 = 연관 강도 0~100점)</p>
+        <p>연관도 산정 기준: ①직접 언급(50점) ②공통 참고자료(40점) ③공통 키워드(20점) ④공통 부처(20점) ⑤같은 전략분야(20점)</p>
+        <p>노드를 드래그하여 위치를 조절하거나, 클릭하면 해당 과제의 선행·병행·후행 과제 목록이 표시됩니다.</p>
+        <a class="link-btn" href="index.html?view=relations">→ 연관 과제 탭으로 이동</a>
+      </div>
+    </div>
+
+    <div class="faq-item" onclick="toggleFaq(this)">
+      <div class="faq-q">Q. 글로벌 120개 사례 데이터는 어디서 왔나요?<span class="arrow">▼</span></div>
+      <div class="faq-a">
+        <p><strong>NIA(한국지능정보사회진흥원) 2025-10호</strong> 「2025 글로벌 AI 정책 동향」 보고서(195페이지)에서 추출했습니다. 25개국/기구의 120개 핵심 AI 정책 사례가 포함되어 있습니다.</p>
+        <p>상위 국가: 미국(22건)·EU(20건)·영국(16건)·프랑스(13건)·중국(10건)</p>
+        <p>분류: 종합계획/응용활용/인프라/인재/규제안전/표준화/국제협력</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- FAQ Category 4: AI기본법 -->
+  <div class="faq-category">
+    <div class="faq-category-title">⚖️ AI기본법 관련</div>
+
+    <div class="faq-item" onclick="toggleFaq(this)">
+      <div class="faq-q">Q. AI기본법 연계 페이지(aiact.html)는 무엇인가요?<span class="arrow">▼</span></div>
+      <div class="faq-a">
+        <p>인공지능기본법(법률 제21311호, 2026.1.22 시행)·시행령·가이드라인 5종과 AI 행동계획 99개 과제의 <strong>연계를 분석하는 별도 페이지</strong>입니다.</p>
+        <p>6개 탭으로 구성: 법령 체계 / 가이드라인 5종 / 과제-법령 매핑 / 사업자 의무 체크리스트 / 이행 일정 / 주요 고려사항</p>
+        <a class="link-btn" href="aiact.html">→ AI기본법 연계 페이지로 이동</a>
+      </div>
+    </div>
+
+    <div class="faq-item" onclick="toggleFaq(this)">
+      <div class="faq-q">Q. 사업자 의무 체크리스트 데이터는 어디에 저장되나요?<span class="arrow">▼</span></div>
+      <div class="faq-a">
+        <p>브라우저의 <strong>localStorage</strong>에 저장됩니다. 같은 브라우저·같은 기기에서 재방문 시 체크 상태가 유지됩니다.</p>
+        <p>※ 다른 기기나 브라우저에서는 초기화됩니다. 공식 이행 관리 시스템이 아닌 자가점검 용도입니다.</p>
+      </div>
+    </div>
+
+    <div class="faq-item" onclick="toggleFaq(this)">
+      <div class="faq-q">Q. 고영향AI 13개 분야란 무엇인가요?<span class="arrow">▼</span></div>
+      <div class="faq-a">
+        <p>AI기본법 시행령에서 정한 <strong>기본권에 중대한 영향을 미치는 13개 분야</strong>입니다:</p>
+        <p>에너지·먹는물·보건의료·의료기기·원자력·범죄수사생체인식·채용·대출심사·교통(자동차·선박·항공·철도)·공공서비스·교육</p>
+        <p>이 분야의 AI 서비스를 제공하는 사업자는 투명성 고지, 영향평가, 6대 사업자 책무 등 강화된 의무가 적용됩니다.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- FAQ Category 5: 데이터·기술 -->
+  <div class="faq-category">
+    <div class="faq-category-title">🔧 데이터·기술 관련</div>
+
+    <div class="faq-item" onclick="toggleFaq(this)">
+      <div class="faq-q">Q. 이 대시보드의 데이터는 어디서 왔나요? 정확한가요?<span class="arrow">▼</span></div>
+      <div class="faq-a">
+        <p>데이터 출처:</p>
+        <p>• <strong>99개 과제·326개 정책권고</strong>: 「대한민국 AI 행동계획 2026」 PDF에서 추출</p>
+        <p>• <strong>법령·가이드라인</strong>: AI기본법·시행령·가이드라인 5종 PDF에서 추출</p>
+        <p>• <strong>글로벌 사례</strong>: NIA 「2025 글로벌 AI 정책 동향」 보고서에서 추출</p>
+        <p>⚠️ <strong>주의</strong>: PDF 자동 추출 과정에서 오류(hallucination)가 있을 수 있습니다. 공식 문서가 아닌 <strong>분석 참고용</strong>입니다.</p>
+      </div>
+    </div>
+
+    <div class="faq-item" onclick="toggleFaq(this)">
+      <div class="faq-q">Q. 인터넷 연결 없이도 사용할 수 있나요?<span class="arrow">▼</span></div>
+      <div class="faq-a">
+        <p><strong>거의 가능합니다.</strong> 모든 데이터가 HTML 파일 내에 인라인으로 포함되어 있어 외부 서버 요청이 없습니다.</p>
+        <p>다만 <strong>구글 폰트(Noto Sans KR)</strong>와 <strong>Chart.js CDN</strong>은 인터넷이 필요합니다. 폰트가 로드되지 않으면 시스템 기본 폰트로 대체됩니다.</p>
+      </div>
+    </div>
+
+    <div class="faq-item" onclick="toggleFaq(this)">
+      <div class="faq-q">Q. 화면을 인쇄하거나 PDF로 저장할 수 있나요?<span class="arrow">▼</span></div>
+      <div class="faq-a">
+        <p>헤더의 <strong>"내보내기"</strong> 버튼을 클릭하면 현재 화면을 PNG 또는 PDF로 저장할 수 있습니다.</p>
+        <p>브라우저의 인쇄 기능(<code>Ctrl+P</code>)도 사용 가능하며, 인쇄 최적화 CSS가 적용되어 있습니다.</p>
+      </div>
+    </div>
+
+    <div class="faq-item" onclick="toggleFaq(this)">
+      <div class="faq-q">Q. 다크 모드는 어떻게 전환하나요?<span class="arrow">▼</span></div>
+      <div class="faq-a">
+        <p>헤더 우측의 <strong>🌙/☀️ 버튼</strong>을 클릭하면 라이트/다크 모드가 전환됩니다. 설정은 localStorage에 저장되어 재방문 시에도 유지됩니다.</p>
+        <p>OS의 다크 모드 설정이 켜져 있으면 첫 방문 시 자동으로 다크 모드가 적용됩니다.</p>
+      </div>
+    </div>
+
+    <div class="faq-item" onclick="toggleFaq(this)">
+      <div class="faq-q">Q. 키보드 단축키가 있나요?<span class="arrow">▼</span></div>
+      <div class="faq-a">
+        <p>네, 다음 단축키를 지원합니다:</p>
+        <p>• <code>Ctrl+F</code> — 전역 검색창 포커스</p>
+        <p>• <code>1~9, 0</code> — 탭 1~10 전환 (종합현황판~표준화현황)</p>
+        <p>• <code>←/→</code> — 모달 내 이전/다음 과제 이동</p>
+        <p>• <code>Esc</code> — 모달 닫기, 검색 초기화</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- FAQ Category 6: 오류·문의 -->
+  <div class="faq-category">
+    <div class="faq-category-title">🛠️ 오류·문의</div>
+
+    <div class="faq-item" onclick="toggleFaq(this)">
+      <div class="faq-q">Q. 데이터가 잘못된 것 같아요. 어디에 제보하나요?<span class="arrow">▼</span></div>
+      <div class="faq-a">
+        <p>GitHub의 <strong>Issues</strong> 페이지에서 오류를 제보해 주세요:</p>
+        <a class="link-btn" href="https://github.com/hollobit/K-AI2026/issues" target="_blank" rel="noopener noreferrer">→ GitHub Issues에서 제보하기</a>
+        <p style="margin-top:8px">과제번호와 구체적인 오류 내용을 함께 기재해 주시면 빠르게 수정할 수 있습니다.</p>
+      </div>
+    </div>
+
+    <div class="faq-item" onclick="toggleFaq(this)">
+      <div class="faq-q">Q. 페이지 로딩이 느려요<span class="arrow">▼</span></div>
+      <div class="faq-a">
+        <p>index.html은 약 1.1MB로, 99개 과제·120개 글로벌 사례 데이터가 모두 인라인으로 포함되어 있어 처음 로딩 시 다소 시간이 걸릴 수 있습니다.</p>
+        <p>일단 로딩되면 모든 데이터가 메모리에 있으므로 <strong>탭 전환·검색·필터 등은 즉시 반응</strong>합니다.</p>
+        <p>유사도 분석(탭 7)은 최초 진입 시 비동기로 계산되며, 진행률 바가 표시됩니다.</p>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ==================== TAB 4: INTERACTIVE TOUR ==================== -->
+<div class="view" id="view-tour">
+
+  <div class="card" style="border-left:4px solid var(--success);margin-bottom:24px">
+    <h2 style="font-size:1.15rem;margin-bottom:8px">🚀 인터랙티브 투어</h2>
+    <p style="font-size:0.88rem;color:var(--text-muted)">대시보드의 핵심 기능을 단계별로 체험합니다. 각 단계를 클릭하여 열고, "직접 해보기" 버튼으로 실제 대시보드에서 확인하세요.</p>
+  </div>
+
+  <!-- Progress Bar -->
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px">
+    <span style="font-size:0.82rem;font-weight:600;color:var(--text-muted)">진행률</span>
+    <div class="tour-progress" style="flex:1"><div class="tour-progress-fill" id="tourProgressFill" style="width:0%"></div></div>
+    <span style="font-size:0.82rem;font-weight:600;color:var(--primary)" id="tourProgressText">0 / 10</span>
+  </div>
+  <div style="display:flex;gap:8px;margin-bottom:24px">
+    <button class="tour-btn tour-btn-secondary" onclick="resetTour()">초기화</button>
+    <button class="tour-btn tour-btn-primary" onclick="completeTour()">전체 완료 처리</button>
+  </div>
+
+  <!-- Step 1 -->
+  <div class="tour-step-card" id="tour-1" onclick="toggleTourStep(1)">
+    <div class="tour-step-header">
+      <div class="tour-step-num">1</div>
+      <div style="flex:1">
+        <div style="font-weight:700;font-size:0.95rem">종합 현황판 둘러보기</div>
+        <div style="font-size:0.8rem;color:var(--text-muted)">KPI 카드와 알림 패널로 전체 현황 파악</div>
+      </div>
+      <span style="font-size:0.8rem;color:var(--gray)">~2분</span>
+    </div>
+    <div class="tour-step-body">
+      <div class="tour-sim">
+        <div class="tour-sim-header">index.html — 종합 현황판</div>
+        <div class="tour-sim-body">
+          <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px">
+            <span class="tour-sim-kpi"><strong>99</strong> 실천과제</span>
+            <span class="tour-sim-kpi"><strong>326</strong> 정책권고</span>
+            <span class="tour-sim-kpi"><strong>31</strong> 주관부처</span>
+            <span class="tour-sim-kpi" style="border-color:var(--danger)"><strong style="color:var(--danger)">12</strong> 기한임박</span>
+          </div>
+          <p style="font-size:0.8rem;color:var(--text-muted)">↑ 실제 대시보드에서는 실시간 D-Day 기준으로 기한임박 과제 수가 계산됩니다.</p>
+        </div>
+      </div>
+      <p style="font-size:0.85rem;margin:12px 0"><strong>체험 포인트:</strong></p>
+      <ul style="font-size:0.84rem;padding-left:20px;margin-bottom:12px">
+        <li style="margin-bottom:4px">KPI 카드 4종 확인 (과제수, 권고수, 부처수, 기한임박)</li>
+        <li style="margin-bottom:4px">기한초과·기한임박 알림 패널 펼치기</li>
+        <li style="margin-bottom:4px">정책 키워드 워드 클라우드에서 핵심 주제 파악</li>
+        <li style="margin-bottom:4px">정책축별·전략분야별 차트 탐색</li>
+      </ul>
+      <div style="display:flex;gap:8px">
+        <a class="tour-btn tour-btn-primary" href="index.html?view=overview" target="_blank" style="text-decoration:none">직접 해보기 →</a>
+        <button class="tour-btn tour-btn-secondary" onclick="event.stopPropagation();markStepDone(1)">완료 체크 ✓</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Step 2 -->
+  <div class="tour-step-card" id="tour-2" onclick="toggleTourStep(2)">
+    <div class="tour-step-header">
+      <div class="tour-step-num">2</div>
+      <div style="flex:1">
+        <div style="font-weight:700;font-size:0.95rem">전역 검색 체험하기</div>
+        <div style="font-size:0.8rem;color:var(--text-muted)">AND 검색, 자동완성, 글로벌 사례 통합 검색</div>
+      </div>
+      <span style="font-size:0.8rem;color:var(--gray)">~2분</span>
+    </div>
+    <div class="tour-step-body">
+      <p style="font-size:0.85rem;margin:12px 0"><strong>체험 포인트:</strong></p>
+      <ul style="font-size:0.84rem;padding-left:20px;margin-bottom:12px">
+        <li style="margin-bottom:4px">검색창에 <code>반도체</code> 입력 → 자동완성 제안 확인</li>
+        <li style="margin-bottom:4px"><code>반도체 인프라</code> 입력 → AND 검색 결과 확인</li>
+        <li style="margin-bottom:4px">검색 카운트 바에서 "과제 N건 · 글로벌 사례 N건" 확인</li>
+        <li style="margin-bottom:4px">과제별 상세 탭 하단의 글로벌 사례 카드 섹션 확인</li>
+      </ul>
+      <div style="display:flex;gap:8px">
+        <a class="tour-btn tour-btn-primary" href="index.html?view=tasks" target="_blank" style="text-decoration:none">직접 해보기 →</a>
+        <button class="tour-btn tour-btn-secondary" onclick="event.stopPropagation();markStepDone(2)">완료 체크 ✓</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Step 3 -->
+  <div class="tour-step-card" id="tour-3" onclick="toggleTourStep(3)">
+    <div class="tour-step-header">
+      <div class="tour-step-num">3</div>
+      <div style="flex:1">
+        <div style="font-weight:700;font-size:0.95rem">과제 상세 모달 체험하기</div>
+        <div style="font-size:0.8rem;color:var(--text-muted)">정책권고, 참고자료, 각주, 북마크, 유사과제</div>
+      </div>
+      <span style="font-size:0.8rem;color:var(--gray)">~3분</span>
+    </div>
+    <div class="tour-step-body">
+      <p style="font-size:0.85rem;margin:12px 0"><strong>체험 포인트:</strong></p>
+      <ul style="font-size:0.84rem;padding-left:20px;margin-bottom:12px">
+        <li style="margin-bottom:4px">과제 카드 클릭 → 상세 모달 열기</li>
+        <li style="margin-bottom:4px">정책권고 목록 확인 (각 권고별 추진기한 배지)</li>
+        <li style="margin-bottom:4px">관련 각주 내용 확인 (회색 배지 + 본문)</li>
+        <li style="margin-bottom:4px">★ 북마크 추가 → 헤더 ★ 버튼으로 목록 확인</li>
+        <li style="margin-bottom:4px">모달 내 유사 과제·같은 전략분야·공통 부처 연관 섹션 확인</li>
+        <li style="margin-bottom:4px"><span class="manual-key">←</span> <span class="manual-key">→</span> 키로 이전/다음 과제 이동</li>
+      </ul>
+      <div style="display:flex;gap:8px">
+        <a class="tour-btn tour-btn-primary" href="index.html?task=1" target="_blank" style="text-decoration:none">과제 ① 모달 열기 →</a>
+        <button class="tour-btn tour-btn-secondary" onclick="event.stopPropagation();markStepDone(3)">완료 체크 ✓</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Step 4 -->
+  <div class="tour-step-card" id="tour-4" onclick="toggleTourStep(4)">
+    <div class="tour-step-header">
+      <div class="tour-step-num">4</div>
+      <div style="flex:1">
+        <div style="font-weight:700;font-size:0.95rem">타임라인으로 기한 관리하기</div>
+        <div style="font-size:0.8rem;color:var(--text-muted)">분기별 Gantt, 4중 필터, 호버 하이라이트, 키워드 URL</div>
+      </div>
+      <span style="font-size:0.8rem;color:var(--gray)">~3분</span>
+    </div>
+    <div class="tour-step-body">
+      <div class="tour-sim">
+        <div class="tour-sim-header">추진기한 타임라인 — 필터 시뮬레이션</div>
+        <div class="tour-sim-body">
+          <div class="tour-sim-tabs">
+            <div class="tour-sim-tab">정책축: 전체</div>
+            <div class="tour-sim-tab">전략분야: 전체</div>
+            <div class="tour-sim-tab active">부처: 과기정통부</div>
+            <div class="tour-sim-tab">키워드: _____</div>
+          </div>
+          <p style="font-size:0.78rem;color:var(--text-muted)">↑ 실제 대시보드에서 부처 필터를 선택하면 해당 부처의 권고사항만 분기별로 표시됩니다.</p>
+        </div>
+      </div>
+      <p style="font-size:0.85rem;margin:12px 0"><strong>체험 포인트:</strong></p>
+      <ul style="font-size:0.84rem;padding-left:20px;margin-bottom:12px">
+        <li style="margin-bottom:4px">분기별 차트에서 각 분기 권고사항 수 확인</li>
+        <li style="margin-bottom:4px">부처 필터 선택 → 차트 실시간 변화 확인</li>
+        <li style="margin-bottom:4px">키워드에 "데이터" 입력 → 관련 권고만 필터링</li>
+        <li style="margin-bottom:4px">같은 과제에 마우스 올리기 → 파스텔 색상 동시 하이라이트</li>
+        <li style="margin-bottom:4px">"전체 내용" ↔ "과제 제목만" 뷰 모드 전환</li>
+        <li style="margin-bottom:4px">타임라인 항목 클릭 → 모달 열림 + 해당 권고 자동 스크롤</li>
+      </ul>
+      <div style="display:flex;flex-wrap:wrap;gap:8px">
+        <a class="tour-btn tour-btn-primary" href="index.html?view=timeline" target="_blank" style="text-decoration:none">타임라인 열기 →</a>
+        <a class="tour-btn tour-btn-secondary" href="index.html?view=timeline&keyword=데이터" target="_blank" style="text-decoration:none">'데이터' 키워드 →</a>
+        <button class="tour-btn tour-btn-secondary" onclick="event.stopPropagation();markStepDone(4)">완료 체크 ✓</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Step 5 -->
+  <div class="tour-step-card" id="tour-5" onclick="toggleTourStep(5)">
+    <div class="tour-step-header">
+      <div class="tour-step-num">5</div>
+      <div style="flex:1">
+        <div style="font-weight:700;font-size:0.95rem">위험 관리 — D-Day 모니터링</div>
+        <div style="font-size:0.8rem;color:var(--text-muted)">복합위험도, 부처 히트맵, 고위험 경보</div>
+      </div>
+      <span style="font-size:0.8rem;color:var(--gray)">~2분</span>
+    </div>
+    <div class="tour-step-body">
+      <p style="font-size:0.85rem;margin:12px 0"><strong>체험 포인트:</strong></p>
+      <ul style="font-size:0.84rem;padding-left:20px;margin-bottom:12px">
+        <li style="margin-bottom:4px">D-Day 배너에서 각 분기 마감까지 남은 일수 확인</li>
+        <li style="margin-bottom:4px">기한초과/긴급/주의/관찰/여유 등급별 과제 확인</li>
+        <li style="margin-bottom:4px">부처별 위험 히트맵에서 과부하 부처 식별</li>
+        <li style="margin-bottom:4px">과제 카드 클릭 → 상세 모달에서 위험 요인 확인</li>
+      </ul>
+      <div style="display:flex;gap:8px">
+        <a class="tour-btn tour-btn-primary" href="index.html?view=risk" target="_blank" style="text-decoration:none">위험 관리 열기 →</a>
+        <button class="tour-btn tour-btn-secondary" onclick="event.stopPropagation();markStepDone(5)">완료 체크 ✓</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Step 6 -->
+  <div class="tour-step-card" id="tour-6" onclick="toggleTourStep(6)">
+    <div class="tour-step-header">
+      <div class="tour-step-num">6</div>
+      <div style="flex:1">
+        <div style="font-weight:700;font-size:0.95rem">부처별 현황 점검하기</div>
+        <div style="font-size:0.8rem;color:var(--text-muted)">31개 부처, 정렬, 위험 배지, 협력기관</div>
+      </div>
+      <span style="font-size:0.8rem;color:var(--gray)">~2분</span>
+    </div>
+    <div class="tour-step-body">
+      <p style="font-size:0.85rem;margin:12px 0"><strong>체험 포인트:</strong></p>
+      <ul style="font-size:0.84rem;padding-left:20px;margin-bottom:12px">
+        <li style="margin-bottom:4px">과제수 순 / 기한임박 순 / 가나다 순 정렬 전환</li>
+        <li style="margin-bottom:4px">특정 부처 클릭 → 담당 과제 목록 확인</li>
+        <li style="margin-bottom:4px">위험 배지(기한초과/긴급) 표시 확인</li>
+        <li style="margin-bottom:4px">협력기관(방사청, 우주청, 국표원 등) 표시 확인</li>
+      </ul>
+      <div style="display:flex;gap:8px">
+        <a class="tour-btn tour-btn-primary" href="index.html?view=ministries" target="_blank" style="text-decoration:none">부처별 현황 열기 →</a>
+        <button class="tour-btn tour-btn-secondary" onclick="event.stopPropagation();markStepDone(6)">완료 체크 ✓</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Step 7 -->
+  <div class="tour-step-card" id="tour-7" onclick="toggleTourStep(7)">
+    <div class="tour-step-header">
+      <div class="tour-step-num">7</div>
+      <div style="flex:1">
+        <div style="font-weight:700;font-size:0.95rem">유사/중복 분석 + 연관 과제 네트워크</div>
+        <div style="font-size:0.8rem;color:var(--text-muted)">TF-IDF 유사도, Force-directed 그래프, 선행/후행</div>
+      </div>
+      <span style="font-size:0.8rem;color:var(--gray)">~3분</span>
+    </div>
+    <div class="tour-step-body">
+      <p style="font-size:0.85rem;margin:12px 0"><strong>체험 포인트:</strong></p>
+      <ul style="font-size:0.84rem;padding-left:20px;margin-bottom:12px">
+        <li style="margin-bottom:4px">유사도 슬라이더 조절 → 결과 변화 확인</li>
+        <li style="margin-bottom:4px">유사 과제 쌍의 공통 키워드 형광펜 하이라이팅</li>
+        <li style="margin-bottom:4px">연관 과제 네트워크 그래프에서 노드 드래그</li>
+        <li style="margin-bottom:4px">과제 노드 클릭 → 선행·병행·후행 과제 목록</li>
+        <li style="margin-bottom:4px">에고 네트워크 ↔ 전체 조감도 토글</li>
+      </ul>
+      <div style="display:flex;gap:8px">
+        <a class="tour-btn tour-btn-primary" href="index.html?view=similarity" target="_blank" style="text-decoration:none">유사분석 열기 →</a>
+        <a class="tour-btn tour-btn-secondary" href="index.html?view=relations" target="_blank" style="text-decoration:none">연관과제 열기 →</a>
+        <button class="tour-btn tour-btn-secondary" onclick="event.stopPropagation();markStepDone(7)">완료 체크 ✓</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Step 8 -->
+  <div class="tour-step-card" id="tour-8" onclick="toggleTourStep(8)">
+    <div class="tour-step-header">
+      <div class="tour-step-num">8</div>
+      <div style="flex:1">
+        <div style="font-weight:700;font-size:0.95rem">글로벌 정책 비교 — 120개 사례 탐색</div>
+        <div style="font-size:0.8rem;color:var(--text-muted)">차트 클릭 필터, 카드/리스트 뷰, 한국↔글로벌 매핑</div>
+      </div>
+      <span style="font-size:0.8rem;color:var(--gray)">~3분</span>
+    </div>
+    <div class="tour-step-body">
+      <p style="font-size:0.85rem;margin:12px 0"><strong>체험 포인트:</strong></p>
+      <ul style="font-size:0.84rem;padding-left:20px;margin-bottom:12px">
+        <li style="margin-bottom:4px">국가별 막대 차트에서 미국 막대 클릭 → 미국 사례만 필터링</li>
+        <li style="margin-bottom:4px">분류별 도넛 차트 클릭 → 해당 분류 필터</li>
+        <li style="margin-bottom:4px">카드 뷰 ↔ 리스트 뷰 전환 (⊞/☰ 버튼)</li>
+        <li style="margin-bottom:4px">사례 카드 클릭 → 상세 모달 (배경·이행방안·권고·원문 링크)</li>
+        <li style="margin-bottom:4px">한국↔글로벌 매핑 행 클릭 → 2열 비교 모달</li>
+      </ul>
+      <div style="display:flex;gap:8px">
+        <a class="tour-btn tour-btn-primary" href="index.html?view=globalcomp" target="_blank" style="text-decoration:none">글로벌 비교 열기 →</a>
+        <button class="tour-btn tour-btn-secondary" onclick="event.stopPropagation();markStepDone(8)">완료 체크 ✓</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Step 9 -->
+  <div class="tour-step-card" id="tour-9" onclick="toggleTourStep(9)">
+    <div class="tour-step-header">
+      <div class="tour-step-num">9</div>
+      <div style="flex:1">
+        <div style="font-weight:700;font-size:0.95rem">Sankey 흐름도 체험하기</div>
+        <div style="font-size:0.8rem;color:var(--text-muted)">정책축→전략분야→과제→부처 4단계 흐름</div>
+      </div>
+      <span style="font-size:0.8rem;color:var(--gray)">~2분</span>
+    </div>
+    <div class="tour-step-body">
+      <p style="font-size:0.85rem;margin:12px 0"><strong>체험 포인트:</strong></p>
+      <ul style="font-size:0.84rem;padding-left:20px;margin-bottom:12px">
+        <li style="margin-bottom:4px">흐름도에서 특정 과제 노드 클릭 → 슬라이드 패널 상세</li>
+        <li style="margin-bottom:4px">검색창에 키워드 입력 → 매칭 노드·연결선 3단계 강조</li>
+        <li style="margin-bottom:4px">정책축/전략분야/부처 노드 클릭 → 대시보드로 딥링크 이동</li>
+      </ul>
+      <div style="display:flex;gap:8px">
+        <a class="tour-btn tour-btn-primary" href="sankey.html" target="_blank" style="text-decoration:none">Sankey 흐름도 열기 →</a>
+        <button class="tour-btn tour-btn-secondary" onclick="event.stopPropagation();markStepDone(9)">완료 체크 ✓</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Step 10 -->
+  <div class="tour-step-card" id="tour-10" onclick="toggleTourStep(10)">
+    <div class="tour-step-header">
+      <div class="tour-step-num">10</div>
+      <div style="flex:1">
+        <div style="font-weight:700;font-size:0.95rem">AI기본법 연계 분석 체험하기</div>
+        <div style="font-size:0.8rem;color:var(--text-muted)">법령 체계, 과제-법령 매핑, 사업자 의무 체크리스트</div>
+      </div>
+      <span style="font-size:0.8rem;color:var(--gray)">~3분</span>
+    </div>
+    <div class="tour-step-body">
+      <p style="font-size:0.85rem;margin:12px 0"><strong>체험 포인트:</strong></p>
+      <ul style="font-size:0.84rem;padding-left:20px;margin-bottom:12px">
+        <li style="margin-bottom:4px">법령 체계 탭: 핵심 조문 카드, 강제의무/노력의무 배지</li>
+        <li style="margin-bottom:4px">과제-법령 매핑 탭: 법령연계 필드 클릭 → 조항 원문 모달</li>
+        <li style="margin-bottom:4px">사업자 의무 체크리스트: 6단계 체크 → 완료율 프로그레스바</li>
+        <li style="margin-bottom:4px">이행 일정: 법률 시행 타임라인 (2026.1.22~7.21)</li>
+      </ul>
+      <div style="display:flex;gap:8px">
+        <a class="tour-btn tour-btn-primary" href="aiact.html" target="_blank" style="text-decoration:none">AI기본법 연계 열기 →</a>
+        <button class="tour-btn tour-btn-secondary" onclick="event.stopPropagation();markStepDone(10)">완료 체크 ✓</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ==================== TAB 5: QUICK REFERENCE ==================== -->
+<div class="view" id="view-quickref">
+
+  <div class="card" style="border-left:4px solid var(--warning);margin-bottom:16px">
+    <h2 style="font-size:1.15rem;margin-bottom:8px">🃏 퀵 레퍼런스 카드</h2>
+    <p style="font-size:0.88rem;color:var(--text-muted)">각 역할별 핵심 기능을 한 장에 요약한 카드입니다. 인쇄하여 책상에 비치하세요. <button onclick="window.print()" style="background:var(--primary);color:white;border:none;padding:4px 14px;border-radius:12px;font-size:0.78rem;font-weight:600;cursor:pointer;font-family:var(--font)">🖨️ 인쇄하기</button></p>
+  </div>
+
+  <div class="qr-grid">
+
+    <!-- Card 1: 부처 담당자 -->
+    <div class="qr-card">
+      <div class="qr-card-header" style="background:linear-gradient(135deg,#003087,#1B5FA4)">🏛️ 부처 담당자 퀵 레퍼런스</div>
+      <div class="qr-card-body">
+        <h4 style="font-size:0.88rem;font-weight:700;margin-bottom:8px;color:var(--primary)">핵심 워크플로우</h4>
+        <ul>
+          <li><span class="qr-icon">1️⃣</span> <strong>부처별 현황</strong> 탭에서 담당 과제 목록 확인</li>
+          <li><span class="qr-icon">2️⃣</span> <strong>타임라인</strong> 탭 → 부처 필터 → 분기별 기한 파악</li>
+          <li><span class="qr-icon">3️⃣</span> <strong>위험 관리</strong> 탭 → 기한초과·긴급 과제 확인</li>
+          <li><span class="qr-icon">4️⃣</span> 과제 클릭 → <strong>권고사항별 기한</strong> 상세 확인</li>
+          <li><span class="qr-icon">5️⃣</span> <strong>유사/중복</strong> 탭 → 협업 대상 부처 파악</li>
+        </ul>
+        <h4 style="font-size:0.88rem;font-weight:700;margin:12px 0 8px;color:var(--primary)">자주 쓰는 URL</h4>
+        <ul>
+          <li><span class="qr-icon">🔗</span> <code style="font-size:0.75rem">?view=ministries</code> 부처별 현황</li>
+          <li><span class="qr-icon">🔗</span> <code style="font-size:0.75rem">?view=timeline</code> 타임라인</li>
+          <li><span class="qr-icon">🔗</span> <code style="font-size:0.75rem">?view=risk</code> 위험 관리</li>
+        </ul>
+        <h4 style="font-size:0.88rem;font-weight:700;margin:12px 0 8px;color:var(--primary)">핵심 단축키</h4>
+        <ul>
+          <li><span class="qr-icon">⌨️</span> <span class="manual-key">Ctrl</span>+<span class="manual-key">F</span> 검색 / <span class="manual-key">3</span> 부처탭 / <span class="manual-key">4</span> 타임라인 / <span class="manual-key">6</span> 위험관리</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Card 2: 총괄 관리자 -->
+    <div class="qr-card">
+      <div class="qr-card-header" style="background:linear-gradient(135deg,#0066CC,#17a2b8)">📊 총괄 진도 관리자 퀵 레퍼런스</div>
+      <div class="qr-card-body">
+        <h4 style="font-size:0.88rem;font-weight:700;margin-bottom:8px;color:var(--accent)">핵심 워크플로우</h4>
+        <ul>
+          <li><span class="qr-icon">1️⃣</span> <strong>종합 현황판</strong> → KPI·알림 패널 → 전체 현황 파악</li>
+          <li><span class="qr-icon">2️⃣</span> <strong>타임라인</strong> → 분기별 차트 + 정책축/부처 필터 교차 분석</li>
+          <li><span class="qr-icon">3️⃣</span> <strong>위험 관리</strong> → 복합위험도 Top 과제 → 연쇄 지연 점검</li>
+          <li><span class="qr-icon">4️⃣</span> <strong>부처별 현황</strong> → 과부하 부처 식별 → 업무 분배 점검</li>
+          <li><span class="qr-icon">5️⃣</span> <strong>Sankey 흐름도</strong> → 정책축→부처 병목 발견</li>
+        </ul>
+        <h4 style="font-size:0.88rem;font-weight:700;margin:12px 0 8px;color:var(--accent)">키워드 URL 단축</h4>
+        <ul>
+          <li><span class="qr-icon">🔗</span> <code style="font-size:0.75rem">?view=timeline&keyword=데이터</code></li>
+          <li><span class="qr-icon">🔗</span> <code style="font-size:0.75rem">?view=timeline&keyword=인재</code></li>
+          <li><span class="qr-icon">🔗</span> <code style="font-size:0.75rem">?view=timeline&keyword=안전</code></li>
+        </ul>
+        <h4 style="font-size:0.88rem;font-weight:700;margin:12px 0 8px;color:var(--accent)">위험 등급 기준</h4>
+        <ul>
+          <li><span class="qr-icon" style="color:#dc3545">●</span> 기한초과 (D+) / <span style="color:#e74c3c">●</span> 긴급 (D-34)</li>
+          <li><span class="qr-icon" style="color:#fd7e14">●</span> 주의 (D-120) / <span style="color:#ffc107">●</span> 관찰 (D-240) / <span style="color:#28a745">●</span> 여유</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Card 3: AI전략위 -->
+    <div class="qr-card">
+      <div class="qr-card-header" style="background:linear-gradient(135deg,#6f42c1,#9b59b6)">🎖️ AI전략위 위원 퀵 레퍼런스</div>
+      <div class="qr-card-body">
+        <h4 style="font-size:0.88rem;font-weight:700;margin-bottom:8px;color:#6f42c1">핵심 워크플로우</h4>
+        <ul>
+          <li><span class="qr-icon">1️⃣</span> <strong>종합 현황판</strong> → 정책축별 분포 → 전략 방향 검토</li>
+          <li><span class="qr-icon">2️⃣</span> <strong>글로벌 정책 비교</strong> → 25개국 120개 사례 → 정합성 점검</li>
+          <li><span class="qr-icon">3️⃣</span> <strong>AI기본법 연계</strong> → 법령 이행 현황 → 제도 정비 확인</li>
+          <li><span class="qr-icon">4️⃣</span> <strong>위험 관리</strong> → 고위험 과제 → 의사결정 (우선순위 조정)</li>
+          <li><span class="qr-icon">5️⃣</span> <strong>연관 과제</strong> → 정책축 간 연계 → 시너지 확인</li>
+        </ul>
+        <h4 style="font-size:0.88rem;font-weight:700;margin:12px 0 8px;color:#6f42c1">주요 참고 페이지</h4>
+        <ul>
+          <li><span class="qr-icon">📄</span> <code style="font-size:0.75rem">aiact.html</code> AI기본법 연계 분석</li>
+          <li><span class="qr-icon">📄</span> <code style="font-size:0.75rem">?view=globalcomp</code> 글로벌 정책 비교</li>
+          <li><span class="qr-icon">📄</span> <code style="font-size:0.75rem">?view=standards</code> 표준화 현황</li>
+        </ul>
+        <h4 style="font-size:0.88rem;font-weight:700;margin:12px 0 8px;color:#6f42c1">글로벌 사례 현황</h4>
+        <ul>
+          <li><span class="qr-icon">🌍</span> 25개국/기구 · 120개 사례 · 7개 분류</li>
+          <li><span class="qr-icon">🇺🇸</span> 미국 22 / 🇪🇺 EU 20 / 🇬🇧 영국 16 / 🇫🇷 프랑스 13 / 🇨🇳 중국 10</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Card 4: 일반 사용자 -->
+    <div class="qr-card">
+      <div class="qr-card-header" style="background:linear-gradient(135deg,#28a745,#20c997)">👤 일반 사용자 퀵 레퍼런스</div>
+      <div class="qr-card-body">
+        <h4 style="font-size:0.88rem;font-weight:700;margin-bottom:8px;color:#28a745">시작하기</h4>
+        <ul>
+          <li><span class="qr-icon">1️⃣</span> <strong>종합 현황판</strong>에서 전체 구조 파악 (3축 → 12분야 → 99과제)</li>
+          <li><span class="qr-icon">2️⃣</span> <strong>전역 검색</strong>(<span class="manual-key">Ctrl</span>+<span class="manual-key">F</span>)으로 관심 키워드 검색</li>
+          <li><span class="qr-icon">3️⃣</span> <strong>Sankey 흐름도</strong>로 정책 흐름 시각적 이해</li>
+          <li><span class="qr-icon">4️⃣</span> <strong>글로벌 비교</strong> 탭에서 해외 정책 동향 탐색</li>
+          <li><span class="qr-icon">5️⃣</span> <strong>AI기본법</strong> 체크리스트로 나에게 미치는 영향 확인</li>
+        </ul>
+        <h4 style="font-size:0.88rem;font-weight:700;margin:12px 0 8px;color:#28a745">인기 검색 키워드</h4>
+        <ul>
+          <li><span class="qr-icon">🔍</span> AI안전 · 데이터 · 반도체 · 인재 · 의료 · 교육 · 자율주행</li>
+          <li><span class="qr-icon">🔍</span> 스타트업 · 컴퓨팅 · 윤리 · 저작권 · 글로벌 · 규제</li>
+        </ul>
+        <h4 style="font-size:0.88rem;font-weight:700;margin:12px 0 8px;color:#28a745">필수 단축키</h4>
+        <ul>
+          <li><span class="qr-icon">⌨️</span> <span class="manual-key">Ctrl</span>+<span class="manual-key">F</span> 검색 / <span class="manual-key">Esc</span> 닫기 / <span class="manual-key">1</span>~<span class="manual-key">0</span> 탭 전환</li>
+        </ul>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Keyboard Shortcuts Summary -->
+  <div class="card">
+    <h3 style="font-size:1.05rem;font-weight:700;margin-bottom:16px">⌨️ 키보드 단축키 전체 목록</h3>
+    <div class="qr-shortcut-grid">
+      <div class="qr-shortcut"><span class="key">Ctrl+F</span> 전역 검색</div>
+      <div class="qr-shortcut"><span class="key">1</span> 종합 현황판</div>
+      <div class="qr-shortcut"><span class="key">2</span> 과제별 상세</div>
+      <div class="qr-shortcut"><span class="key">3</span> 부처별 현황</div>
+      <div class="qr-shortcut"><span class="key">4</span> 추진기한 타임라인</div>
+      <div class="qr-shortcut"><span class="key">5</span> 참고/각주</div>
+      <div class="qr-shortcut"><span class="key">6</span> 위험 관리</div>
+      <div class="qr-shortcut"><span class="key">7</span> 유사/중복 분석</div>
+      <div class="qr-shortcut"><span class="key">8</span> 연관 과제</div>
+      <div class="qr-shortcut"><span class="key">9</span> 글로벌 협력</div>
+      <div class="qr-shortcut"><span class="key">0</span> 표준화 현황</div>
+      <div class="qr-shortcut"><span class="key">←→</span> 모달 이전/다음</div>
+      <div class="qr-shortcut"><span class="key">Esc</span> 모달 닫기</div>
+    </div>
+  </div>
+
+  <!-- URL Parameters Summary -->
+  <div class="card">
+    <h3 style="font-size:1.05rem;font-weight:700;margin-bottom:16px">🔗 URL 파라미터 요약</h3>
+    <table style="width:100%;border-collapse:collapse;font-size:0.84rem">
+      <tr style="background:var(--primary);color:white"><th style="padding:8px;text-align:left">URL 예시</th><th style="padding:8px;text-align:left">동작</th></tr>
+      <tr><td style="padding:8px;border:1px solid var(--border)"><code>index.html?view=overview</code></td><td style="padding:8px;border:1px solid var(--border)">종합 현황판 탭 열기</td></tr>
+      <tr style="background:var(--light)"><td style="padding:8px;border:1px solid var(--border)"><code>index.html?view=timeline&keyword=데이터</code></td><td style="padding:8px;border:1px solid var(--border)">타임라인 + '데이터' 키워드 필터</td></tr>
+      <tr><td style="padding:8px;border:1px solid var(--border)"><code>index.html?view=timeline&task=5</code></td><td style="padding:8px;border:1px solid var(--border)">타임라인 + 과제 5 필터</td></tr>
+      <tr style="background:var(--light)"><td style="padding:8px;border:1px solid var(--border)"><code>index.html?task=1</code></td><td style="padding:8px;border:1px solid var(--border)">과제 ① 상세 모달 열기</td></tr>
+      <tr><td style="padding:8px;border:1px solid var(--border)"><code>index.html?axis=1</code></td><td style="padding:8px;border:1px solid var(--border)">정책축 1 (AI 고속도로) 필터</td></tr>
+      <tr style="background:var(--light)"><td style="padding:8px;border:1px solid var(--border)"><code>index.html?area=5</code></td><td style="padding:8px;border:1px solid var(--border)">전략분야 5 (AI 규제혁신) 필터</td></tr>
+      <tr><td style="padding:8px;border:1px solid var(--border)"><code>sankey.html?task=5</code></td><td style="padding:8px;border:1px solid var(--border)">Sankey에서 과제 5 강조</td></tr>
+    </table>
+  </div>
+
+</div>
+
+<!-- ==================== TAB 6: SYSTEM MAP ==================== -->
+<div class="view" id="view-sysmap">
+
+  <div class="card" style="border-left:4px solid var(--info);margin-bottom:24px">
+    <h2 style="font-size:1.15rem;margin-bottom:8px">🗺️ 시스템 전체 맵</h2>
+    <p style="font-size:0.88rem;color:var(--text-muted)">대시보드를 구성하는 모든 페이지와 탭의 구조입니다. 역할 버튼을 클릭하면 해당 역할이 주로 사용하는 기능이 강조됩니다.</p>
+  </div>
+
+  <div class="persona-filter-bar">
+    <button class="persona-filter-btn active" onclick="filterSysmap('all')">전체</button>
+    <button class="persona-filter-btn" onclick="filterSysmap('ministry')">🏛️ 부처 담당자</button>
+    <button class="persona-filter-btn" onclick="filterSysmap('manager')">📊 총괄 관리자</button>
+    <button class="persona-filter-btn" onclick="filterSysmap('committee')">🎖️ AI전략위</button>
+    <button class="persona-filter-btn" onclick="filterSysmap('public')">👤 일반 사용자</button>
+  </div>
+
+  <!-- Main Dashboard -->
+  <div class="card">
+    <h3 style="font-size:1.05rem;margin-bottom:16px;display:flex;align-items:center;gap:8px">
+      <span style="background:var(--primary);color:white;padding:4px 12px;border-radius:6px;font-size:0.8rem">메인</span>
+      index.html — 대시보드 (11개 탭)
+    </h3>
+    <div class="sysmap-grid">
+      <a href="index.html?view=overview" class="sysmap-node" data-roles="ministry,manager,committee,public" style="text-decoration:none;color:inherit">
+        <div class="icon">📈</div>
+        <div><div class="label">1. 종합 현황판</div><div class="sub">KPI·알림·워드클라우드</div></div>
+      </a>
+      <a href="index.html?view=tasks" class="sysmap-node" data-roles="ministry,manager,public" style="text-decoration:none;color:inherit">
+        <div class="icon">📋</div>
+        <div><div class="label">2. 과제별 상세</div><div class="sub">99개 과제·326개 권고</div></div>
+      </a>
+      <a href="index.html?view=ministries" class="sysmap-node" data-roles="ministry,manager" style="text-decoration:none;color:inherit">
+        <div class="icon">🏢</div>
+        <div><div class="label">3. 부처별 현황</div><div class="sub">31개 부처·정렬·필터</div></div>
+      </a>
+      <a href="index.html?view=timeline" class="sysmap-node" data-roles="ministry,manager,committee" style="text-decoration:none;color:inherit">
+        <div class="icon">📅</div>
+        <div><div class="label">4. 추진기한 타임라인</div><div class="sub">분기별·필터·Gantt형</div></div>
+      </a>
+      <a href="index.html?view=references" class="sysmap-node" data-roles="public" style="text-decoration:none;color:inherit">
+        <div class="icon">📚</div>
+        <div><div class="label">5. 참고/각주</div><div class="sub">참고25·각주91</div></div>
+      </a>
+      <a href="index.html?view=risk" class="sysmap-node" data-roles="ministry,manager,committee" style="text-decoration:none;color:inherit">
+        <div class="icon">⚠️</div>
+        <div><div class="label">6. 위험 관리</div><div class="sub">복합위험도·D-Day</div></div>
+      </a>
+      <a href="index.html?view=similarity" class="sysmap-node" data-roles="ministry,manager" style="text-decoration:none;color:inherit">
+        <div class="icon">🔍</div>
+        <div><div class="label">7. 유사/중복 분석</div><div class="sub">TF-IDF 코사인 유사도</div></div>
+      </a>
+      <a href="index.html?view=relations" class="sysmap-node" data-roles="ministry,manager,committee" style="text-decoration:none;color:inherit">
+        <div class="icon">🔗</div>
+        <div><div class="label">8. 연관 과제</div><div class="sub">네트워크 그래프</div></div>
+      </a>
+      <a href="index.html?view=global" class="sysmap-node" data-roles="committee" style="text-decoration:none;color:inherit">
+        <div class="icon">🌐</div>
+        <div><div class="label">9. 글로벌 협력</div><div class="sub">국제기구·양자협력</div></div>
+      </a>
+      <a href="index.html?view=standards" class="sysmap-node" data-roles="committee" style="text-decoration:none;color:inherit">
+        <div class="icon">📐</div>
+        <div><div class="label">10. 표준화 현황</div><div class="sub">법제도·기술표준</div></div>
+      </a>
+      <a href="index.html?view=globalcomp" class="sysmap-node" data-roles="committee,public" style="text-decoration:none;color:inherit">
+        <div class="icon">🌍</div>
+        <div><div class="label">11. 글로벌 정책 비교</div><div class="sub">120개 사례·25개국</div></div>
+      </a>
+    </div>
+  </div>
+
+  <!-- Sub Pages -->
+  <div class="card">
+    <h3 style="font-size:1.05rem;margin-bottom:16px;display:flex;align-items:center;gap:8px">
+      <span style="background:var(--success);color:white;padding:4px 12px;border-radius:6px;font-size:0.8rem">연계</span>
+      별도 분석 페이지
+    </h3>
+    <div class="sysmap-grid">
+      <a href="aiact.html" target="_blank" class="sysmap-node" data-roles="ministry,committee,public" style="text-decoration:none;color:inherit">
+        <div class="icon">⚖️</div>
+        <div><div class="label">AI기본법 연계</div><div class="sub">법령·가이드라인·체크리스트</div></div>
+      </a>
+      <a href="sankey.html" target="_blank" class="sysmap-node" data-roles="manager,public" style="text-decoration:none;color:inherit">
+        <div class="icon">🔀</div>
+        <div><div class="label">Sankey 흐름도</div><div class="sub">정책축→분야→과제→부처</div></div>
+      </a>
+      <a href="help.html" class="sysmap-node highlighted" data-roles="ministry,manager,committee,public" style="text-decoration:none;color:inherit">
+        <div class="icon">❓</div>
+        <div><div class="label">도움말 & FAQ</div><div class="sub">현재 페이지</div></div>
+      </a>
+    </div>
+  </div>
+
+  <!-- Feature Cross-Reference -->
+  <div class="card">
+    <h3 style="font-size:1.05rem;margin-bottom:16px">🔄 주요 기능 교차 참조</h3>
+    <div style="overflow-x:auto">
+      <table style="width:100%;border-collapse:collapse;font-size:0.82rem">
+        <thead>
+          <tr style="background:var(--primary);color:white">
+            <th style="padding:10px;text-align:left;border:1px solid rgba(255,255,255,0.2)">기능</th>
+            <th style="padding:10px;text-align:center;border:1px solid rgba(255,255,255,0.2)">🏛️ 부처</th>
+            <th style="padding:10px;text-align:center;border:1px solid rgba(255,255,255,0.2)">📊 관리자</th>
+            <th style="padding:10px;text-align:center;border:1px solid rgba(255,255,255,0.2)">🎖️ 전략위</th>
+            <th style="padding:10px;text-align:center;border:1px solid rgba(255,255,255,0.2)">👤 일반</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td style="padding:8px 10px;border:1px solid var(--border)">과제 기한 확인</td><td style="text-align:center;border:1px solid var(--border)">★★★</td><td style="text-align:center;border:1px solid var(--border)">★★★</td><td style="text-align:center;border:1px solid var(--border)">★★☆</td><td style="text-align:center;border:1px solid var(--border)">★☆☆</td></tr>
+          <tr style="background:var(--light)"><td style="padding:8px 10px;border:1px solid var(--border)">권고사항별 기한 파악</td><td style="text-align:center;border:1px solid var(--border)">★★★</td><td style="text-align:center;border:1px solid var(--border)">★★★</td><td style="text-align:center;border:1px solid var(--border)">★★☆</td><td style="text-align:center;border:1px solid var(--border)">★☆☆</td></tr>
+          <tr><td style="padding:8px 10px;border:1px solid var(--border)">타임라인(Gantt) 일정</td><td style="text-align:center;border:1px solid var(--border)">★★★</td><td style="text-align:center;border:1px solid var(--border)">★★★</td><td style="text-align:center;border:1px solid var(--border)">★★★</td><td style="text-align:center;border:1px solid var(--border)">★☆☆</td></tr>
+          <tr style="background:var(--light)"><td style="padding:8px 10px;border:1px solid var(--border)">키워드별 기한 필터</td><td style="text-align:center;border:1px solid var(--border)">★★★</td><td style="text-align:center;border:1px solid var(--border)">★★★</td><td style="text-align:center;border:1px solid var(--border)">★★☆</td><td style="text-align:center;border:1px solid var(--border)">★★☆</td></tr>
+          <tr><td style="padding:8px 10px;border:1px solid var(--border)">복합위험도 점검</td><td style="text-align:center;border:1px solid var(--border)">★★★</td><td style="text-align:center;border:1px solid var(--border)">★★★</td><td style="text-align:center;border:1px solid var(--border)">★★★</td><td style="text-align:center;border:1px solid var(--border)">☆☆☆</td></tr>
+          <tr style="background:var(--light)"><td style="padding:8px 10px;border:1px solid var(--border)">부처별 과제 현황</td><td style="text-align:center;border:1px solid var(--border)">★★★</td><td style="text-align:center;border:1px solid var(--border)">★★★</td><td style="text-align:center;border:1px solid var(--border)">★★☆</td><td style="text-align:center;border:1px solid var(--border)">★☆☆</td></tr>
+          <tr><td style="padding:8px 10px;border:1px solid var(--border)">유사/중복 분석</td><td style="text-align:center;border:1px solid var(--border)">★★☆</td><td style="text-align:center;border:1px solid var(--border)">★★★</td><td style="text-align:center;border:1px solid var(--border)">★★☆</td><td style="text-align:center;border:1px solid var(--border)">☆☆☆</td></tr>
+          <tr style="background:var(--light)"><td style="padding:8px 10px;border:1px solid var(--border)">연관 과제 네트워크</td><td style="text-align:center;border:1px solid var(--border)">★★☆</td><td style="text-align:center;border:1px solid var(--border)">★★★</td><td style="text-align:center;border:1px solid var(--border)">★★★</td><td style="text-align:center;border:1px solid var(--border)">☆☆☆</td></tr>
+          <tr><td style="padding:8px 10px;border:1px solid var(--border)">글로벌 정책 비교</td><td style="text-align:center;border:1px solid var(--border)">★☆☆</td><td style="text-align:center;border:1px solid var(--border)">★★☆</td><td style="text-align:center;border:1px solid var(--border)">★★★</td><td style="text-align:center;border:1px solid var(--border)">★★★</td></tr>
+          <tr style="background:var(--light)"><td style="padding:8px 10px;border:1px solid var(--border)">AI기본법 체크리스트</td><td style="text-align:center;border:1px solid var(--border)">★★☆</td><td style="text-align:center;border:1px solid var(--border)">★☆☆</td><td style="text-align:center;border:1px solid var(--border)">★★★</td><td style="text-align:center;border:1px solid var(--border)">★★★</td></tr>
+          <tr><td style="padding:8px 10px;border:1px solid var(--border)">Sankey 흐름도</td><td style="text-align:center;border:1px solid var(--border)">★☆☆</td><td style="text-align:center;border:1px solid var(--border)">★★★</td><td style="text-align:center;border:1px solid var(--border)">★★☆</td><td style="text-align:center;border:1px solid var(--border)">★★★</td></tr>
+          <tr style="background:var(--light)"><td style="padding:8px 10px;border:1px solid var(--border)">전역 검색</td><td style="text-align:center;border:1px solid var(--border)">★★★</td><td style="text-align:center;border:1px solid var(--border)">★★★</td><td style="text-align:center;border:1px solid var(--border)">★★☆</td><td style="text-align:center;border:1px solid var(--border)">★★★</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+</main>
+
+<footer style="text-align:center;padding:24px;color:var(--text-muted);font-size:0.8rem;border-top:1px solid var(--border);margin-top:40px">
+  대한민국 AI 행동계획 2026 대시보드 (UNOFFICIAL) |
+  <a href="https://github.com/hollobit/K-AI2026" target="_blank" rel="noopener noreferrer" style="color:var(--primary);text-decoration:none">GitHub</a> |
+  <a href="index.html" style="color:var(--primary);text-decoration:none">대시보드로 돌아가기</a>
+</footer>
+
+<script>
+// Theme
+function toggleTheme() {
+  var html = document.documentElement;
+  var isDark = html.getAttribute('data-theme') === 'dark';
+  html.setAttribute('data-theme', isDark ? 'light' : 'dark');
+  localStorage.setItem('theme', isDark ? 'light' : 'dark');
+  document.getElementById('themeToggle').textContent = isDark ? '🌙' : '☀️';
+}
+(function initTheme() {
+  var saved = localStorage.getItem('theme');
+  var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  var theme = saved || (prefersDark ? 'dark' : 'light');
+  document.documentElement.setAttribute('data-theme', theme);
+  var btn = document.getElementById('themeToggle');
+  if (btn) btn.textContent = theme === 'dark' ? '☀️' : '🌙';
+})();
+
+// Tab switching
+function switchView(view) {
+  document.querySelectorAll('.view').forEach(function(v) { v.classList.remove('active'); });
+  document.querySelectorAll('.nav-tab').forEach(function(t) { t.classList.remove('active'); });
+  var el = document.getElementById('view-' + view);
+  if (el) el.classList.add('active');
+  document.querySelectorAll('.nav-tab').forEach(function(t) {
+    if (t.getAttribute('data-view') === view) t.classList.add('active');
+  });
+}
+
+// Persona selection
+var currentPersona = null;
+function selectPersona(persona) {
+  currentPersona = persona;
+  document.querySelectorAll('.persona-card').forEach(function(c) { c.classList.remove('selected'); });
+  event.currentTarget.classList.add('selected');
+  document.querySelectorAll('.scenario-panel').forEach(function(p) { p.classList.remove('active'); });
+  var panel = document.getElementById('panel-' + persona);
+  if (panel) {
+    panel.classList.add('active');
+    panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+}
+
+// FAQ toggle
+function toggleFaq(el) {
+  el.classList.toggle('open');
+}
+
+// System map filter
+function filterSysmap(role) {
+  document.querySelectorAll('.persona-filter-btn').forEach(function(b) { b.classList.remove('active'); });
+  event.currentTarget.classList.add('active');
+  document.querySelectorAll('.sysmap-node').forEach(function(node) {
+    var roles = (node.getAttribute('data-roles') || '').split(',');
+    if (role === 'all' || roles.indexOf(role) !== -1) {
+      node.style.opacity = '1';
+      node.style.transform = 'scale(1)';
+      node.classList.toggle('highlighted', role !== 'all' && roles.indexOf(role) !== -1);
+    } else {
+      node.style.opacity = '0.3';
+      node.style.transform = 'scale(0.95)';
+      node.classList.remove('highlighted');
+    }
+  });
+}
+
+// Tour
+var TOUR_TOTAL = 10;
+var tourDone = JSON.parse(localStorage.getItem('helpTourDone') || '[]');
+function updateTourProgress() {
+  var pct = Math.round((tourDone.length / TOUR_TOTAL) * 100);
+  var fill = document.getElementById('tourProgressFill');
+  var txt = document.getElementById('tourProgressText');
+  if (fill) fill.style.width = pct + '%';
+  if (txt) txt.textContent = tourDone.length + ' / ' + TOUR_TOTAL;
+  for (var i = 1; i <= TOUR_TOTAL; i++) {
+    var card = document.getElementById('tour-' + i);
+    if (card) card.classList.toggle('completed', tourDone.indexOf(i) !== -1);
+  }
+}
+function toggleTourStep(n) {
+  var card = document.getElementById('tour-' + n);
+  if (!card) return;
+  var wasActive = card.classList.contains('active');
+  document.querySelectorAll('.tour-step-card').forEach(function(c) { c.classList.remove('active'); });
+  if (!wasActive) card.classList.add('active');
+}
+function markStepDone(n) {
+  if (tourDone.indexOf(n) === -1) tourDone.push(n);
+  localStorage.setItem('helpTourDone', JSON.stringify(tourDone));
+  updateTourProgress();
+}
+function resetTour() {
+  tourDone = [];
+  localStorage.removeItem('helpTourDone');
+  document.querySelectorAll('.tour-step-card').forEach(function(c) { c.classList.remove('active','completed'); });
+  updateTourProgress();
+}
+function completeTour() {
+  tourDone = [];
+  for (var i = 1; i <= TOUR_TOTAL; i++) tourDone.push(i);
+  localStorage.setItem('helpTourDone', JSON.stringify(tourDone));
+  updateTourProgress();
+}
+setTimeout(updateTourProgress, 100);
+
+// Manual TOC smooth scroll
+document.querySelectorAll('.manual-toc a').forEach(function(a) {
+  a.addEventListener('click', function(e) {
+    e.preventDefault();
+    var target = document.querySelector(this.getAttribute('href'));
+    if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+});
+
+// URL params
+(function() {
+  var params = new URLSearchParams(window.location.search);
+  var view = params.get('view');
+  if (view) switchView(view);
+  var persona = params.get('persona');
+  if (persona) {
+    var card = document.querySelector('.persona-card[onclick*="' + persona + '"]');
+    if (card) { card.click(); }
+  }
+})();
+</script>
+</body>
+</html>
