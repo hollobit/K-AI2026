@@ -10227,6 +10227,32 @@ const AGENT_PROFILES = {
       opportunities: ['지역 산단 AI 전환으로 제조 혁신','스마트시티 AI 통합 관제','지역 공공 AI 서비스 확대'],
       threats: ['수도권-지방 AI 격차 확대','지역 예산 확보 어려움','청년 인구 유출 가속화']
     }
+  },
+  defense: {
+    name: '국방', icon: '\u{1F396}\uFE0F', color: '#263238', stance: 'defense_strategist',
+    sentiment_bias: 0.2, influence_weight: 2.5,
+    focus_keywords: ['국방','군사','무인','사이버','방산','자율','감시','정찰','안보','전투','작전','드론','로봇','국방부','합참','방위'],
+    evaluation_criteria: { military_readiness: 0.35, tech_sovereignty: 0.25, defense_export: 0.25, civil_military: 0.15 },
+    criteria_labels: { military_readiness: '군사 준비태세', tech_sovereignty: '기술 주권', defense_export: '방산 수출', civil_military: '민군 협력' },
+    swot: {
+      strengths: ['국방AI 전략분야 독립 운영(SA10, 7개 과제)','K-방산 수출 세계 9위','자율무인체계 기술력','국방 사이버사령부 역량'],
+      weaknesses: ['국방 데이터 폐쇄성으로 AI 활용 제한','민간 AI 기술 도입 프로세스 복잡','국방 AI 전문인력 부족','레거시 무기체계 AI 통합 난이도'],
+      opportunities: ['방산 AI 수출 시장 급성장($200B+)','동맹국(미·NATO) AI 공동 개발','자율무인체계 차세대 전력화','사이버 AI 방어 혁신'],
+      threats: ['국제 자율무기 규범과 충돌','적대국 AI 무기 고도화','AI 군비 경쟁 가속','군사 AI 윤리 논란']
+    }
+  },
+  leadership: {
+    name: '대통령/장관', icon: '\u{1F3DB}\uFE0F', color: '#0D47A1', stance: 'national_leader',
+    sentiment_bias: 0.4, influence_weight: 5.0,
+    focus_keywords: ['대통령','장관','국가','전략','비전','G3','경쟁력','글로벌','성장','도약','혁신','위원회','국정','의제','예산','투자','성과'],
+    evaluation_criteria: { national_vision: 0.35, execution_speed: 0.25, global_standing: 0.25, public_trust: 0.15 },
+    criteria_labels: { national_vision: '국가 비전 달성', execution_speed: '실행 속도', global_standing: '국제 위상', public_trust: '국민 신뢰' },
+    swot: {
+      strengths: ['대통령직속 AI전략위원회 최상위 거버넌스','99개 과제 구체적 이행 체계','AI기본법 시행으로 법적 기반 확보','글로벌 AI G3 목표 명확'],
+      weaknesses: ['부처 간 칸막이로 범정부 시너지 미흡','예산 확보 경쟁으로 우선순위 희석','정권 임기(5년) 내 성과 압박','민간 협력 메커니즘 구체성 부족'],
+      opportunities: ['AI를 국가 성장 엔진으로 정립 — GDP 기여율 2.8%→8%','글로벌 AI 거버넌스 주도국 도약','AI 기반 공공서비스 혁신으로 국민 체감 성과','반도체+AI 패키지로 수출 300억$ 시대'],
+      threats: ['정권 교체 시 정책 연속성 단절','미중 기술 패권에 따른 외교적 선택 압박','AI 부작용(일자리·프라이버시)에 대한 국민 반발','행동계획 이행 지연 시 글로벌 경쟁 탈락']
+    }
   }
 };
 
@@ -11685,6 +11711,23 @@ const SWOT_STRATEGIES = {
     wt: { title: 'WT 전략', subtitle: '약점과 위협 동시 최소화', color: '#b71c1c', items: [
       { strategy: '인재 유출 + 예산 부족 동시 대응', action: '지역 AI 특별회계 신설 + AI 인재 지역 의무 복무제(장학금 연계)', tasks: [65,66,15,16] }
     ]}
+  },
+  defense: {
+    so: { title: 'SO 전략', subtitle: '국방 강점으로 기회 극대화', color: '#1b5e20', items: [
+      { strategy: '자율무인체계 기술력을 방산 AI 수출 확대에 활용', action: '자율드론·무인전투체계·AI 사이버보안 패키지 수출 전략 수립, 동맹국 공동 개발 MOU 확대', tasks: [79,80] },
+      { strategy: '국방AI 전략분야(7개 과제)를 민군 기술 이전 플랫폼으로 발전', action: '국방 AI 기술의 민간 전환(spin-off) 프로그램 연 10건 이상 추진', tasks: [74,75,76] }
+    ]},
+    wo: { title: 'WO 전략', subtitle: '기회로 국방 약점 보완', color: '#e65100', items: [
+      { strategy: '국방 데이터 폐쇄성을 민군 협력 플랫폼으로 극복', action: '비밀등급 분류 체계 재정비, 비식별 국방 데이터 민간 AI 기업 개방, 민군 공동 데이터 플랫폼 구축', tasks: [76,9,10] },
+      { strategy: '국방 AI 전문인력 부족을 민간 AI 인재 교류로 해소', action: '민간 AI 전문가 국방 자문관 제도(연 100명), 군 간부 AI 석사과정 확대', tasks: [77,15,16] }
+    ]},
+    st: { title: 'ST 전략', subtitle: '국방 강점으로 위협 대응', color: '#0d47a1', items: [
+      { strategy: '사이버사령부 역량으로 적대적 AI 공격 선제 차단', action: 'AI 기반 사이버 방어 체계 고도화, 적대적 AI 탐지·무력화 기술 개발', tasks: [78,10,11] },
+      { strategy: '자율무인체계로 AI 군비 경쟁에 대응', action: '차세대 자율무인전투체계 개발 로드맵, Human-in-the-loop 원칙 법제화', tasks: [79,74] }
+    ]},
+    wt: { title: 'WT 전략', subtitle: '약점과 위협 동시 최소화', color: '#b71c1c', items: [
+      { strategy: '레거시 무기체계 + 국제 윤리 규범 이중 대응', action: '기존 무기체계 AI 통합 로드맵(단계적 전환) + 국제 자율무기 규범 선제 참여로 한국형 AI 군사 윤리 체계 확립', tasks: [74,79,99] }
+    ]}
   }
 };
 
@@ -11726,7 +11769,8 @@ function renderAgentInterview(ap, agentKey) {
     security: ['가장 큰 AI 안보 위협은?','AI 안전사고 대응 체계는?','국방AI와 민간 안전 규범 간 균형은?','적대적 AI 공격 대비는?','AGI 도래 시 안전 전략은?'],
     expert: ['AI 인재 유출 방지 방안은?','파운데이션 모델 독자 개발 가능한가?','산학 연계 개선 방안은?','AI 연구 인프라 확충은?','오픈소스 LLM 전략은?'],
     education: ['K-12 AI 교육과정 현황은?','AI 교원 양성 방안은?','교육 격차 해소 방법은?','AI 활용 맞춤형 교육은?','평생교육 AI 전환은?'],
-    regional: ['수도권-지방 AI 격차 해소는?','지역 AI 인재 정주 방안은?','강소형 데이터센터 효과는?','5극3특 특화 도시 진행은?','지역 산단 AI 전환 방안은?']
+    regional: ['수도권-지방 AI 격차 해소는?','지역 AI 인재 정주 방안은?','강소형 데이터센터 효과는?','5극3특 특화 도시 진행은?','지역 산단 AI 전환 방안은?'],
+    defense: ['국방AI 핵심 과제는?','자율무인체계 발전 방향은?','민군 기술 협력 개선은?','방산 AI 수출 전략은?','국방 데이터 개방 방안은?','AI 군사 윤리 기준은?']
   };
 
   var chatId = 'agentChat_' + agentKey;
@@ -12253,7 +12297,15 @@ const CIT_SUB_SEGMENTS = [
   { id:'ethics', name:'AI 윤리·철학 전문가', icon:'\u{1F9D8}', color:'#6A1B9A',
     keywords:['윤리','철학','가치','원칙','도덕','책임','신뢰','투명'],
     focus:'AI 윤리 원칙, 가치 정렬, 사회적 책임, 투명성',
-    swot: { s:['AI 윤리 가이드라인 시행','국민 AI 윤리 의식 제고 노력'], w:['윤리 원칙의 실천적 적용 미흡','AI 윤리 전문 인력 부족'], o:['글로벌 AI 윤리 규범 선도','AI 윤리 교육 확대'], t:['기술 발전 속도가 윤리 논의를 앞서감','AGI 시대 윤리 프레임워크 부재'] } }
+    swot: { s:['AI 윤리 가이드라인 시행','국민 AI 윤리 의식 제고 노력'], w:['윤리 원칙의 실천적 적용 미흡','AI 윤리 전문 인력 부족'], o:['글로벌 AI 윤리 규범 선도','AI 윤리 교육 확대'], t:['기술 발전 속도가 윤리 논의를 앞서감','AGI 시대 윤리 프레임워크 부재'] } },
+  { id:'youth', name:'청년 세대', icon:'\u{1F9D1}', color:'#1565C0',
+    keywords:['청년','대학생','취업','창업','스타트업','20대','30대','신규','채용','인턴','경력'],
+    focus:'AI 시대 청년 취업·창업, AI 역량 교육, 일자리 기회, 스타트업 도전',
+    swot: { s:['AI 스타트업 생태계 확대(2,100+)','AI 전공 대학원 확충 계획','청년 디지털 역량 높음'], w:['AI 분야 양질의 일자리 부족','대기업-스타트업 처우 격차','AI 창업 자금 조달 어려움(시리즈B 절벽)'], o:['AI 신직종 대량 창출(22만)','글로벌 AI 기업 취업 기회','공공 AI 시장 개방으로 청년 창업 기회'], t:['AI 자동화로 초급 일자리 감소','비AI 전공 청년 취업 불이익 확대','AI 인재 해외 유출'] } },
+  { id:'vulnerable', name:'장애인·노약자', icon:'\u{267F}', color:'#795548',
+    keywords:['장애','고령','노인','취약','소외','접근성','보조','돌봄','복지','유니버설','배리어프리'],
+    focus:'AI 접근성·보조 기술, 고령층 AI 돌봄, 디지털 격차 해소, 유니버설 디자인',
+    swot: { s:['디지털 포용성 확대 과제 포함(SA11)','AI 기본사회 추진계획 수립','공공 AI 서비스 접근성 목표'], w:['장애인·고령층 전용 AI 서비스 구체성 부족','AI 접근성 표준·가이드라인 미비','보조 기술 R&D 투자 부족'], o:['AI 기반 맞춤형 돌봄 서비스 혁신','음성·시각 AI로 장애인 접근성 획기적 개선','고령사회 AI 돌봄 수요 폭증'], t:['AI 서비스 디지털 격차 확대','AI 오류 시 취약계층 피해 집중','비AI 대안 채널 축소로 서비스 사각지대'] } }
 ];
 
 function renderCitizenSubSegments() {
