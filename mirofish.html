@@ -12251,6 +12251,224 @@ async function runPanoramaSearch() {
 /* ================================================================
    SECTION 3: STAKEHOLDERS
    ================================================================ */
+function renderStakeholderHelp() {
+  var container = document.getElementById('stakeholderContent');
+  var keys = Object.keys(AGENT_PROFILES);
+  var html = '';
+
+  // ====== 헤더 ======
+  html += '<div class="card" style="border-left:4px solid #607D8B;background:linear-gradient(135deg,#f5f7fa,var(--card-bg))">';
+  html += '<h3 style="color:#455A64;margin-bottom:8px">\u2753 이해관계자 분석 방법론 가이드</h3>';
+  html += '<p style="font-size:.88rem;color:var(--text-muted);line-height:1.7">이 탭에서는 MiroFish 에이전트 페르소나 기반 이해관계자 분석의 <strong>역할·영향력·감성편향의 결정 방법</strong>, <strong>관심도·관련도 수치화 로직</strong>, <strong>온톨로지와의 관계</strong>, 그리고 <strong>SNS 시뮬레이션 산출 방법</strong>을 설명합니다.</p>';
+  html += '</div>';
+
+  // ====== 1. 에이전트 페르소나 개요 ======
+  html += '<div class="card"><div class="card-title" style="font-size:1.05rem">\u{1F464} 1. 에이전트 페르소나 (10대 관점)</div>';
+  html += '<p style="font-size:.85rem;color:var(--text-muted);margin-bottom:12px">AI 행동계획 99개 과제를 10가지 서로 다른 이해관계자 관점에서 분석합니다. 각 에이전트는 고유한 역할(stance), 영향력(influence_weight), 감성편향(sentiment_bias), 관심 키워드(focus_keywords), 평가 기준(evaluation_criteria), SWOT 분석을 가집니다.</p>';
+  html += '<div style="overflow-x:auto"><table class="top-tasks" style="font-size:.82rem"><thead><tr>';
+  html += '<th>에이전트</th><th>역할(stance)</th><th>영향력</th><th>감성편향</th><th>관심 키워드(일부)</th>';
+  html += '</tr></thead><tbody>';
+  var stanceLabels = { implementer:'정책 이행자', beneficiary_critic:'수혜자/비판자', rights_advocate:'권리 옹호자', comparativist:'비교 분석가', guardian:'안전 수호자', practitioner:'현장 실무자', educator:'교육자', local_advocate:'지역 옹호자', defense_strategist:'국방 전략가', national_leader:'국가 리더' };
+  keys.forEach(function(k) {
+    var ap = AGENT_PROFILES[k];
+    var sbColor = ap.sentiment_bias > 0 ? '#4caf50' : ap.sentiment_bias < 0 ? '#e53935' : '#999';
+    html += '<tr>';
+    html += '<td style="white-space:nowrap">' + ap.icon + ' <strong>' + ap.name + '</strong></td>';
+    html += '<td>' + (stanceLabels[ap.stance] || ap.stance) + '</td>';
+    html += '<td style="text-align:center;font-weight:700">' + ap.influence_weight.toFixed(1) + '</td>';
+    html += '<td style="text-align:center;color:' + sbColor + ';font-weight:700">' + (ap.sentiment_bias > 0 ? '+' : '') + ap.sentiment_bias.toFixed(1) + '</td>';
+    html += '<td style="font-size:.78rem;color:var(--text-muted)">' + ap.focus_keywords.slice(0, 6).join(', ') + '…</td>';
+    html += '</tr>';
+  });
+  html += '</tbody></table></div></div>';
+
+  // ====== 2. 역할·영향력·감성편향 결정 기준 ======
+  html += '<div class="card"><div class="card-title" style="font-size:1.05rem">\u{2696}\uFE0F 2. 역할·영향력·감성편향은 어떻게 결정되나요?</div>';
+
+  html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;margin-top:12px">';
+
+  // 역할
+  html += '<div style="padding:16px;background:var(--bg);border-radius:8px;border:1px solid var(--border)">';
+  html += '<h4 style="color:#1565C0;margin-bottom:8px">\u{1F3AD} 역할 (stance)</h4>';
+  html += '<p style="font-size:.84rem;line-height:1.7;color:var(--text)">해당 이해관계자가 AI 행동계획에 대해 취하는 <strong>기본적 입장 유형</strong>입니다.</p>';
+  html += '<ul style="font-size:.82rem;color:var(--text-muted);margin:8px 0 0 16px;line-height:1.8">';
+  html += '<li><strong>정책 이행자</strong> — 직접 정책을 집행하는 주체 (부처 관료)</li>';
+  html += '<li><strong>수혜자/비판자</strong> — 정책의 직접 영향을 받으며 양면 평가 (산업계)</li>';
+  html += '<li><strong>권리 옹호자</strong> — 시민 권리와 공익 관점 (시민/전문가)</li>';
+  html += '<li><strong>비교 분석가</strong> — 글로벌 사례 대비 평가 (국제 관점)</li>';
+  html += '<li><strong>국가 리더</strong> — 최종 의사결정 및 비전 설정 (대통령/장관)</li>';
+  html += '</ul></div>';
+
+  // 영향력
+  html += '<div style="padding:16px;background:var(--bg);border-radius:8px;border:1px solid var(--border)">';
+  html += '<h4 style="color:#E65100;margin-bottom:8px">\u{1F451} 영향력 (influence_weight)</h4>';
+  html += '<p style="font-size:.84rem;line-height:1.7;color:var(--text)">정책 결정과 이행에 미치는 <strong>실질적 권한과 자원 동원력</strong>을 1.0~5.0 스케일로 표현합니다.</p>';
+  html += '<ul style="font-size:.82rem;color:var(--text-muted);margin:8px 0 0 16px;line-height:1.8">';
+  html += '<li><strong>5.0</strong> — 대통령/장관 (최종 의사결정권, 예산 배정 권한)</li>';
+  html += '<li><strong>3.0</strong> — 부처 관료 (과제 직접 이행, 인력·예산 집행)</li>';
+  html += '<li><strong>2.5</strong> — 국제·안보·국방 (외교·안보 의사결정 영향)</li>';
+  html += '<li><strong>2.0</strong> — 산업계·AI전문가 (시장·기술 의견 반영력)</li>';
+  html += '<li><strong>1.5</strong> — 시민·지역 (간접 영향, 여론 형성력)</li>';
+  html += '</ul></div>';
+
+  // 감성편향
+  html += '<div style="padding:16px;background:var(--bg);border-radius:8px;border:1px solid var(--border)">';
+  html += '<h4 style="color:#2E7D32;margin-bottom:8px">\u{1F321}\uFE0F 감성편향 (sentiment_bias)</h4>';
+  html += '<p style="font-size:.84rem;line-height:1.7;color:var(--text)">AI 행동계획에 대한 <strong>기본적 태도</strong>를 -1.0(강한 부정) ~ +1.0(강한 긍정) 스케일로 표현합니다.</p>';
+  html += '<ul style="font-size:.82rem;color:var(--text-muted);margin:8px 0 0 16px;line-height:1.8">';
+  html += '<li><strong style="color:#4caf50">+0.4</strong> — 대통령/장관 (정책 추진 주체, 강한 긍정)</li>';
+  html += '<li><strong style="color:#4caf50">+0.3</strong> — 부처 관료 (이행 책임, 긍정적)</li>';
+  html += '<li><strong>0.0</strong> — 시민·교육계 (중립, 기대와 우려 공존)</li>';
+  html += '<li><strong style="color:#e53935">-0.1</strong> — 산업계·AI전문가 (규제 부담 우려)</li>';
+  html += '</ul></div>';
+  html += '</div></div>';
+
+  // ====== 3. 관심도·관련도 수치화 ======
+  html += '<div class="card"><div class="card-title" style="font-size:1.05rem">\u{1F4CA} 3. 페르소나별 관심도·관련도 수치화 방법</div>';
+
+  // 3-1. 과제별 점수
+  html += '<div style="margin-top:12px;padding:16px;background:#f0f4ff;border-radius:8px;border:1px solid #c5cae9">';
+  html += '<h4 style="color:#1a237e;margin-bottom:8px">3-1. 과제별 관심도 점수 (evaluateTask)</h4>';
+  html += '<p style="font-size:.84rem;line-height:1.7;margin-bottom:10px">각 에이전트가 99개 과제 각각에 대해 얼마나 관심이 있는지를 0~100점으로 산출합니다.</p>';
+  html += '<div style="background:var(--card-bg);border-radius:6px;padding:14px;font-family:monospace;font-size:.84rem;line-height:1.9;border:1px solid var(--border)">';
+  html += '<strong>점수</strong> = (<span style="color:#1565C0">제목 키워드 매칭 수</span> \u00D7 <strong>15</strong>)<br>';
+  html += '\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0+ (<span style="color:#2E7D32">배경 텍스트 키워드 매칭 수</span> \u00D7 <strong>3</strong>)<br>';
+  html += '\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0+ (<span style="color:#E65100">권고사항 키워드 매칭 수</span> \u00D7 <strong>5</strong>)<br>';
+  html += '\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0+ (<span style="color:#6A1B9A">sentiment_bias</span> \u00D7 <strong>10</strong>)<br>';
+  html += '<span style="color:#999">결과: 0~100 범위로 클리핑</span>';
+  html += '</div>';
+  html += '<div style="margin-top:10px;display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px;font-size:.8rem">';
+  html += '<div style="padding:8px;background:rgba(21,101,192,.08);border-radius:4px"><strong>제목 \u00D715</strong> — 과제명에 키워드가 있으면 핵심 관련 과제</div>';
+  html += '<div style="padding:8px;background:rgba(46,125,50,.08);border-radius:4px"><strong>배경 \u00D73</strong> — 추진 배경에 키워드가 있으면 맥락적 관련</div>';
+  html += '<div style="padding:8px;background:rgba(230,81,0,.08);border-radius:4px"><strong>권고 \u00D75</strong> — 구체적 실행 항목에 직접 연결</div>';
+  html += '<div style="padding:8px;background:rgba(106,27,154,.08);border-radius:4px"><strong>감성 \u00D710</strong> — 기본 태도에 따른 보정</div>';
+  html += '</div></div>';
+
+  // 3-2. 레이더 차트
+  html += '<div style="margin-top:16px;padding:16px;background:#f1f8e9;border-radius:8px;border:1px solid #c5e1a5">';
+  html += '<h4 style="color:#33691E;margin-bottom:8px">3-2. 개요 탭 레이더 차트 관심도</h4>';
+  html += '<p style="font-size:.84rem;line-height:1.7;margin-bottom:10px">개요 탭의 "이해관계자별 관심도" 레이더 차트는 전략 분야 차원별로 관심도를 산출합니다.</p>';
+  html += '<div style="background:var(--card-bg);border-radius:6px;padding:14px;font-family:monospace;font-size:.84rem;line-height:1.9;border:1px solid var(--border)">';
+  html += '<strong>관심도</strong> = min(100, max(15,<br>';
+  html += '\u00A0\u00A0\u00A0\u00A0<span style="color:#1565C0">focusBonus</span> \u00A0\u00A0\u00A0\u00A0\u2190 에이전트 키워드 \u2194 차원 키워드 상호 매칭 \u00D7 18<br>';
+  html += '\u00A0\u00A0+ <span style="color:#2E7D32">\u221A(전체 매칭 수)</span> \u00D7 4 \u00A0\u2190 데이터 점수 (sqrt로 극단값 압축)<br>';
+  html += '\u00A0\u00A0+ <span style="color:#E65100">influence_weight</span> \u00D7 5 \u00A0\u2190 영향력 보정<br>';
+  html += '))<br><span style="color:#999">범위: 15~95로 클리핑 (시각화 가독성)</span>';
+  html += '</div></div>';
+
+  // 3-3. 평가기준 레이더
+  html += '<div style="margin-top:16px;padding:16px;background:#fff3e0;border-radius:8px;border:1px solid #ffe0b2">';
+  html += '<h4 style="color:#E65100;margin-bottom:8px">3-3. 에이전트별 평가기준 레이더 점수</h4>';
+  html += '<p style="font-size:.84rem;line-height:1.7;margin-bottom:10px">각 에이전트 상세 화면의 레이더 차트는 4개 고유 평가기준으로 구성됩니다.</p>';
+  html += '<div style="background:var(--card-bg);border-radius:6px;padding:14px;font-family:monospace;font-size:.84rem;line-height:1.9;border:1px solid var(--border)">';
+  html += '<strong>기준별 점수</strong> = min(95,<br>';
+  html += '\u00A0\u00A0\u00A0\u00A0기본값 (40 + <span style="color:#E65100">influence_weight</span> \u00D7 10 + 오프셋)<br>';
+  html += '\u00A0\u00A0+ 상위 5개 과제 평균(과제 점수 \u00D7 <span style="color:#6A1B9A">해당 기준 가중치</span>)<br>';
+  html += ')';
+  html += '</div>';
+  html += '<p style="font-size:.82rem;color:var(--text-muted);margin-top:8px">평가기준 예시:</p>';
+  html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:6px;font-size:.78rem;margin-top:6px">';
+  html += '<div style="padding:6px 10px;background:rgba(21,101,192,.06);border-radius:4px">\u{1F3DB}\uFE0F 부처: 이행가능성 0.35, 자원소요 0.25, 부처조정 0.20, 기한적정 0.20</div>';
+  html += '<div style="padding:6px 10px;background:rgba(230,81,0,.06);border-radius:4px">\u{1F3E2} 산업: 사업영향 0.35, 규제부담 0.25, 시장기회 0.25, 혁신지원 0.15</div>';
+  html += '<div style="padding:6px 10px;background:rgba(13,71,161,.06);border-radius:4px">\u{1F3DB}\uFE0F 대통령: 국가비전 0.35, 실행속도 0.25, 국제위상 0.25, 국민신뢰 0.15</div>';
+  html += '</div></div>';
+  html += '</div>';
+
+  // ====== 4. SNS 시뮬레이션 수치화 ======
+  html += '<div class="card"><div class="card-title" style="font-size:1.05rem">\u{1F4F1} 4. SNS 시뮬레이션 수치화</div>';
+  html += '<p style="font-size:.85rem;color:var(--text-muted);margin-bottom:12px">SNS 여론 분석 탭에서 각 에이전트의 참여도·감성·바이럴 여부를 산출하는 로직입니다.</p>';
+  html += '<div style="background:var(--bg);border-radius:8px;padding:16px;border:1px solid var(--border)">';
+  html += '<div style="background:var(--card-bg);border-radius:6px;padding:14px;font-family:monospace;font-size:.84rem;line-height:2;border:1px solid var(--border)">';
+  html += '<strong>\u2460 관련도</strong> = focus_keywords \u4E2D 과제 텍스트에 포함된 키워드 수<br>';
+  html += '<strong>\u2461 게시 확률</strong> = 관련도 < 1 \u2192 스킵, 아니면 (0.3 + 관련도 \u00D7 0.1)<br>';
+  html += '<strong>\u2462 참여도</strong> = <span style="color:#E65100">influence_weight</span> \u00D7 (10 + random \u00D7 50) \u00D7 (<span style="color:#1565C0">관련도</span> / 3)<br>';
+  html += '<strong>\u2463 감성</strong> = <span style="color:#6A1B9A">sentiment_bias</span> + (random \u2212 0.5) \u00D7 0.6<br>';
+  html += '<strong>\u2464 바이럴</strong> = 참여도 > 80 \u2192 \u{1F525} 바이럴 판정<br>';
+  html += '<strong>\u2465 분해</strong> = 좋아요(60%) + 리포스트(25%) + 댓글(15%)';
+  html += '</div>';
+
+  html += '<div style="margin-top:14px;padding:12px;background:#e3f2fd;border-radius:6px">';
+  html += '<h5 style="color:#1565C0;margin-bottom:6px">\u{1F4DD} 계산 예시</h5>';
+  html += '<div style="font-size:.82rem;line-height:1.8;color:#333">';
+  html += '<strong>\u{1F3DB}\uFE0F 대통령/장관</strong> (influence=5.0, bias=+0.4) \u2192 과제 "AI 반도체 글로벌 경쟁력"<br>';
+  html += '\u00A0\u00A0관련도=4 (글로벌,경쟁력,투자,성장) \u2192 참여도 = 5.0 \u00D7 45 \u00D7 1.33 = <strong style="color:#e53935">300 \u{1F525}</strong><br>';
+  html += '\u00A0\u00A0감성 = 0.4 + 0.1 = <strong style="color:#4caf50">+0.5</strong> (긍정)<br><br>';
+  html += '<strong>\u{1F465} 시민/전문가</strong> (influence=1.5, bias=0.0) \u2192 동일 과제<br>';
+  html += '\u00A0\u00A0관련도=1 (접근성) \u2192 참여도 = 1.5 \u00D7 45 \u00D7 0.33 = <strong>22</strong><br>';
+  html += '\u00A0\u00A0감성 = 0.0 - 0.2 = <strong style="color:#e53935">-0.2</strong> (약간 부정)';
+  html += '</div></div></div></div>';
+
+  // ====== 5. 온톨로지와의 관계 ======
+  html += '<div class="card"><div class="card-title" style="font-size:1.05rem">\u{1F578}\uFE0F 5. 온톨로지와의 관계</div>';
+  html += '<p style="font-size:.85rem;color:var(--text-muted);margin-bottom:12px">온톨로지(지식 그래프)와 이해관계자 분석은 서로 독립적으로 운영되면서 종합 과제 분석에서 합류합니다.</p>';
+
+  html += '<div style="display:grid;grid-template-columns:1fr 60px 1fr;gap:12px;align-items:start;margin-bottom:16px">';
+
+  // 온톨로지 박스
+  html += '<div style="padding:16px;background:#ede7f6;border-radius:8px;border:1px solid #d1c4e9">';
+  html += '<h4 style="color:#4527A0;margin-bottom:8px">\u{1F578}\uFE0F 온톨로지 (구조적 관계)</h4>';
+  html += '<ul style="font-size:.82rem;line-height:1.8;color:#333;margin-left:16px">';
+  html += '<li><strong>과제</strong> \u2194 부처 (소관 관계)</li>';
+  html += '<li><strong>과제</strong> \u2194 법령 (근거 관계)</li>';
+  html += '<li><strong>과제</strong> \u2194 전략분야 (소속 관계)</li>';
+  html += '<li><strong>과제</strong> \u2194 과제 (협력/충돌 관계)</li>';
+  html += '</ul>';
+  html += '<p style="font-size:.78rem;color:var(--text-muted);margin-top:8px">\u2192 "누가 소관하고, 어떤 법에 근거하고, 어떤 분야에 속하는지" 정의</p>';
+  html += '</div>';
+
+  // 화살표
+  html += '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;padding-top:40px">';
+  html += '<div style="font-size:1.5rem">\u2194</div>';
+  html += '<div style="font-size:.7rem;color:var(--text-muted);margin-top:4px">합류</div>';
+  html += '</div>';
+
+  // 이해관계자 박스
+  html += '<div style="padding:16px;background:#e3f2fd;border-radius:8px;border:1px solid #bbdefb">';
+  html += '<h4 style="color:#1565C0;margin-bottom:8px">\u{1F465} 이해관계자 (관점 평가)</h4>';
+  html += '<ul style="font-size:.82rem;line-height:1.8;color:#333;margin-left:16px">';
+  html += '<li><strong>focus_keywords</strong> \u2192 관련도 계산</li>';
+  html += '<li><strong>evaluation_criteria</strong> \u2192 기준별 점수</li>';
+  html += '<li><strong>SWOT</strong> \u2192 강약점 카드</li>';
+  html += '<li><strong>sentiment_bias</strong> \u2192 감성 시뮬레이션</li>';
+  html += '</ul>';
+  html += '<p style="font-size:.78rem;color:var(--text-muted);margin-top:8px">\u2192 "각 관점에서 과제를 어떻게 평가하는지" 정의</p>';
+  html += '</div>';
+  html += '</div>';
+
+  // 합류 설명
+  html += '<div style="padding:14px;background:linear-gradient(135deg,#ede7f6,#e3f2fd);border-radius:8px;border:1px solid var(--border);text-align:center">';
+  html += '<strong style="font-size:.9rem">\u{1F4CB} 종합 과제 분석 (taskeval 탭)</strong>';
+  html += '<p style="font-size:.82rem;color:var(--text-muted);margin-top:6px;line-height:1.7">온톨로지의 <strong>구조적 맥락</strong>(소관 부처, 관련 법령, 전략분야) 위에<br>이해관계자별 <strong>관점 평가</strong>(점수, SWOT, 시나리오)를 오버레이하여<br>과제의 종합적인 이행 전망을 제시합니다.</p>';
+  html += '</div></div>';
+
+  // ====== 6. 전체 흐름 요약 ======
+  html += '<div class="card"><div class="card-title" style="font-size:1.05rem">\u{1F504} 6. 전체 데이터 흐름 요약</div>';
+  html += '<div style="background:var(--bg);border-radius:8px;padding:16px;font-family:monospace;font-size:.82rem;line-height:2.2;border:1px solid var(--border);overflow-x:auto">';
+  html += '<pre style="margin:0;white-space:pre;color:var(--text)">';
+  html += 'AGENT_PROFILES\n';
+  html += '\u251C\u2500 focus_keywords[] \u2500\u2500\u2500 countKeywords() \u2500\u2500\u2500 \u201C관련도\u201D (키워드 매칭 수)\n';
+  html += '\u251C\u2500 sentiment_bias \u2500\u2500\u2500\u2500 \u00D710 \u2192 evaluateTask() \u2500 \u201C과제별 점수\u201D (0~100)\n';
+  html += '\u2502\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0 \u00B10.3 random \u2192 SNS \u2500\u2500\u2500\u2500\u2500 \u201C감성 시뮬\u201D (-1~+1)\n';
+  html += '\u251C\u2500 influence_weight \u2500\u2500\u2500 \u00D7(10+rand\u00D750) \u2500\u2500\u2500 \u201C참여도\u201D (SNS engagement)\n';
+  html += '\u2502\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0 \u00D75 \u2192 레이더 보정 \u2500\u2500\u2500 \u201C개요 관심도\u201D (15~95)\n';
+  html += '\u2502\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0 \u00D710 \u2192 레이더 기본 \u2500\u2500 \u201C기준별 점수\u201D (0~95)\n';
+  html += '\u251C\u2500 evaluation_criteria \u2500 가중치 배분 \u2500\u2500\u2500\u2500\u2500 \u201C4축 레이더\u201D\n';
+  html += '\u2514\u2500 SWOT \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 \u201CSWOT 카드\u201D (직접 표시)';
+  html += '</pre></div></div>';
+
+  // ====== 7. 현재 한계와 개선 방향 ======
+  html += '<div class="card" style="border-left:4px solid #ff9800"><div class="card-title" style="font-size:1.05rem">\u{1F6A7} 7. 현재 한계와 개선 방향</div>';
+  html += '<div style="overflow-x:auto"><table class="top-tasks" style="font-size:.82rem"><thead><tr><th>현재 방식</th><th>한계</th><th>개선 방향</th></tr></thead><tbody>';
+  html += '<tr><td>감성편향 고정값</td><td>실제 여론 변화 미반영</td><td>실제 언론/SNS 감성분석 결과 연동</td></tr>';
+  html += '<tr><td>영향력 고정값</td><td>정량 근거 부족</td><td>예산 배정액, 입법 발의 건수 기반 산출</td></tr>';
+  html += '<tr><td>키워드 매칭 (includes)</td><td>동의어/유사어 미인식<br>("일자리" \u2260 "고용")</td><td>LLM 기반 의미론적 관련도 산출</td></tr>';
+  html += '<tr><td>SWOT 수동 작성</td><td>업데이트 비용</td><td>정책 문서 자동 파싱 \u2192 SWOT 생성</td></tr>';
+  html += '<tr><td>SNS 시뮬레이션(가상)</td><td>실제 데이터 아님</td><td>실제 SNS API 연동 (X, 네이버 뉴스 등)</td></tr>';
+  html += '</tbody></table></div></div>';
+
+  container.innerHTML = html;
+}
+
 function renderStakeholders() {
   const subTabsEl = document.getElementById('stakeholderSubTabs');
   const keys = Object.keys(AGENT_PROFILES);
@@ -12267,10 +12485,12 @@ function renderStakeholders() {
     }
   }
 
+  var helpBtn = '<button class="sub-tab' + (STATE.selectedAgent === '_help' ? ' active' : '') + '" data-agent="_help" style="border-color:' + (STATE.selectedAgent === '_help' ? '#607D8B' : '') + ';color:' + (STATE.selectedAgent === '_help' ? '#607D8B' : '') + '">\u2753 도움말</button>';
+
   subTabsEl.innerHTML = keys.map(k => {
     const ap = AGENT_PROFILES[k];
     return '<button class="sub-tab' + (STATE.selectedAgent === k ? ' active' : '') + '" data-agent="' + k + '" style="border-color:' + (STATE.selectedAgent === k ? ap.color : '') + ';color:' + (STATE.selectedAgent === k ? ap.color : '') + '">' + ap.icon + ' ' + ap.name + '</button>';
-  }).join('') + graphProfileBtn;
+  }).join('') + helpBtn + graphProfileBtn;
 
   subTabsEl.querySelectorAll('.sub-tab[data-agent]').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -12283,6 +12503,7 @@ function renderStakeholders() {
 }
 
 function renderAgentView(agentKey) {
+  if (agentKey === '_help') { renderStakeholderHelp(); return; }
   const ap = AGENT_PROFILES[agentKey];
   const container = document.getElementById('stakeholderContent');
   const allScored = DATA.tasks.map(t => ({ task: t, score: Math.round(MiroFishEngine.evaluateTask(t, ap)) })).sort((a, b) => b.score - a.score);
