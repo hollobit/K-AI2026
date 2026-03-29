@@ -1,0 +1,62 @@
+{
+  "task_id": 69,
+  "task_title": "수요 맞춤형 지역 AX 인재 양성 및 정주형 인재 순환 생태계 조성",
+  "analysis_type": "risk_analysis",
+  "analysis_label": "위험 요소 및 고려사항",
+  "model": "claude-code",
+  "generated_at": "2026-03-29T15:00:00",
+  "persona_count": 10,
+  "results": [
+    {
+      "persona": "government",
+      "persona_name": "부처 관료",
+      "response": "- {'risk': '교육부·노동부·중기부 간 교육 목표·방법론 불일치', 'level': '상'}\n- {'risk': '26년 1분기까지 교육 계획 수립 일정 촉박', 'level': '중'}\n- {'risk': '기존 직업 훈련 체계와의 통합 조정 난항', 'level': '중'}"
+    },
+    {
+      "persona": "industry",
+      "persona_name": "산업계",
+      "response": "- {'risk': '교육이 범용적이어서 기업 수요 미충족', 'level': '상'}\n- {'risk': '교육 이수자의 수도권 취업 선호', 'level': '상'}\n- {'risk': '중소기업의 교육 참여 여력 부족', 'level': '중'}"
+    },
+    {
+      "persona": "citizen",
+      "persona_name": "시민/전문가",
+      "response": "- {'risk': '교육 기회의 도시 편중으로 농어촌 주민 소외', 'level': '중'}\n- {'risk': '재직자 교육과 근무 시간 충돌', 'level': '중'}\n- {'risk': '교육 이수 후 실질적 경력 향상 미흡', 'level': '중'}"
+    },
+    {
+      "persona": "global",
+      "persona_name": "국제 관점",
+      "response": "- {'risk': '교육 프로그램 질이 글로벌 수준 미달', 'level': '중'}\n- {'risk': '글로벌 AI 교육 표준과의 정합성 부족', 'level': '중'}\n- {'risk': '해외 교육기관 교류 프로그램 미흡', 'level': '하'}"
+    },
+    {
+      "persona": "security",
+      "persona_name": "안보/안전/보안",
+      "response": "- {'risk': 'AI 교육에서 보안 역량 교육 부재', 'level': '중'}\n- {'risk': '교육용 데이터·시스템의 보안 취약점', 'level': '중'}\n- {'risk': '보안 전문 인재의 별도 양성 경로 미흡', 'level': '중'}"
+    },
+    {
+      "persona": "expert",
+      "persona_name": "AI 전문가/인재",
+      "response": "- {'risk': '교육 수준의 수도권-지역 격차 지속', 'level': '상'}\n- {'risk': '지역 내 경력 개발 경로 제한', 'level': '상'}\n- {'risk': '핵심 인재의 해외 유출', 'level': '중'}"
+    },
+    {
+      "persona": "education",
+      "persona_name": "교육계",
+      "response": "- {'risk': 'AI 교원 확보 경쟁 심화', 'level': '상'}\n- {'risk': '실습 인프라 투자 부족', 'level': '중'}\n- {'risk': '기존 교육과정과 AI 교육 통합 어려움', 'level': '중'}"
+    },
+    {
+      "persona": "regional",
+      "persona_name": "지역활성화",
+      "response": "- {'risk': '정주 환경 미비로 인재 유치 실패', 'level': '상'}\n- {'risk': '지역 내 양질 일자리 부족으로 인재 유출 지속', 'level': '상'}\n- {'risk': '교육과 고용의 연계 미흡', 'level': '중'}"
+    },
+    {
+      "persona": "defense",
+      "persona_name": "국방",
+      "response": "- {'risk': '국방 AI 특화 교육의 범용 교육과 분리 부족', 'level': '중'}\n- {'risk': '방산업체 지역 인력 확보 경쟁 심화', 'level': '중'}\n- {'risk': '군 복무 후 지역 정주 연계 미흡', 'level': '하'}"
+    },
+    {
+      "persona": "leadership",
+      "persona_name": "대통령/장관",
+      "response": "- {'risk': '교육 이수자의 실질 취업·정주 성과 미흡', 'level': '상'}\n- {'risk': '보여주기식 교육이라는 비판 위험', 'level': '중'}\n- {'risk': '교육 성과의 장기 소요', 'level': '중'}"
+    }
+  ],
+  "errors": []
+}

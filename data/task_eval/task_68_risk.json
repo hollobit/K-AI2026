@@ -1,0 +1,62 @@
+{
+  "task_id": 68,
+  "task_title": "지역 인재를 활용한 지역 AX 기업 육성 및 지역 창업 역량 강화",
+  "analysis_type": "risk_analysis",
+  "analysis_label": "위험 요소 및 고려사항",
+  "model": "claude-code",
+  "generated_at": "2026-03-29T15:00:00",
+  "persona_count": 10,
+  "results": [
+    {
+      "persona": "government",
+      "persona_name": "부처 관료",
+      "response": "- {'risk': '중기부·과기정통부·산업부 간 유사 지원 사업 중복', 'level': '상'}\n- {'risk': '지자체별 창업 지원 역량 격차로 균등한 성과 미달', 'level': '중'}\n- {'risk': '지원 방안 수립 일정(26년 3분기) 촉박', 'level': '중'}"
+    },
+    {
+      "persona": "industry",
+      "persona_name": "산업계",
+      "response": "- {'risk': '지역 중소기업의 AI 기술 흡수 역량 부족', 'level': '상'}\n- {'risk': '스케일업 기업의 수도권 이전으로 지역 효과 희석', 'level': '상'}\n- {'risk': '글로벌 시장 진출 역량 부족', 'level': '중'}"
+    },
+    {
+      "persona": "citizen",
+      "persona_name": "시민/전문가",
+      "response": "- {'risk': '창업 지원의 특정 분야·기업 편중', 'level': '중'}\n- {'risk': '창업 실패에 대한 재기 지원 부족', 'level': '중'}\n- {'risk': '지역 주민의 참여 기회 제한', 'level': '하'}"
+    },
+    {
+      "persona": "global",
+      "persona_name": "국제 관점",
+      "response": "- {'risk': '지역 기업의 글로벌 경쟁력 부족', 'level': '중'}\n- {'risk': '글로벌 진출 지원 인프라의 지역 부재', 'level': '중'}\n- {'risk': '국제 IP 보호·인증 역량 미흡', 'level': '중'}"
+    },
+    {
+      "persona": "security",
+      "persona_name": "안보/안전/보안",
+      "response": "- {'risk': '지역 중소기업의 보안 역량 취약', 'level': '상'}\n- {'risk': 'AI 스타트업의 보안 검증 소홀', 'level': '중'}\n- {'risk': '공급망 보안 리스크 확대', 'level': '중'}"
+    },
+    {
+      "persona": "expert",
+      "persona_name": "AI 전문가/인재",
+      "response": "- {'risk': '지역 기업의 AI 프로젝트 규모·난이도 미달로 인재 유치 실패', 'level': '상'}\n- {'risk': '연구 네트워크·학술 커뮤니티 부재', 'level': '중'}\n- {'risk': '처우 격차로 핵심 인재 이탈', 'level': '상'}"
+    },
+    {
+      "persona": "education",
+      "persona_name": "교육계",
+      "response": "- {'risk': '교육 프로그램 질적 수준 미달', 'level': '중'}\n- {'risk': '산업체 교육 참여 의지 저조', 'level': '중'}\n- {'risk': '우수 학생의 수도권 유출 지속', 'level': '상'}"
+    },
+    {
+      "persona": "regional",
+      "persona_name": "지역활성화",
+      "response": "- {'risk': '지역 창업 생태계 미성숙으로 초기 성과 부진', 'level': '중'}\n- {'risk': '성공 기업의 수도권 이전 지속', 'level': '상'}\n- {'risk': '지자체 창업 지원 역량 격차', 'level': '중'}"
+    },
+    {
+      "persona": "defense",
+      "persona_name": "국방",
+      "response": "- {'risk': '방산 AI 진입 장벽으로 지역 스타트업 참여 제한', 'level': '중'}\n- {'risk': '보안 요구와 스타트업 문화 간 충돌', 'level': '중'}\n- {'risk': '방산 AI 수요의 지역 기업 매칭 어려움', 'level': '하'}"
+    },
+    {
+      "persona": "leadership",
+      "persona_name": "대통령/장관",
+      "response": "- {'risk': '지역 기업 육성 성과의 장기 소요', 'level': '상'}\n- {'risk': '다수 부처 관여로 성과 귀속 불명확', 'level': '중'}\n- {'risk': '예산 대비 가시적 성과 부족 시 비판', 'level': '중'}"
+    }
+  ],
+  "errors": []
+}

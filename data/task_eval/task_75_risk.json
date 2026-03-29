@@ -1,0 +1,62 @@
+{
+  "task_id": 75,
+  "task_title": "국방 AI 기술 및 체계 획득 제도 개편",
+  "analysis_type": "risk_analysis",
+  "analysis_label": "위험 요소 및 고려사항",
+  "model": "claude-code",
+  "generated_at": "2026-03-29T15:00:00",
+  "persona_count": 10,
+  "results": [
+    {
+      "persona": "government",
+      "persona_name": "부처 관료",
+      "response": "- {'risk': '기존 획득 절차와 AI 기술 발전 주기 괴리 극복 난이도', 'level': '상'}\n- {'risk': '방사청 내부 절차 관성', 'level': '상'}\n- {'risk': '소프트웨어 획득 체계 신설의 법적 근거 부족', 'level': '중'}"
+    },
+    {
+      "persona": "industry",
+      "persona_name": "산업계",
+      "response": "- {'risk': '소프트웨어 중심 계약·대가 체계 미확립', 'level': '상'}\n- {'risk': '보안 인증 절차의 신속 배포 제약', 'level': '상'}\n- {'risk': '기존 방산 계약 구조와의 충돌', 'level': '중'}"
+    },
+    {
+      "persona": "citizen",
+      "persona_name": "시민/전문가",
+      "response": "- {'risk': '신속 획득이 안전성 검증 소홀로 이어질 위험', 'level': '중'}\n- {'risk': '국방 예산 효율성에 대한 우려', 'level': '중'}\n- {'risk': 'AI 시스템 오작동의 사회적 영향', 'level': '중'}"
+    },
+    {
+      "persona": "global",
+      "persona_name": "국제 관점",
+      "response": "- {'risk': '동맹국 획득 제도와의 비호환성', 'level': '중'}\n- {'risk': '국제 표준과의 정합성 부족', 'level': '중'}\n- {'risk': '공동 개발 프로젝트에서의 제도적 장벽', 'level': '중'}"
+    },
+    {
+      "persona": "security",
+      "persona_name": "안보/안전/보안",
+      "response": "- {'risk': '신속 배포로 인한 보안 검증 축소', 'level': '상'}\n- {'risk': '지속적 갱신의 공급망 보안 리스크', 'level': '상'}\n- {'risk': '모듈형 인증의 보안 허점', 'level': '중'}"
+    },
+    {
+      "persona": "expert",
+      "persona_name": "AI 전문가/인재",
+      "response": "- {'risk': '국방 특수 요구사항에 의한 개발 효율 저하', 'level': '중'}\n- {'risk': '국방 AI 개발 환경의 민간 대비 열악함', 'level': '상'}\n- {'risk': '보안 제약으로 최신 기술 적용 지연', 'level': '중'}"
+    },
+    {
+      "persona": "education",
+      "persona_name": "교육계",
+      "response": "- {'risk': '획득 제도 교육의 기존 체계 통합 지연', 'level': '중'}\n- {'risk': 'SW 엔지니어링 국방 교육 미흡', 'level': '중'}\n- {'risk': '교원 확보 어려움', 'level': '중'}"
+    },
+    {
+      "persona": "regional",
+      "persona_name": "지역활성화",
+      "response": "- {'risk': '대형 방산업체 중심 획득 구조 지속', 'level': '상'}\n- {'risk': '지역 AI 기업의 국방 SW 역량 부족', 'level': '중'}\n- {'risk': '모듈 단위 획득의 실효성 미검증', 'level': '중'}"
+    },
+    {
+      "persona": "defense",
+      "persona_name": "국방",
+      "response": "- {'risk': '하드웨어 중심 획득 문화 전환 난이도', 'level': '상'}\n- {'risk': 'SW 품질·형상 관리 역량 부족', 'level': '상'}\n- {'risk': 'AI 기능 업데이트와 무기체계 안전성 확보 간 충돌', 'level': '중'}"
+    },
+    {
+      "persona": "leadership",
+      "persona_name": "대통령/장관",
+      "response": "- {'risk': '제도 개편 성과의 지연', 'level': '중'}\n- {'risk': '방산 이해관계자 반발', 'level': '중'}\n- {'risk': '기존 사업과의 충돌', 'level': '중'}"
+    }
+  ],
+  "errors": []
+}

@@ -1,0 +1,62 @@
+{
+  "task_id": 67,
+  "task_title": "지역 산단을 지역 AX 활성화를 위한 산업 인프라 거점으로 탈바꿈",
+  "analysis_type": "risk_analysis",
+  "analysis_label": "위험 요소 및 고려사항",
+  "model": "claude-code",
+  "generated_at": "2026-03-29T15:00:00",
+  "persona_count": 10,
+  "results": [
+    {
+      "persona": "government",
+      "persona_name": "부처 관료",
+      "response": "- {'risk': '산업부·과기정통부·기후부·중기부·국토부 간 소관 법령 차이로 통합 계획 수립 지연', 'level': '상'}\n- {'risk': '지역 AX 생태계 활성화 계획과 AI 집적단지 구축계획 간 중복·충돌', 'level': '중'}\n- {'risk': '지자체별 산단 관리 체계 상이로 일관된 AX 전환 기준 적용 어려움', 'level': '중'}"
+    },
+    {
+      "persona": "industry",
+      "persona_name": "산업계",
+      "response": "- {'risk': '기존 입주 기업의 AI 전환 의지·역량 부족으로 참여율 저조', 'level': '상'}\n- {'risk': '산단 내 통신·전력 등 기반 인프라 미비로 AI 시스템 운영 제약', 'level': '중'}\n- {'risk': '중소기업의 AI 전환 비용 부담 과중', 'level': '상'}"
+    },
+    {
+      "persona": "citizen",
+      "persona_name": "시민/전문가",
+      "response": "- {'risk': 'AI 자동화로 인한 기존 제조업 일자리 감소와 노동자 불안', 'level': '상'}\n- {'risk': '산단 전환 공사로 인한 인근 주민 생활환경 악화', 'level': '중'}\n- {'risk': '전환 혜택의 대기업·IT기업 편중', 'level': '중'}"
+    },
+    {
+      "persona": "global",
+      "persona_name": "국제 관점",
+      "response": "- {'risk': '글로벌 스마트 팩토리 경쟁에서 기술 격차 확대', 'level': '중'}\n- {'risk': '해외 기업의 지역 산단 투자 유인 부족', 'level': '중'}\n- {'risk': '국제 스마트 제조 표준과의 호환성 미확보', 'level': '하'}"
+    },
+    {
+      "persona": "security",
+      "persona_name": "안보/안전/보안",
+      "response": "- {'risk': '스마트 산단의 OT 시스템 사이버 공격 노출 위험 증가', 'level': '상'}\n- {'risk': 'IT-OT 융합 보안 체계 미비로 산업 피해 가능성', 'level': '상'}\n- {'risk': '산단 내 데이터 유출 및 산업 스파이 위험', 'level': '중'}"
+    },
+    {
+      "persona": "expert",
+      "persona_name": "AI 전문가/인재",
+      "response": "- {'risk': '지역 산단의 연구 환경 열악으로 AI 연구인력 유치 실패', 'level': '상'}\n- {'risk': '산업 데이터 품질·접근성 부족으로 AI 연구 성과 제한', 'level': '중'}\n- {'risk': 'AI·제조 융합 전문가의 절대 부족', 'level': '상'}"
+    },
+    {
+      "persona": "education",
+      "persona_name": "교육계",
+      "response": "- {'risk': '지역 교육기관의 AI 교원·실습 인프라 부족', 'level': '중'}\n- {'risk': '교육과정 개편 속도가 산업 변화를 따라가지 못함', 'level': '중'}\n- {'risk': '산학협력 프로그램의 형식화', 'level': '중'}"
+    },
+    {
+      "persona": "regional",
+      "persona_name": "지역활성화",
+      "response": "- {'risk': '노후 산단의 물리적 한계로 AI 전환 지연', 'level': '상'}\n- {'risk': '지자체 간 산단 유치 경쟁 과열로 비효율적 자원 배분', 'level': '중'}\n- {'risk': '산단 전환이 지역 경제 활성화로 연결되지 않는 구조적 한계', 'level': '중'}"
+    },
+    {
+      "persona": "defense",
+      "persona_name": "국방",
+      "response": "- {'risk': '민간 산단 기술의 국방 적용 시 보안 인증 장기 소요', 'level': '중'}\n- {'risk': '방산 클러스터와 지역 산단 간 물리적 거리로 연계 제한', 'level': '중'}\n- {'risk': '이중용도 기술의 수출 통제 이슈', 'level': '하'}"
+    },
+    {
+      "persona": "leadership",
+      "persona_name": "대통령/장관",
+      "response": "- {'risk': '산단 전환 성과의 장기 소요로 임기 내 가시적 성과 부족', 'level': '상'}\n- {'risk': '대규모 재정 투입에 대한 정치적 비판', 'level': '중'}\n- {'risk': '기존 산단 기업의 반발로 정치적 부담 증가', 'level': '중'}"
+    }
+  ],
+  "errors": []
+}

@@ -1,0 +1,62 @@
+{
+  "task_id": 66,
+  "task_title": "5극 3특 권역별 성장엔진에 기반한 AX 혁신 벨트 조성",
+  "analysis_type": "risk_analysis",
+  "analysis_label": "위험 요소 및 고려사항",
+  "model": "claude-code",
+  "generated_at": "2026-03-29T15:00:00",
+  "persona_count": 10,
+  "results": [
+    {
+      "persona": "government",
+      "persona_name": "부처 관료",
+      "response": "- {'risk': '부처 간 정책 조율 실패로 AX 특화산업 육성계획과 기존 혁신특구 정책이 중복·충돌', 'level': '상'}\n- {'risk': '지방시대위원회의 심의 기능이 형식화되어 실질적 조정력 부재', 'level': '중'}\n- {'risk': '계획 수립 일정(26년 1분기) 준수를 위한 부처 간 협의 시간 부족', 'level': '중'}"
+    },
+    {
+      "persona": "industry",
+      "persona_name": "산업계",
+      "response": "- {'risk': '지역 AX 거점에 대한 민간 투자 유인 부족으로 정부 주도형에 머무름', 'level': '상'}\n- {'risk': '지역 간 동일 산업 유치 경쟁으로 과잉 투자 및 수요 분산', 'level': '중'}\n- {'risk': '지역 AI 인프라의 기술적 수준이 기업 요구에 미달', 'level': '중'}"
+    },
+    {
+      "persona": "citizen",
+      "persona_name": "시민/전문가",
+      "response": "- {'risk': '대규모 인프라 조성 과정에서 환경 영향 및 지역 주민 갈등 발생', 'level': '중'}\n- {'risk': 'AX 혁신 벨트 혜택의 특정 계층·기업 편중', 'level': '중'}\n- {'risk': '지역 주민의 AI 기술 이해도 부족으로 참여 저조', 'level': '하'}"
+    },
+    {
+      "persona": "global",
+      "persona_name": "국제 관점",
+      "response": "- {'risk': '글로벌 AI 허브 경쟁에서 분산 전략이 집중도 부족으로 인식될 위험', 'level': '중'}\n- {'risk': '해외 투자 유치 시 지역별 차별화 포인트 부재', 'level': '중'}\n- {'risk': '국제 표준·규범과의 정합성 확보 미흡', 'level': '하'}"
+    },
+    {
+      "persona": "security",
+      "persona_name": "안보/안전/보안",
+      "response": "- {'risk': '분산된 AI 인프라의 통합 보안 관제 체계 부재로 사이버 공격에 취약', 'level': '상'}\n- {'risk': '권역별 보안 수준 격차가 전체 시스템의 최약점 형성', 'level': '상'}\n- {'risk': '민간-공공 데이터 연계 시 개인정보 유출 위험', 'level': '중'}"
+    },
+    {
+      "persona": "expert",
+      "persona_name": "AI 전문가/인재",
+      "response": "- {'risk': '지역 AI 연구 거점의 연구 수준이 글로벌 기준에 미달하여 인재 유출 심화', 'level': '상'}\n- {'risk': '수도권 대비 네트워킹·커리어 기회 부족으로 핵심 인재 유치 실패', 'level': '상'}\n- {'risk': '지역 대학 AI 교원 확보 경쟁 심화', 'level': '중'}"
+    },
+    {
+      "persona": "education",
+      "persona_name": "교육계",
+      "response": "- {'risk': '지역 대학의 AI 교육 인프라 투자 부족으로 형식적 산학협력에 그침', 'level': '중'}\n- {'risk': '수도권-지방 대학 간 AI 교육 격차 확대', 'level': '중'}\n- {'risk': '산업 수요와 교육 커리큘럼 간 미스매치 지속', 'level': '중'}"
+    },
+    {
+      "persona": "regional",
+      "persona_name": "지역활성화",
+      "response": "- {'risk': '전시성 인프라 조성에 그쳐 실질적 지역 경제 활성화 효과 미달', 'level': '상'}\n- {'risk': '지자체 AI 정책 역량 부족으로 중앙 의존도 심화', 'level': '중'}\n- {'risk': '기존 지역 균형발전 정책과의 중복으로 예산 낭비', 'level': '중'}"
+    },
+    {
+      "persona": "defense",
+      "persona_name": "국방",
+      "response": "- {'risk': '민간 AX 혁신 벨트와 국방 AI 인프라 간 보안 충돌', 'level': '중'}\n- {'risk': '방산업체의 수도권 집중으로 지역 민군 협력 제한', 'level': '중'}\n- {'risk': '이중용도 기술의 수출 통제와 지역 혁신 간 긴장', 'level': '하'}"
+    },
+    {
+      "persona": "leadership",
+      "persona_name": "대통령/장관",
+      "response": "- {'risk': '임기 내 가시적 성과 부재로 정치적 동력 상실', 'level': '상'}\n- {'risk': '지역 간 형평성 논란이 정치적 부담으로 전화', 'level': '중'}\n- {'risk': '대규모 예산 투입 대비 성과 미흡 시 감사·비판 리스크', 'level': '중'}"
+    }
+  ],
+  "errors": []
+}

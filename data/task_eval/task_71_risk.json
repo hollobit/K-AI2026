@@ -1,0 +1,62 @@
+{
+  "task_id": 71,
+  "task_title": "K-컬처 산업의 AX 활성화 지원을 통한 콘텐츠 사업자 육성",
+  "analysis_type": "risk_analysis",
+  "analysis_label": "위험 요소 및 고려사항",
+  "model": "claude-code",
+  "generated_at": "2026-03-29T15:00:00",
+  "persona_count": 10,
+  "results": [
+    {
+      "persona": "government",
+      "persona_name": "부처 관료",
+      "response": "- {'risk': '문체부·과기정통부·방미통위 간 소관 중복으로 조율 지연', 'level': '상'}\n- {'risk': 'AI 콘텐츠 펀드 민간 투자 유치 실패', 'level': '중'}\n- {'risk': '육성 방안 수립 일정(26년 2분기) 촉박', 'level': '중'}"
+    },
+    {
+      "persona": "industry",
+      "persona_name": "산업계",
+      "response": "- {'risk': '펀드 혜택의 대형 기업 편중', 'level': '상'}\n- {'risk': '콘텐츠-AI 기술 인력 부족', 'level': '상'}\n- {'risk': '중소 콘텐츠 기업의 AI 도입 역량 미흡', 'level': '중'}"
+    },
+    {
+      "persona": "citizen",
+      "persona_name": "시민/전문가",
+      "response": "- {'risk': 'AI 콘텐츠의 획일화로 문화 다양성 훼손', 'level': '중'}\n- {'risk': '소규모 창작자의 생태계 소외', 'level': '중'}\n- {'risk': 'AI 콘텐츠 품질 관리 미흡', 'level': '중'}"
+    },
+    {
+      "persona": "global",
+      "persona_name": "국제 관점",
+      "response": "- {'risk': '글로벌 플랫폼의 AI 투자 규모 격차', 'level': '상'}\n- {'risk': '콘텐츠 AI 기술의 글로벌 표준 추격 실패', 'level': '중'}\n- {'risk': '해외 진출 시 현지 규제 장벽', 'level': '중'}"
+    },
+    {
+      "persona": "security",
+      "persona_name": "안보/안전/보안",
+      "response": "- {'risk': '콘텐츠 AI 시스템을 통한 IP 유출', 'level': '상'}\n- {'risk': 'AI 생성 콘텐츠의 저작권 침해 탐지 어려움', 'level': '중'}\n- {'risk': '콘텐츠 플랫폼 해킹 위험', 'level': '중'}"
+    },
+    {
+      "persona": "expert",
+      "persona_name": "AI 전문가/인재",
+      "response": "- {'risk': '콘텐츠-AI 융합 전문가 희소', 'level': '상'}\n- {'risk': '산학 프로젝트 기회 부족', 'level': '중'}\n- {'risk': '콘텐츠 AI 연구 투자 미흡', 'level': '중'}"
+    },
+    {
+      "persona": "education",
+      "persona_name": "교육계",
+      "response": "- {'risk': '콘텐츠-AI 융합 교육 준비 지연', 'level': '중'}\n- {'risk': '교원 확보 어려움', 'level': '중'}\n- {'risk': '교육과정 산업 연계 미흡', 'level': '중'}"
+    },
+    {
+      "persona": "regional",
+      "persona_name": "지역활성화",
+      "response": "- {'risk': '콘텐츠 산업의 수도권 편중 지속', 'level': '상'}\n- {'risk': '지역 콘텐츠 사업자의 AI 역량 부족', 'level': '중'}\n- {'risk': '지역 문화 자원 활용 미흡', 'level': '중'}"
+    },
+    {
+      "persona": "defense",
+      "persona_name": "국방",
+      "response": "- {'risk': '민간 콘텐츠 기술의 국방 적용 시 보안 인증 장기 소요', 'level': '중'}\n- {'risk': '콘텐츠 관리 체계 미비', 'level': '하'}\n- {'risk': 'VR/AR 콘텐츠의 군사 보안 이슈', 'level': '중'}"
+    },
+    {
+      "persona": "leadership",
+      "persona_name": "대통령/장관",
+      "response": "- {'risk': '펀드 운영 비효율성·편향 비판', 'level': '중'}\n- {'risk': 'K-컬처 AX 성과 가시화 지연', 'level': '중'}\n- {'risk': '이해관계자 간 갈등 정치화', 'level': '중'}"
+    }
+  ],
+  "errors": []
+}

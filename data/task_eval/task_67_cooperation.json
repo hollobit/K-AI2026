@@ -1,0 +1,62 @@
+{
+  "task_id": 67,
+  "task_title": "지역 산단을 지역 AX 활성화를 위한 산업 인프라 거점으로 탈바꿈",
+  "analysis_type": "cooperation_analysis",
+  "analysis_label": "타과제 협력 분석",
+  "model": "claude-code",
+  "generated_at": "2026-03-29T15:00:00",
+  "persona_count": 10,
+  "results": [
+    {
+      "persona": "government",
+      "persona_name": "부처 관료",
+      "response": "(분석 내용 없음)"
+    },
+    {
+      "persona": "industry",
+      "persona_name": "산업계",
+      "response": "(분석 내용 없음)"
+    },
+    {
+      "persona": "citizen",
+      "persona_name": "시민/전문가",
+      "response": "(분석 내용 없음)"
+    },
+    {
+      "persona": "global",
+      "persona_name": "국제 관점",
+      "response": "(분석 내용 없음)"
+    },
+    {
+      "persona": "security",
+      "persona_name": "안보/안전/보안",
+      "response": "(분석 내용 없음)"
+    },
+    {
+      "persona": "expert",
+      "persona_name": "AI 전문가/인재",
+      "response": "(분석 내용 없음)"
+    },
+    {
+      "persona": "education",
+      "persona_name": "교육계",
+      "response": "(분석 내용 없음)"
+    },
+    {
+      "persona": "regional",
+      "persona_name": "지역활성화",
+      "response": "(분석 내용 없음)"
+    },
+    {
+      "persona": "defense",
+      "persona_name": "국방",
+      "response": "(분석 내용 없음)"
+    },
+    {
+      "persona": "leadership",
+      "persona_name": "대통령/장관",
+      "response": "(분석 내용 없음)"
+    }
+  ],
+  "errors": []
+}

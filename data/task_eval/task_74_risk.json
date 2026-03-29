@@ -1,0 +1,62 @@
+{
+  "task_id": 74,
+  "task_title": "국방 AI 거버넌스 혁신으로 국방 AI 추진체계 재설계",
+  "analysis_type": "risk_analysis",
+  "analysis_label": "위험 요소 및 고려사항",
+  "model": "claude-code",
+  "generated_at": "2026-03-29T15:00:00",
+  "persona_count": 10,
+  "results": [
+    {
+      "persona": "government",
+      "persona_name": "부처 관료",
+      "response": "- {'risk': '국방부 내부 조직 개편 저항', 'level': '상'}\n- {'risk': '방사청·합참·각군 간 권한 재편 갈등', 'level': '상'}\n- {'risk': '국방인공지능법 제정 지연', 'level': '중'}"
+    },
+    {
+      "persona": "industry",
+      "persona_name": "산업계",
+      "response": "- {'risk': '조직 개편 과도기 의사결정 지연', 'level': '중'}\n- {'risk': '국방 CAIO와 방사청 기능 중복', 'level': '중'}\n- {'risk': '정책 방향 불확실성으로 투자 위축', 'level': '중'}"
+    },
+    {
+      "persona": "citizen",
+      "persona_name": "시민/전문가",
+      "response": "- {'risk': '국방 AI 윤리적 활용 논의 부족', 'level': '중'}\n- {'risk': '군사 AI 자율성 범위에 대한 사회적 합의 미흡', 'level': '중'}\n- {'risk': '국방 AI 투명성 확보 미흡', 'level': '중'}"
+    },
+    {
+      "persona": "global",
+      "persona_name": "국제 관점",
+      "response": "- {'risk': '동맹국 AI 전략과의 비호환성', 'level': '중'}\n- {'risk': '국제 군사 AI 규범 변화에 대한 대응 지연', 'level': '중'}\n- {'risk': '상호운용성 확보 실패', 'level': '중'}"
+    },
+    {
+      "persona": "security",
+      "persona_name": "안보/안전/보안",
+      "response": "- {'risk': '조직 개편 과도기 보안 공백', 'level': '상'}\n- {'risk': '새 거버넌스 체계의 보안 책임 불명확', 'level': '중'}\n- {'risk': '국방 AI 시스템의 사이버 공격 표면 확대', 'level': '상'}"
+    },
+    {
+      "persona": "expert",
+      "persona_name": "AI 전문가/인재",
+      "response": "- {'risk': '국방의 폐쇄적 문화로 민간 전문가 참여 제약', 'level': '상'}\n- {'risk': '보안 제약으로 연구 활동 제한', 'level': '중'}\n- {'risk': '국방 AI 전문 인재의 절대 부족', 'level': '상'}"
+    },
+    {
+      "persona": "education",
+      "persona_name": "교육계",
+      "response": "- {'risk': '군사 AI 교육과 민간 AI 교육 연계 부족', 'level': '중'}\n- {'risk': '군사 AI 교육 표준 미비', 'level': '중'}\n- {'risk': '교육 인프라 공유 미흡', 'level': '하'}"
+    },
+    {
+      "persona": "regional",
+      "persona_name": "지역활성화",
+      "response": "- {'risk': '국방 AI 사업의 수도권 대형 방산업체 집중', 'level': '상'}\n- {'risk': '지역 AI 기업의 국방 시장 진입 장벽', 'level': '중'}\n- {'risk': '지역 방산 클러스터와의 연계 미흡', 'level': '중'}"
+    },
+    {
+      "persona": "defense",
+      "persona_name": "국방",
+      "response": "- {'risk': '기존 군 조직의 관성과 저항', 'level': '상'}\n- {'risk': '각군 고유 AI 소요의 통합 추진체계 미반영', 'level': '중'}\n- {'risk': '국방 AI 연구·운용 조직 간 역할 혼선', 'level': '중'}"
+    },
+    {
+      "persona": "leadership",
+      "persona_name": "대통령/장관",
+      "response": "- {'risk': '군 내부 저항의 정치적 부담', 'level': '상'}\n- {'risk': '국회 법안 통과 불확실성', 'level': '중'}\n- {'risk': '개편 과도기 국방 AI 사업 지연', 'level': '중'}"
+    }
+  ],
+  "errors": []
+}

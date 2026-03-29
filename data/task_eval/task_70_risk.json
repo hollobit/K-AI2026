@@ -1,0 +1,62 @@
+{
+  "task_id": 70,
+  "task_title": "AI 기반 콘텐츠 창작 지원체계 구축 및 창작자 생태계 활성화",
+  "analysis_type": "risk_analysis",
+  "analysis_label": "위험 요소 및 고려사항",
+  "model": "claude-code",
+  "generated_at": "2026-03-29T15:00:00",
+  "persona_count": 10,
+  "results": [
+    {
+      "persona": "government",
+      "persona_name": "부처 관료",
+      "response": "- {'risk': 'AI 창작물 저작권 귀속 기준 미확립으로 정책 추진 지연', 'level': '상'}\n- {'risk': '문체부·과기정통부·방미통위 간 소관 중복', 'level': '중'}\n- {'risk': 'AI 창작 도구 바우처의 실효성 검증 미흡', 'level': '중'}"
+    },
+    {
+      "persona": "industry",
+      "persona_name": "산업계",
+      "response": "- {'risk': '글로벌 빅테크 AI 창작 도구 독점으로 국내 기업 경쟁력 약화', 'level': '상'}\n- {'risk': '중소 창작자의 AI 기술 활용 역량 부족', 'level': '중'}\n- {'risk': 'AI 콘텐츠 수익 배분 모델 미확립', 'level': '상'}"
+    },
+    {
+      "persona": "citizen",
+      "persona_name": "시민/전문가",
+      "response": "- {'risk': 'AI 생성 콘텐츠의 질적 하락으로 문화 생태계 훼손', 'level': '중'}\n- {'risk': '기존 창작자의 일자리 대체 불안', 'level': '상'}\n- {'risk': 'AI 콘텐츠의 윤리적 문제(표절, 편향)', 'level': '중'}"
+    },
+    {
+      "persona": "global",
+      "persona_name": "국제 관점",
+      "response": "- {'risk': '각국 AI 콘텐츠 규제 차이로 글로벌 유통 장벽', 'level': '중'}\n- {'risk': '해외 AI 창작 도구 종속', 'level': '중'}\n- {'risk': '글로벌 저작권 분쟁 확대', 'level': '중'}"
+    },
+    {
+      "persona": "security",
+      "persona_name": "안보/안전/보안",
+      "response": "- {'risk': '딥페이크 등 악의적 AI 콘텐츠 확산', 'level': '상'}\n- {'risk': 'AI 창작 플랫폼 보안 취약점', 'level': '중'}\n- {'risk': '허위정보 유포에 AI 콘텐츠 악용', 'level': '상'}"
+    },
+    {
+      "persona": "expert",
+      "persona_name": "AI 전문가/인재",
+      "response": "- {'risk': '글로벌 빅테크 대비 연구 인력·데이터 부족', 'level': '상'}\n- {'risk': '한국어·한국 문화 특화 AI 모델 개발 비용 과다', 'level': '중'}\n- {'risk': '콘텐츠 AI 분야 인재의 해외 유출', 'level': '중'}"
+    },
+    {
+      "persona": "education",
+      "persona_name": "교육계",
+      "response": "- {'risk': 'AI 도구 의존으로 기본 창작 역량 약화', 'level': '중'}\n- {'risk': 'AI 창작 교육 커리큘럼·교원 부족', 'level': '중'}\n- {'risk': '교육 현장의 AI 도구 활용 가이드 미비', 'level': '중'}"
+    },
+    {
+      "persona": "regional",
+      "persona_name": "지역활성화",
+      "response": "- {'risk': '지역 콘텐츠 산업 인프라 미비', 'level': '중'}\n- {'risk': '수도권 중심 콘텐츠 생태계 편중 지속', 'level': '중'}\n- {'risk': '지역 창작자의 AI 활용 역량 부족', 'level': '중'}"
+    },
+    {
+      "persona": "defense",
+      "persona_name": "국방",
+      "response": "- {'risk': '콘텐츠 AI 기술의 적대적 활용 위험', 'level': '중'}\n- {'risk': '딥페이크의 정보전 악용', 'level': '상'}\n- {'risk': '군사 시뮬레이션 데이터의 보안 이슈', 'level': '중'}"
+    },
+    {
+      "persona": "leadership",
+      "persona_name": "대통령/장관",
+      "response": "- {'risk': '저작권 논쟁이 정치적 갈등으로 비화', 'level': '상'}\n- {'risk': '창작자 일자리 우려로 정치적 반발', 'level': '중'}\n- {'risk': 'AI 콘텐츠 윤리 이슈의 사회적 논란', 'level': '중'}"
+    }
+  ],
+  "errors": []
+}

@@ -1,0 +1,62 @@
+{
+  "task_id": 73,
+  "task_title": "K-콘텐츠와 K-AI의 동반 해외 진출을 통한 글로벌 시장 확대",
+  "analysis_type": "risk_analysis",
+  "analysis_label": "위험 요소 및 고려사항",
+  "model": "claude-code",
+  "generated_at": "2026-03-29T15:00:00",
+  "persona_count": 10,
+  "results": [
+    {
+      "persona": "government",
+      "persona_name": "부처 관료",
+      "response": "- {'risk': '외교부·문체부·중기부 간 해외 진출 지원 분절', 'level': '상'}\n- {'risk': '글로벌 홍보 허브의 실효성 미검증', 'level': '중'}\n- {'risk': '현지국 규제 대응 역량 부족', 'level': '중'}"
+    },
+    {
+      "persona": "industry",
+      "persona_name": "산업계",
+      "response": "- {'risk': '해외 시장 규제·문화 장벽 극복 어려움', 'level': '상'}\n- {'risk': 'K-AI 글로벌 경쟁력 미검증', 'level': '중'}\n- {'risk': '중소기업의 해외 진출 역량 부족', 'level': '상'}"
+    },
+    {
+      "persona": "citizen",
+      "persona_name": "시민/전문가",
+      "response": "- {'risk': '해외 진출 혜택의 대기업 편중', 'level': '중'}\n- {'risk': '상업적 성공 중심 정책으로 문화 깊이 희석', 'level': '중'}\n- {'risk': '해외 문화 수용성에 대한 이해 부족', 'level': '하'}"
+    },
+    {
+      "persona": "global",
+      "persona_name": "국제 관점",
+      "response": "- {'risk': '현지국 AI 규제 장벽', 'level': '상'}\n- {'risk': '문화적 민감성 간과로 현지 반발', 'level': '중'}\n- {'risk': 'K-AI 기술의 현지 경쟁자 부상', 'level': '중'}"
+    },
+    {
+      "persona": "security",
+      "persona_name": "안보/안전/보안",
+      "response": "- {'risk': '핵심 AI 기술의 해외 유출', 'level': '상'}\n- {'risk': '현지 파트너를 통한 기술 이전 위험', 'level': '중'}\n- {'risk': '이중용도 기술의 수출 통제 이슈', 'level': '중'}"
+    },
+    {
+      "persona": "expert",
+      "persona_name": "AI 전문가/인재",
+      "response": "- {'risk': 'K-AI의 글로벌 경쟁력 미검증', 'level': '중'}\n- {'risk': '해외 시장에서의 기술 수용 불확실', 'level': '중'}\n- {'risk': '글로벌 AI 인재의 해외 유출 가속', 'level': '중'}"
+    },
+    {
+      "persona": "education",
+      "persona_name": "교육계",
+      "response": "- {'risk': '글로벌 AI·콘텐츠 인재 양성 지연', 'level': '중'}\n- {'risk': '해외 교육기관 교류 프로그램 미흡', 'level': '하'}\n- {'risk': '글로벌 역량 교육의 실효성 부족', 'level': '중'}"
+    },
+    {
+      "persona": "regional",
+      "persona_name": "지역활성화",
+      "response": "- {'risk': '해외 진출 지원의 수도권 편중', 'level': '상'}\n- {'risk': '지역 콘텐츠 기업의 글로벌 역량 부족', 'level': '중'}\n- {'risk': '지역 문화 콘텐츠의 해외 수용성 불확실', 'level': '중'}"
+    },
+    {
+      "persona": "defense",
+      "persona_name": "국방",
+      "response": "- {'risk': '이중용도 기술의 해외 유출 안보 위험', 'level': '상'}\n- {'risk': 'K-AI 해외 진출 시 기술 보안 체계 미비', 'level': '중'}\n- {'risk': '우방국 기술 협력의 역이전 위험', 'level': '중'}"
+    },
+    {
+      "persona": "leadership",
+      "persona_name": "대통령/장관",
+      "response": "- {'risk': '수출 250억 달러 목표 미달 시 정치적 비판', 'level': '상'}\n- {'risk': '해외 시장 환경 변화에 대한 유연성 부족', 'level': '중'}\n- {'risk': '기술 유출 논란의 정치화', 'level': '중'}"
+    }
+  ],
+  "errors": []
+}
