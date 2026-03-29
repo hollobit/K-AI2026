@@ -1537,7 +1537,7 @@ var PRIORITY_COLORS = {
 };
 
 // ===== 탭 전환 =====
-function switchView(name) {
+function switchView(name, skipHistory) {
   document.querySelectorAll('.view').forEach(function(v) { v.classList.remove('active'); });
   document.querySelectorAll('.nav-tab').forEach(function(t) { t.classList.remove('active'); });
   var el = document.getElementById('view-' + name);
@@ -1546,6 +1546,11 @@ function switchView(name) {
   var map = { law: 0, guideline: 1, mapping: 2, checklist: 3, timeline: 4, consider: 5, compliance: 6, lawsearch: 7 };
   if (map[name] !== undefined && tabs[map[name]]) tabs[map[name]].classList.add('active');
   if (name === 'compliance' && !window._complianceRendered) renderCompliance();
+  // URL 업데이트
+  if (!skipHistory && window.history && window.history.replaceState) {
+    var url = window.location.pathname + '?view=' + name;
+    window.history.replaceState(null, '', url);
+  }
 }
 
 // ===== 테이블 렌더링 =====
@@ -1879,7 +1884,7 @@ window.addEventListener('DOMContentLoaded', function() {
   // URL 파라미터로 탭 직접 열기: ?view=compliance
   var params = new URLSearchParams(window.location.search);
   var viewParam = params.get('view');
-  if (viewParam) switchView(viewParam);
+  if (viewParam) switchView(viewParam, true);
 });
 
 // ===== 법령 검색 기능 (api_proxy.py CORS 프록시 경유) =====
