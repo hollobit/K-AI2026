@@ -1,0 +1,62 @@
+{
+  "task_id": 60,
+  "task_title": "교사 지원형 AI 보조교사 도입 및 AI 기반의 교육행정 혁신",
+  "analysis_type": "risk_factors",
+  "analysis_label": "위험 요소 및 고려사항",
+  "model": "claude-code",
+  "generated_at": "2026-03-29T15:00:00",
+  "persona_count": 10,
+  "results": [
+    {
+      "persona": "government",
+      "persona_name": "부처 관료",
+      "response": "(분석 내용 없음)"
+    },
+    {
+      "persona": "industry",
+      "persona_name": "산업계",
+      "response": "(분석 내용 없음)"
+    },
+    {
+      "persona": "citizen",
+      "persona_name": "시민/전문가",
+      "response": "(분석 내용 없음)"
+    },
+    {
+      "persona": "global",
+      "persona_name": "국제 관점",
+      "response": "(분석 내용 없음)"
+    },
+    {
+      "persona": "security",
+      "persona_name": "안보/안전/보안",
+      "response": "(분석 내용 없음)"
+    },
+    {
+      "persona": "expert",
+      "persona_name": "AI 전문가/인재",
+      "response": "(분석 내용 없음)"
+    },
+    {
+      "persona": "education",
+      "persona_name": "교육계",
+      "response": "(분석 내용 없음)"
+    },
+    {
+      "persona": "regional",
+      "persona_name": "지역활성화",
+      "response": "(분석 내용 없음)"
+    },
+    {
+      "persona": "defense",
+      "persona_name": "국방",
+      "response": "(분석 내용 없음)"
+    },
+    {
+      "persona": "leadership",
+      "persona_name": "대통령/장관",
+      "response": "(분석 내용 없음)"
+    }
+  ],
+  "errors": []
+}
