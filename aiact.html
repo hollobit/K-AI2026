@@ -364,6 +364,28 @@ tbody td { padding: 11px 14px; font-size: 0.85rem; border-bottom: 1px solid var(
 }
 .ti-date.has-link { text-decoration: underline dotted; }
 
+/* Quick search buttons */
+.quick-search-btn {
+  padding: 4px 12px; border-radius: 14px; border: 1px solid var(--border);
+  background: var(--light); color: var(--dark); font-size: 0.78rem;
+  cursor: pointer; transition: all 0.2s;
+}
+.quick-search-btn:hover { background: var(--primary); color: white; border-color: var(--primary); }
+
+/* Law search result cards */
+.law-result-card {
+  background: white; border-radius: var(--radius); box-shadow: var(--shadow);
+  padding: 16px 20px; margin-bottom: 12px; cursor: pointer;
+  border-left: 4px solid var(--primary); transition: all 0.2s;
+}
+.law-result-card:hover { box-shadow: 0 4px 16px rgba(26,35,126,0.15); transform: translateY(-1px); }
+.law-result-card h4 { font-size: 0.95rem; color: var(--dark); margin-bottom: 6px; }
+.law-result-card .meta { font-size: 0.82rem; color: var(--gray); display: flex; gap: 12px; flex-wrap: wrap; }
+.law-result-card .meta span { display: inline-flex; align-items: center; gap: 4px; }
+.law-result-card.type-precedent { border-left-color: var(--accent); }
+.law-result-card.type-interpretation { border-left-color: var(--info); }
+.law-result-card.type-term { border-left-color: var(--success); }
+
 /* Responsive */
 @media (max-width: 768px) {
   .header h1 { font-size: 1.3rem; }
@@ -404,6 +426,7 @@ tbody td { padding: 11px 14px; font-size: 0.85rem; border-bottom: 1px solid var(
   <div class="nav-tab" onclick="switchView('timeline')">&#9200; 이행 일정</div>
   <div class="nav-tab" onclick="switchView('consider')">&#9888;&#65039; 주요 고려사항</div>
   <div class="nav-tab" onclick="switchView('compliance')">&#9878;&#65039; 컴플라이언스</div>
+  <div class="nav-tab" onclick="switchView('lawsearch')">&#128269; 법령 검색</div>
 </nav>
 
 <!-- ===== 탭 1: 법령 체계 ===== -->
@@ -1202,6 +1225,56 @@ tbody td { padding: 11px 14px; font-size: 0.85rem; border-bottom: 1px solid var(
   <div id="complianceDetail"></div>
 </div>
 
+<!-- ===== 탭 8: 법령 검색 ===== -->
+<div class="view" id="view-lawsearch">
+  <div class="section-title" style="margin-bottom:20px">&#128269; 법령정보 검색 <span style="font-size:0.8rem;color:var(--gray);font-weight:400">국가법령정보센터 연동 with korean-law-mcp</span></div>
+
+  <!-- 검색 폼 -->
+  <div style="background:white;border-radius:var(--radius);box-shadow:var(--shadow);padding:20px;margin-bottom:20px">
+    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
+      <div style="flex:1;min-width:250px">
+        <label style="font-size:0.82rem;font-weight:600;color:var(--dark);display:block;margin-bottom:6px">검색어</label>
+        <input type="text" id="lawSearchQuery" placeholder="법령명, 키워드, 조문 내용 등" style="width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:6px;font-size:0.95rem;outline:none;transition:border-color 0.2s" onfocus="this.style.borderColor='var(--primary)'" onblur="this.style.borderColor='var(--border)'" onkeydown="if(event.key==='Enter')searchLaw()">
+      </div>
+      <div style="min-width:160px">
+        <label style="font-size:0.82rem;font-weight:600;color:var(--dark);display:block;margin-bottom:6px">검색 유형</label>
+        <select id="lawSearchType" style="width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:6px;font-size:0.9rem;background:white;cursor:pointer">
+          <option value="law">&#128203; 법령</option>
+          <option value="precedent">&#9878;&#65039; 판례</option>
+          <option value="interpretation">&#128218; 행정해석</option>
+          <option value="term">&#128196; 법률용어</option>
+        </select>
+      </div>
+      <button onclick="searchLaw()" style="padding:10px 24px;background:var(--primary);color:white;border:none;border-radius:6px;font-size:0.9rem;font-weight:600;cursor:pointer;transition:background 0.2s;white-space:nowrap" onmouseover="this.style.background='var(--primary-light)'" onmouseout="this.style.background='var(--primary)'">&#128269; 검색</button>
+    </div>
+    <!-- 빠른 검색 -->
+    <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
+      <span style="font-size:0.78rem;color:var(--gray);line-height:28px">빠른 검색:</span>
+      <button class="quick-search-btn" onclick="quickSearch('인공지능기본법','law')">인공지능기본법</button>
+      <button class="quick-search-btn" onclick="quickSearch('개인정보보호법','law')">개인정보보호법</button>
+      <button class="quick-search-btn" onclick="quickSearch('인공지능','precedent')">AI 판례</button>
+      <button class="quick-search-btn" onclick="quickSearch('알고리즘','interpretation')">알고리즘 해석례</button>
+      <button class="quick-search-btn" onclick="quickSearch('고위험','term')">고위험 용어</button>
+    </div>
+  </div>
+
+  <!-- 검색 결과 -->
+  <div id="lawSearchStatus" style="display:none;text-align:center;padding:40px;color:var(--gray)"></div>
+  <div id="lawSearchResults"></div>
+  <div id="lawSearchPaging" style="display:none;text-align:center;margin-top:16px"></div>
+
+  <!-- 안내 (초기 상태) -->
+  <div id="lawSearchGuide" style="background:white;border-radius:var(--radius);box-shadow:var(--shadow);padding:40px 24px;text-align:center">
+    <div style="font-size:2.5rem;margin-bottom:12px">&#9878;&#65039;</div>
+    <h3 style="color:var(--primary);margin-bottom:8px">국가법령정보센터 통합 검색</h3>
+    <p style="color:var(--gray);font-size:0.9rem;line-height:1.8;max-width:500px;margin:0 auto">
+      법령, 판례, 행정해석례, 법률용어를 검색할 수 있습니다.<br>
+      검색어를 입력하고 유형을 선택한 후 검색 버튼을 클릭하세요.<br>
+      <span style="font-size:0.82rem;color:var(--info)">데이터 출처: 법제처 국가법령정보센터 Open API</span>
+    </p>
+  </div>
+</div>
+
 <!-- ===== 모달 ===== -->
 <div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
   <div class="modal" id="modalContent">
@@ -1470,7 +1543,7 @@ function switchView(name) {
   var el = document.getElementById('view-' + name);
   if (el) el.classList.add('active');
   var tabs = document.querySelectorAll('.nav-tab');
-  var map = { law: 0, guideline: 1, mapping: 2, checklist: 3, timeline: 4, consider: 5, compliance: 6 };
+  var map = { law: 0, guideline: 1, mapping: 2, checklist: 3, timeline: 4, consider: 5, compliance: 6, lawsearch: 7 };
   if (map[name] !== undefined && tabs[map[name]]) tabs[map[name]].classList.add('active');
   if (name === 'compliance' && !window._complianceRendered) renderCompliance();
 }
@@ -1808,6 +1881,457 @@ window.addEventListener('DOMContentLoaded', function() {
   var viewParam = params.get('view');
   if (viewParam) switchView(viewParam);
 });
+
+// ===== 법령 검색 기능 (api_proxy.py CORS 프록시 경유) =====
+var _lawSearchState = { query: '', type: 'law', page: 1, total: 0, items: [] };
+var _LAW_TARGETS = { law: 'law', precedent: 'prec', interpretation: 'expc', term: 'lsTrmSch' };
+var _LAW_TYPE_LABELS = { law: '법령', precedent: '판례', interpretation: '행정해석', term: '법률용어' };
+var _LAW_PROXY = 'http://localhost:5500/api/law-proxy';
+
+function _fetchLawApi(endpoint, params) {
+  params.endpoint = endpoint;
+  var qs = Object.keys(params).map(function(k) {
+    return encodeURIComponent(k) + '=' + encodeURIComponent(params[k]);
+  }).join('&');
+  return fetch(_LAW_PROXY + '?' + qs).then(function(r) {
+    if (!r.ok) throw new Error('API 응답 오류: ' + r.status);
+    return r.text().then(function(text) {
+      if (!text || !text.trim()) return { empty: true, totalCnt: '0' };
+      try { return JSON.parse(text); }
+      catch(e) { throw new Error('응답 파싱 실패'); }
+    });
+  });
+}
+
+function _normalizeLawResults(data, searchType) {
+  var items = [], total = 0;
+  if (searchType === 'law') {
+    var root = data.LawSearch || data;
+    total = parseInt(root.totalCnt || '0', 10);
+    var raw = root.law || [];
+    if (!Array.isArray(raw)) raw = [raw];
+    raw.forEach(function(d) {
+      items.push({
+        id: d['법령일련번호'] || '', lawId: d['법령ID'] || '',
+        title: d['법령명한글'] || d['법령약칭명'] || '',
+        type: d['법령구분명'] || '', department: d['소관부처명'] || '',
+        promulgation_date: d['공포일자'] || '', enforcement_date: d['시행일자'] || '',
+        status: d['현행연혁코드'] || '', link: d['법령상세링크'] || ''
+      });
+    });
+  } else if (searchType === 'precedent') {
+    var root = data.PrecSearch || data;
+    total = parseInt(root.totalCnt || '0', 10);
+    var raw = root.prec || [];
+    if (!Array.isArray(raw)) raw = [raw];
+    raw.forEach(function(d) {
+      items.push({
+        id: d['판례일련번호'] || '', title: d['사건명'] || '',
+        caseNumber: d['사건번호'] || '', court: d['법원명'] || '',
+        date: d['선고일자'] || '', type: d['사건종류명'] || '',
+        result: d['판결유형'] || '', link: d['판례상세링크'] || ''
+      });
+    });
+  } else if (searchType === 'interpretation') {
+    var root = data.ExpcSearch || data;
+    total = parseInt(root.totalCnt || '0', 10);
+    var raw = root.expc || [];
+    if (!Array.isArray(raw)) raw = [raw];
+    raw.forEach(function(d) {
+      items.push({
+        id: d['법령해석례일련번호'] || '', title: d['사안명'] || d['법령해석례사안명'] || '',
+        law_title: d['법령명'] || '', date: d['회답일자'] || d['안건번호'] || '',
+        department: d['회답기관'] || '', link: d['법령해석례상세링크'] || ''
+      });
+    });
+  } else if (searchType === 'term') {
+    var root = data.LsTrmSch || data;
+    total = parseInt(root.totalCnt || '0', 10);
+    var raw = root.lsTrmSch || [];
+    if (!Array.isArray(raw)) raw = [raw];
+    raw.forEach(function(d) {
+      items.push({
+        id: d['법령용어일련번호'] || '', title: d['용어명'] || '',
+        definition: d['정의'] || d['뜻'] || '', law_title: d['법령명'] || '',
+        link: d['법령용어상세링크'] || ''
+      });
+    });
+  }
+  return { items: items, total: total };
+}
+
+function quickSearch(query, type) {
+  document.getElementById('lawSearchQuery').value = query;
+  document.getElementById('lawSearchType').value = type;
+  searchLaw();
+}
+
+function searchLaw(page) {
+  var query = document.getElementById('lawSearchQuery').value.trim();
+  var searchType = document.getElementById('lawSearchType').value;
+  if (!query) { document.getElementById('lawSearchQuery').focus(); return; }
+
+  page = page || 1;
+  _lawSearchState.query = query;
+  _lawSearchState.type = searchType;
+  _lawSearchState.page = page;
+
+  var guide = document.getElementById('lawSearchGuide');
+  var status = document.getElementById('lawSearchStatus');
+  var results = document.getElementById('lawSearchResults');
+  var paging = document.getElementById('lawSearchPaging');
+
+  guide.style.display = 'none';
+  results.innerHTML = '';
+  paging.style.display = 'none';
+  status.style.display = 'block';
+  status.innerHTML = '<div style="font-size:1.5rem;margin-bottom:8px">&#9203;</div>검색 중...';
+
+  var target = _LAW_TARGETS[searchType];
+  if (!target) { status.innerHTML = '지원하지 않는 검색 유형'; return; }
+
+  _fetchLawApi('lawSearch.do', { target: target, query: query, display: '20', page: String(page) })
+  .then(function(data) {
+    var parsed = _normalizeLawResults(data, searchType);
+    _lawSearchState.total = parsed.total;
+    _lawSearchState.items = parsed.items;
+
+    if (!parsed.items.length) {
+      status.innerHTML = '<div style="font-size:1.5rem;margin-bottom:8px">&#128269;</div>"'
+        + query + '" ' + _LAW_TYPE_LABELS[searchType] + ' 검색 결과가 없습니다.';
+      return;
+    }
+
+    status.style.display = 'none';
+    var html = '<div style="font-size:0.85rem;color:var(--gray);margin-bottom:12px;font-weight:500">'
+      + _LAW_TYPE_LABELS[searchType] + ' 검색 결과: 총 <strong style="color:var(--primary)">'
+      + parsed.total + '</strong>건' + (page > 1 ? ' (페이지 ' + page + ')' : '') + '</div>';
+    results.innerHTML = html;
+
+    parsed.items.forEach(function(item, idx) {
+      var card = document.createElement('div');
+      card.className = 'law-result-card type-' + searchType;
+      card.onclick = function() { openLawDetail(item, searchType); };
+      card.innerHTML = renderLawResultCard(item, searchType, idx + 1 + (page - 1) * 20);
+      results.appendChild(card);
+    });
+
+    // 페이징
+    var totalPages = Math.ceil(parsed.total / 20);
+    if (totalPages > 1) {
+      paging.style.display = 'block';
+      var ph = '';
+      if (page > 1) ph += '<button onclick="searchLaw(' + (page - 1) + ')" style="margin:0 4px;padding:6px 14px;border:1px solid var(--border);border-radius:6px;background:white;cursor:pointer">&laquo; 이전</button>';
+      ph += '<span style="margin:0 12px;font-size:0.85rem;color:var(--gray)">' + page + ' / ' + totalPages + '</span>';
+      if (page < totalPages) ph += '<button onclick="searchLaw(' + (page + 1) + ')" style="margin:0 4px;padding:6px 14px;border:1px solid var(--border);border-radius:6px;background:white;cursor:pointer">다음 &raquo;</button>';
+      paging.innerHTML = ph;
+    }
+  })
+  .catch(function(err) {
+    status.innerHTML = '<div style="font-size:1.5rem;margin-bottom:8px">&#10060;</div>검색 중 오류가 발생했습니다.<br><span style="font-size:0.82rem">'
+      + err.message + '</span><br><span style="font-size:0.78rem;color:var(--gray);margin-top:8px;display:inline-block">'
+      + 'CORS 오류 시 api_proxy.py 프록시 모드를 사용하세요.</span>';
+  });
+}
+
+function renderLawResultCard(item, type, num) {
+  var html = '<h4>' + num + '. ' + (item.title || '(제목 없음)') + '</h4><div class="meta">';
+  if (type === 'law') {
+    if (item.type) html += '<span>&#128203; ' + item.type + '</span>';
+    if (item.department) html += '<span>&#127970; ' + item.department + '</span>';
+    if (item.enforcement_date) html += '<span>&#128197; 시행 ' + item.enforcement_date + '</span>';
+    if (item.status) html += '<span class="badge badge-' + (item.status === '현행' ? 'primary' : 'info') + '">' + item.status + '</span>';
+  } else if (type === 'precedent') {
+    if (item.court) html += '<span>&#127963; ' + item.court + '</span>';
+    if (item.caseNumber) html += '<span>&#128196; ' + item.caseNumber + '</span>';
+    if (item.date) html += '<span>&#128197; ' + item.date + '</span>';
+    if (item.type) html += '<span>' + item.type + '</span>';
+  } else if (type === 'interpretation') {
+    if (item.law_title) html += '<span>&#128203; ' + item.law_title + '</span>';
+    if (item.department) html += '<span>&#127970; ' + item.department + '</span>';
+    if (item.date) html += '<span>&#128197; ' + item.date + '</span>';
+  } else if (type === 'term') {
+    if (item.definition) html += '</div><p style="margin-top:8px;font-size:0.88rem;color:#444;line-height:1.6">' + item.definition + '</p><div class="meta">';
+    if (item.law_title) html += '<span>&#128203; ' + item.law_title + '</span>';
+  }
+  html += '</div>';
+  return html;
+}
+
+function openLawDetail(item, type) {
+  document.getElementById('modalTitle').textContent = item.title || '상세 내용';
+
+  var badgeColors = { law: 'primary', precedent: 'mandatory', interpretation: 'info', term: 'conditional' };
+  document.getElementById('modalBadges').innerHTML = '<span class="badge badge-' + (badgeColors[type] || 'primary') + '">' + _LAW_TYPE_LABELS[type] + '</span>';
+
+  var html = '<div class="modal-section" style="margin-bottom:16px">';
+  if (type === 'law') {
+    html += '<p><strong>법령 구분:</strong> ' + (item.type || '-') + '</p>'
+      + '<p><strong>소관 부처:</strong> ' + (item.department || '-') + '</p>'
+      + '<p><strong>시행일:</strong> ' + (item.enforcement_date || '-') + '</p>'
+      + '<p><strong>공포일:</strong> ' + (item.promulgation_date || '-') + '</p>';
+  } else if (type === 'precedent') {
+    html += '<p><strong>법원:</strong> ' + (item.court || '-') + '</p>'
+      + '<p><strong>사건번호:</strong> ' + (item.caseNumber || '-') + '</p>'
+      + '<p><strong>선고일:</strong> ' + (item.date || '-') + '</p>'
+      + '<p><strong>판결유형:</strong> ' + (item.result || '-') + '</p>';
+  } else if (type === 'interpretation') {
+    html += '<p><strong>관련 법령:</strong> ' + (item.law_title || '-') + '</p>'
+      + '<p><strong>회답기관:</strong> ' + (item.department || '-') + '</p>'
+      + '<p><strong>회답일:</strong> ' + (item.date || '-') + '</p>';
+  } else if (type === 'term') {
+    html += '<p><strong>정의:</strong> ' + (item.definition || '-') + '</p>'
+      + '<p><strong>관련 법령:</strong> ' + (item.law_title || '-') + '</p>';
+  }
+  html += '</div>';
+
+  // 전문 조회 버튼
+  if (type !== 'term' && item.id) {
+    var detailTarget = (type === 'law') ? 'law' : (type === 'precedent') ? 'prec' : 'expc';
+    var detailParam = (type === 'law') ? 'MST' : 'ID';
+    html += '<div id="lawDetailContent" style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border)">'
+      + '<button onclick="fetchLawFullText(\'' + detailTarget + '\',\'' + detailParam + '\',\'' + item.id + '\')" '
+      + 'style="display:inline-flex;align-items:center;gap:6px;background:var(--primary);color:white;padding:10px 20px;border:none;border-radius:6px;font-size:0.88rem;font-weight:600;cursor:pointer">'
+      + '&#128196; 전문 조회</button></div>';
+  }
+
+  // 국가법령정보센터 링크
+  if (item.link) {
+    html += '<div style="margin-top:12px"><a href="https://www.law.go.kr' + item.link + '" target="_blank" rel="noopener noreferrer" '
+      + 'style="display:inline-flex;align-items:center;gap:6px;color:var(--primary);font-size:0.85rem;font-weight:600;text-decoration:none">'
+      + '&#128279; 국가법령정보센터에서 보기</a></div>';
+  }
+
+  document.getElementById('modalBody').innerHTML = html;
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
+function fetchLawFullText(target, paramName, id) {
+  var container = document.getElementById('lawDetailContent');
+  if (!container) return;
+  container.innerHTML = '<div style="text-align:center;padding:20px;color:var(--gray)">&#9203; 전문 조회 중...</div>';
+
+  var params = { target: target };
+  params[paramName] = id;
+
+  _fetchLawApi('lawService.do', params)
+  .then(function(data) {
+    var html = '';
+    if (target === 'law') {
+      html = _renderLawFullText(data);
+    } else if (target === 'prec') {
+      html = _renderPrecFullText(data);
+    } else {
+      html = _renderExpcFullText(data);
+    }
+    container.innerHTML = html;
+  })
+  .catch(function(err) {
+    container.innerHTML = '<div style="color:var(--accent);padding:12px">&#10060; 조회 실패: ' + err.message + '</div>';
+  });
+}
+
+function _toStr(v) {
+  if (v == null) return '';
+  if (typeof v === 'string') return v;
+  if (Array.isArray(v)) return v.flat(5).filter(function(x){ return typeof x === 'string'; }).join('\n');
+  if (typeof v === 'object') return JSON.stringify(v, null, 2);
+  return String(v);
+}
+function _brToNl(s) { return _toStr(s).replace(/<br\s*\/?>/gi, '\n').replace(/&nbsp;/g, ' '); }
+function _esc(s) { return _toStr(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function _renderLawFullText(data) {
+  var root = data['법령'] || data;
+  var info = root['기본정보'] || {};
+  var articles = (root['조문'] || {})['조문단위'] || [];
+  var addenda = (root['부칙'] || {})['부칙단위'] || [];
+
+  var html = '';
+
+  // 헤더
+  if (info['법령명_한글']) {
+    var lawType = (info['법종구분'] || {})['법종구분명'] || '';
+    var dept = (info['소관부처'] || {})['소관부처명'] || '';
+    html += '<div style="background:linear-gradient(135deg,var(--primary),var(--primary-light));color:white;padding:16px 20px;border-radius:8px 8px 0 0;margin-bottom:0">'
+      + '<h4 style="margin:0 0 6px;font-size:1.1rem">' + info['법령명_한글'] + '</h4>'
+      + '<div style="display:flex;gap:12px;flex-wrap:wrap;font-size:0.8rem;opacity:0.9">';
+    if (lawType) html += '<span>' + lawType + '</span>';
+    if (dept) html += '<span>' + dept + '</span>';
+    if (info['공포일자']) html += '<span>공포 ' + info['공포일자'] + '</span>';
+    if (info['시행일자']) html += '<span>시행 ' + info['시행일자'] + '</span>';
+    if (info['공포번호']) html += '<span>제' + info['공포번호'] + '호</span>';
+    html += '</div></div>';
+  }
+
+  // 조문
+  html += '<div style="max-height:500px;overflow-y:auto;padding:0;border:1px solid var(--border);border-radius:0 0 8px 8px;background:white">';
+
+  if (articles.length) {
+    articles.forEach(function(a) {
+      var isChapter = a['조문여부'] === '전문';
+      var content = _esc(a['조문내용'] || '').trim();
+
+      if (isChapter) {
+        // 장/절/관 제목
+        html += '<div style="background:var(--light);padding:10px 20px;font-weight:700;font-size:0.92rem;color:var(--primary);border-bottom:1px solid var(--border)">'
+          + content + '</div>';
+        return;
+      }
+
+      html += '<div style="padding:12px 20px;border-bottom:1px solid #f0f0f0">';
+
+      // 조문 제목
+      var title = a['조문제목'] ? '(' + _esc(a['조문제목']) + ')' : '';
+      html += '<div style="font-weight:600;font-size:0.9rem;color:var(--dark);margin-bottom:4px">'
+        + content.split('\n')[0] + '</div>';
+
+      // 항 (paragraph)
+      var hang = a['항'];
+      if (hang) {
+        var hangList = Array.isArray(hang) ? hang : [hang];
+        hangList.forEach(function(h) {
+          if (h['항내용']) {
+            html += '<div style="padding:2px 0 2px 16px;font-size:0.87rem;color:#333">' + _esc(h['항내용']) + '</div>';
+          }
+          // 호 (subparagraph)
+          var ho = h['호'];
+          if (ho) {
+            var hoList = Array.isArray(ho) ? ho : [ho];
+            hoList.forEach(function(item) {
+              html += '<div style="padding:1px 0 1px 32px;font-size:0.85rem;color:#444">' + _esc(item['호내용'] || '') + '</div>';
+              // 목 (item)
+              var mok = item['목'];
+              if (mok) {
+                var mokList = Array.isArray(mok) ? mok : [mok];
+                mokList.forEach(function(m) {
+                  html += '<div style="padding:1px 0 1px 52px;font-size:0.83rem;color:#555">' + _esc(m['목내용'] || '') + '</div>';
+                });
+              }
+            });
+          }
+        });
+      }
+      html += '</div>';
+    });
+  } else {
+    html += '<div style="padding:20px;color:var(--gray);text-align:center">조문 정보를 불러올 수 없습니다.</div>';
+  }
+
+  // 부칙
+  if (addenda.length) {
+    html += '<div style="background:var(--light);padding:10px 20px;font-weight:700;font-size:0.92rem;color:var(--primary);border-top:2px solid var(--border)">부칙</div>';
+    addenda.forEach(function(a) {
+      var content = _esc(_brToNl(a['부칙내용'] || '')).trim();
+      html += '<div style="padding:8px 20px;font-size:0.85rem;color:#444;border-bottom:1px solid #f5f5f5">';
+      if (a['부칙공포일자'] || a['부칙공포번호']) {
+        html += '<div style="font-size:0.78rem;color:var(--gray);margin-bottom:4px">'
+          + (a['부칙공포일자'] ? '공포 ' + a['부칙공포일자'] : '') + ' '
+          + (a['부칙공포번호'] ? '제' + a['부칙공포번호'] + '호' : '') + '</div>';
+      }
+      html += '<div style="white-space:pre-wrap;line-height:1.7">' + content + '</div></div>';
+    });
+  }
+
+  html += '</div>';
+  return html;
+}
+
+function _renderSection(title, content, color) {
+  if (!content || !content.trim()) return '';
+  var clean = _brToNl(content).trim();
+  // 번호 목록 ([1], [2]...) 분리
+  var parts = clean.split(/(?=\[?\d+\])/);
+  var bodyHtml = '';
+  parts.forEach(function(p) {
+    p = p.trim();
+    if (!p) return;
+    var match = p.match(/^\[?(\d+)\]\s*(.*)/s);
+    if (match) {
+      bodyHtml += '<div style="margin-bottom:8px"><span style="display:inline-block;width:24px;height:24px;line-height:24px;text-align:center;border-radius:50%;background:'
+        + color + ';color:white;font-size:0.75rem;font-weight:700;margin-right:8px;flex-shrink:0">' + match[1] + '</span>'
+        + '<span>' + _esc(match[2]) + '</span></div>';
+    } else {
+      bodyHtml += '<div style="margin-bottom:8px">' + _esc(p) + '</div>';
+    }
+  });
+  return '<div style="margin-bottom:20px">'
+    + '<div style="font-weight:700;font-size:0.92rem;color:' + color + ';padding-bottom:6px;border-bottom:2px solid ' + color + ';margin-bottom:10px">' + title + '</div>'
+    + '<div style="font-size:0.87rem;line-height:1.8;color:#333">' + bodyHtml + '</div></div>';
+}
+
+function _renderPrecFullText(data) {
+  var prec = data['PrecService'] || data['판례정보'] || data;
+
+  var html = '';
+
+  // 헤더
+  html += '<div style="background:linear-gradient(135deg,#b71c1c,#e53935);color:white;padding:16px 20px;border-radius:8px 8px 0 0">'
+    + '<h4 style="margin:0 0 6px;font-size:1.1rem">' + _esc(prec['사건명'] || '') + '</h4>'
+    + '<div style="display:flex;gap:12px;flex-wrap:wrap;font-size:0.8rem;opacity:0.9">';
+  if (prec['법원명']) html += '<span>' + prec['법원명'] + '</span>';
+  if (prec['사건번호']) html += '<span>' + prec['사건번호'] + '</span>';
+  if (prec['선고일자']) html += '<span>선고 ' + prec['선고일자'] + '</span>';
+  if (prec['판결유형']) html += '<span>' + prec['판결유형'] + '</span>';
+  html += '</div></div>';
+
+  // 본문
+  html += '<div style="max-height:500px;overflow-y:auto;padding:20px;border:1px solid var(--border);border-radius:0 0 8px 8px;background:white">';
+
+  html += _renderSection('판시사항', prec['판시사항'], 'var(--primary)');
+  html += _renderSection('판결요지', prec['판결요지'], '#1565c0');
+
+  if (prec['참조조문']) {
+    html += '<div style="margin-bottom:20px"><div style="font-weight:700;font-size:0.92rem;color:var(--gray);padding-bottom:6px;border-bottom:1px solid var(--border);margin-bottom:8px">참조조문</div>'
+      + '<div style="font-size:0.85rem;color:#555;line-height:1.7">' + _esc(_brToNl(prec['참조조문'])) + '</div></div>';
+  }
+  if (prec['참조판례']) {
+    html += '<div style="margin-bottom:20px"><div style="font-weight:700;font-size:0.92rem;color:var(--gray);padding-bottom:6px;border-bottom:1px solid var(--border);margin-bottom:8px">참조판례</div>'
+      + '<div style="font-size:0.85rem;color:#555;line-height:1.7">' + _esc(_brToNl(prec['참조판례'])) + '</div></div>';
+  }
+
+  if (prec['판례내용']) {
+    html += '<div style="margin-bottom:20px"><div style="font-weight:700;font-size:0.92rem;color:#333;padding-bottom:6px;border-bottom:2px solid #333;margin-bottom:10px">판례 전문</div>'
+      + '<div style="font-size:0.87rem;line-height:1.9;color:#333;white-space:pre-wrap">' + _esc(_brToNl(prec['판례내용'])) + '</div></div>';
+  }
+
+  html += '</div>';
+  return html;
+}
+
+function _renderExpcFullText(data) {
+  var expc = data['ExpcService'] || data['해석례정보'] || data;
+
+  var html = '';
+
+  // 헤더
+  html += '<div style="background:linear-gradient(135deg,#01579b,#039be5);color:white;padding:16px 20px;border-radius:8px 8px 0 0">'
+    + '<h4 style="margin:0 0 6px;font-size:1.05rem">' + _esc(expc['사안명'] || expc['법령해석례사안명'] || '') + '</h4>'
+    + '<div style="display:flex;gap:12px;flex-wrap:wrap;font-size:0.8rem;opacity:0.9">';
+  if (expc['법령명']) html += '<span>' + expc['법령명'] + '</span>';
+  if (expc['회답기관']) html += '<span>' + expc['회답기관'] + '</span>';
+  if (expc['안건번호']) html += '<span>' + expc['안건번호'] + '</span>';
+  html += '</div></div>';
+
+  // 본문
+  html += '<div style="max-height:500px;overflow-y:auto;padding:20px;border:1px solid var(--border);border-radius:0 0 8px 8px;background:white">';
+
+  if (expc['질의요지']) {
+    html += '<div style="margin-bottom:20px"><div style="font-weight:700;font-size:0.92rem;color:#01579b;padding-bottom:6px;border-bottom:2px solid #01579b;margin-bottom:10px">질의요지</div>'
+      + '<div style="font-size:0.87rem;line-height:1.8;color:#333;white-space:pre-wrap;background:#f0f7ff;padding:12px;border-radius:6px">' + _esc(_brToNl(expc['질의요지'])) + '</div></div>';
+  }
+  if (expc['회답']) {
+    html += '<div style="margin-bottom:20px"><div style="font-weight:700;font-size:0.92rem;color:#2e7d32;padding-bottom:6px;border-bottom:2px solid #2e7d32;margin-bottom:10px">회답</div>'
+      + '<div style="font-size:0.87rem;line-height:1.8;color:#333;white-space:pre-wrap;background:#f0fff0;padding:12px;border-radius:6px;font-weight:500">' + _esc(_brToNl(expc['회답'])) + '</div></div>';
+  }
+  if (expc['이유']) {
+    html += '<div style="margin-bottom:20px"><div style="font-weight:700;font-size:0.92rem;color:#333;padding-bottom:6px;border-bottom:2px solid #333;margin-bottom:10px">이유</div>'
+      + '<div style="font-size:0.87rem;line-height:1.9;color:#333;white-space:pre-wrap">' + _esc(_brToNl(expc['이유'])) + '</div></div>';
+  }
+
+  html += '</div>';
+  return html;
+}
 </script>
 </body>
 </html>

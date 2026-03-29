@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>대한민국 AI 행동계획 - 미래 전략 분석</title>
   <meta name="description" content="MiroFish 멀티 에이전트 시뮬레이션 프레임워크 기반 정책 분석 대시보드">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#003087">
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <script src="task_eval_data.js" defer></script>
@@ -328,6 +330,7 @@ a:hover { text-decoration: underline; }
   <button class="tab-btn" data-tab="report">&#x1F4DD; 종합 보고서</button>
   <button class="tab-btn" data-tab="sns">&#x1F4E1; SNS 여론</button>
   <button class="tab-btn" data-tab="trust">&#x1F6E1;&#xFE0F; 정보 신뢰성</button>
+  <button class="tab-btn" data-tab="changelog">📜 변경 이력</button>
 </div>
 
 <div class="content">
@@ -499,6 +502,9 @@ a:hover { text-decoration: underline; }
     <div id="trustContent"></div>
   </div>
 
+  <!-- TAB: Changelog -->
+  <div class="tab-content" id="tab-changelog"></div>
+
   <!-- TAB: Task Comprehensive Evaluation -->
   <div class="tab-content" id="tab-taskeval">
     <h2 class="section-title">&#x1F4CB; 과제별 전략</h2>
@@ -537,8 +543,12 @@ a:hover { text-decoration: underline; }
         <button onclick="teToggleAll(true)" style="padding:6px 14px;border:1px solid var(--border);border-radius:6px;background:var(--card-bg);color:var(--text);cursor:pointer;font-family:var(--font)">📂 전체 펼치기</button>
         <button onclick="teToggleAll(false)" style="padding:6px 14px;border:1px solid var(--border);border-radius:6px;background:var(--card-bg);color:var(--text);cursor:pointer;font-family:var(--font)">📁 전체 접기</button>
         <button onclick="tePrintAll()" style="padding:6px 14px;border:1px solid var(--border);border-radius:6px;background:var(--card-bg);color:var(--text);cursor:pointer;font-family:var(--font)">🖨 인쇄</button>
+        <button id="teCompareModeBtn" onclick="teToggleCompareMode()" style="padding:6px 14px;border:1px solid var(--border);border-radius:6px;background:var(--card-bg);color:var(--text);cursor:pointer;font-family:var(--font)">📊 비교 모드</button>
       </div>
     </div>
+
+    <!-- D2: Compare panel (hidden by default) -->
+    <div id="teComparePanel" style="display:none"></div>
 
     <!-- 12 Accordion Sections -->
     <div id="teAccordionContainer"></div>
@@ -11092,6 +11102,7 @@ function renderCurrentTab() {
     case 'report': renderReport(); break;
     case 'sns': renderSNS(); break;
     case 'trust': renderTrust(); break;
+    case 'changelog': renderChangelog(); break;
     case 'taskeval': renderTaskEval(); break;
   }
 }
@@ -17183,6 +17194,7 @@ const TE_SECTIONS = [
   { id: 'interactions', icon: '\u{1F504}', title: '상호작용 매트릭스', open: false },
   { id: 'techtrends', icon: '\u{1F680}', title: 'AI 기술 트렌드 대응', open: false },
   { id: 'summary', icon: '\u{1F4CA}', title: '종합 평가 요약', open: false },
+  { id: 'news', icon: '\u{1F4F0}', title: '관련 뉴스·동향', open: false },
 ];
 
 function teRenderAll() {
@@ -17232,8 +17244,10 @@ function teRenderAll() {
   teRenderSummary(task);
   // AI interview — 통합 페르소나별 뷰
   teRenderAIInterview(task);
+  // D4: 뉴스·동향 검색 허브
+  teRenderNews(task);
 
-  // URL expand=1 파라미터 처리
+  // URL expand=1 ��라미터 처리
   var expandParam = new URLSearchParams(window.location.search).get('expand');
   if (expandParam === '1') {
     STATE.teExpanded = true;
@@ -17294,7 +17308,17 @@ function teRenderOverview(task) {
   } else {
     html += '<div class="card" style="margin-top:12px;text-align:center;padding:30px;color:var(--text-muted)">권고사항 데이터 없음</div>';
   }
+  // O1: Show saved memo if exists
+  var savedMemo = teGetSavedMemo(task);
+  if (savedMemo) {
+    html += '<div class="card" style="margin-top:12px;border-left:4px solid var(--warning)"><div class="card-title">\u{1F5D2}\uFE0F 저장된 메모</div>';
+    html += '<div style="font-size:.85rem;white-space:pre-wrap;line-height:1.6;background:var(--light);padding:10px;border-radius:6px">' + teEscapeHtml(savedMemo) + '</div></div>';
+  }
   el.innerHTML = html;
+  // D3: Calendar heatmap (appended after innerHTML)
+  teRenderCalendarHeatmap(task, el);
+  // O3: Similar tasks recommendation
+  teRenderSimilarTasks(task, el);
 }
 
 function teRenderStakeholders(task) {
@@ -18031,6 +18055,8 @@ function teRenderInteractions(task) {
   }
 
   el.innerHTML = html;
+  // D1: Critical path analysis
+  teRenderCriticalPath(task, el);
 }
 
 function teRenderTechTrends(task) {
@@ -18324,6 +18350,525 @@ function teFormatMarkdown(text) {
 }
 
 /* ================================================================
+   D1: 크리티컬 패스 분석
+   ================================================================ */
+function teRenderCriticalPath(task, containerEl) {
+  if (typeof STRATEGY_INTERACTIONS === 'undefined' || typeof KEY_STRATEGIES === 'undefined') return;
+
+  var stratMap = {};
+  KEY_STRATEGIES.forEach(function(ks) { stratMap[ks.id] = ks; });
+
+  // Build degree map from all interactions
+  var degreeMap = {};
+  KEY_STRATEGIES.forEach(function(ks) { degreeMap[ks.id] = { in: 0, out: 0, total: 0 }; });
+  STRATEGY_INTERACTIONS.forEach(function(si) {
+    if (degreeMap[si.from]) { degreeMap[si.from].out += si.strength; degreeMap[si.from].total += si.strength; }
+    if (degreeMap[si.to]) { degreeMap[si.to].in += si.strength; degreeMap[si.to].total += si.strength; }
+  });
+
+  // Find strategies related to this task
+  var relatedIds = [];
+  KEY_STRATEGIES.forEach(function(ks) {
+    if ((ks.related_tasks || []).some(function(rt) { return rt.id === task.id; }) ||
+        (ks.indirect_tasks || []).some(function(rt) { return rt.id === task.id; })) {
+      relatedIds.push(ks.id);
+    }
+  });
+  if (relatedIds.length === 0) return;
+
+  // Sort related strategies by total degree (most connected first)
+  var sorted = relatedIds.slice().sort(function(a, b) { return (degreeMap[b] || {}).total - (degreeMap[a] || {}).total; });
+
+  // Build critical path chain: follow highest-strength outgoing edges
+  var chain = [sorted[0]];
+  var visited = {};
+  visited[sorted[0]] = true;
+  var current = sorted[0];
+  for (var step = 0; step < 4; step++) {
+    var bestNext = null;
+    var bestStr = 0;
+    STRATEGY_INTERACTIONS.forEach(function(si) {
+      if (si.from === current && !visited[si.to] && si.strength > bestStr && si.type !== 'tension') {
+        bestNext = si.to; bestStr = si.strength;
+      }
+      if (si.to === current && !visited[si.from] && si.strength > bestStr && si.type !== 'tension') {
+        bestNext = si.from; bestStr = si.strength;
+      }
+    });
+    if (!bestNext) break;
+    chain.push(bestNext);
+    visited[bestNext] = true;
+    current = bestNext;
+  }
+
+  if (chain.length < 2) return;
+
+  var html = '<div class="card" style="margin-top:14px"><div class="card-title">\u{1F6E4}\uFE0F 크리티컬 패스 분석</div>';
+  html += '<p style="font-size:.82rem;color:var(--text-muted);margin-bottom:12px">이 과제와 관련된 전략 중 가장 많은 하류 작업을 차단하는 핵심 경로입니다.</p>';
+
+  // Degree summary table
+  html += '<div style="overflow-x:auto;margin-bottom:14px"><table class="top-tasks" style="font-size:.8rem"><thead><tr><th>전략</th><th>유입 강도</th><th>유출 강도</th><th>총 연결도</th></tr></thead><tbody>';
+  sorted.slice(0, 5).forEach(function(sid) {
+    var ks = stratMap[sid];
+    var d = degreeMap[sid] || { in: 0, out: 0, total: 0 };
+    if (!ks) return;
+    html += '<tr><td style="color:' + ks.color + ';font-weight:600">' + ks.icon + ' ' + ks.name + '</td>';
+    html += '<td style="text-align:center">' + d.in + '</td><td style="text-align:center">' + d.out + '</td>';
+    html += '<td style="text-align:center;font-weight:700">' + d.total + '</td></tr>';
+  });
+  html += '</tbody></table></div>';
+
+  // Flow visualization
+  html += '<div style="display:flex;align-items:center;gap:0;overflow-x:auto;padding:12px 0">';
+  chain.forEach(function(sid, i) {
+    var ks = stratMap[sid];
+    if (!ks) return;
+    var d = degreeMap[sid] || { total: 0 };
+    var isRelated = relatedIds.indexOf(sid) >= 0;
+    html += '<div style="flex-shrink:0;text-align:center;padding:10px 14px;border-radius:10px;border:2px solid ' + ks.color + (isRelated ? '' : '66') + ';background:' + ks.color + '0a;min-width:100px">';
+    html += '<div style="font-size:1.3rem">' + ks.icon + '</div>';
+    html += '<div style="font-size:.78rem;font-weight:600;color:' + ks.color + ';margin-top:4px">' + ks.name + '</div>';
+    html += '<div style="font-size:.7rem;color:var(--text-muted)">연결도: ' + d.total + '</div></div>';
+    if (i < chain.length - 1) {
+      // Find interaction strength between this and next
+      var nextSid = chain[i + 1];
+      var inter = STRATEGY_INTERACTIONS.find(function(si) {
+        return (si.from === sid && si.to === nextSid) || (si.from === nextSid && si.to === sid);
+      });
+      var arrColor = inter ? (inter.type === 'synergy' ? '#2E7D32' : inter.type === 'dependency' ? '#1565C0' : '#E65100') : '#999';
+      html += '<div style="flex-shrink:0;display:flex;flex-direction:column;align-items:center;padding:0 4px">';
+      html += '<div style="font-size:1.1rem;color:' + arrColor + '">→</div>';
+      if (inter) html += '<div style="font-size:.65rem;color:' + arrColor + '">' + inter.strength + '</div>';
+      html += '</div>';
+    }
+  });
+  html += '</div></div>';
+
+  containerEl.insertAdjacentHTML('beforeend', html);
+}
+
+/* ================================================================
+   D2: 다중 과제 비교 모드
+   ================================================================ */
+var _teCompareActive = false;
+
+function teToggleCompareMode() {
+  _teCompareActive = !_teCompareActive;
+  var btn = document.getElementById('teCompareModeBtn');
+  if (btn) {
+    btn.style.background = _teCompareActive ? 'var(--primary)' : 'var(--card-bg)';
+    btn.style.color = _teCompareActive ? '#fff' : 'var(--text)';
+  }
+  var panel = document.getElementById('teComparePanel');
+  var accordion = document.getElementById('teAccordionContainer');
+  if (_teCompareActive) {
+    if (panel) panel.style.display = 'block';
+    if (accordion) accordion.style.display = 'none';
+    teRenderComparePanel();
+  } else {
+    if (panel) panel.style.display = 'none';
+    if (accordion) accordion.style.display = 'block';
+  }
+}
+
+function teRenderComparePanel() {
+  var panel = document.getElementById('teComparePanel');
+  if (!panel || !DATA || !DATA.tasks) return;
+  var html = '<div class="card"><div class="card-title">\u{1F4CA} 다중 과제 비교 모드</div>';
+  html += '<p style="font-size:.82rem;color:var(--text-muted);margin-bottom:12px">2~4개 과제를 선택하여 비교합니다.</p>';
+  html += '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px;max-height:200px;overflow-y:auto">';
+  DATA.tasks.forEach(function(t) {
+    html += '<label style="display:inline-flex;align-items:center;gap:4px;font-size:.78rem;padding:3px 8px;border-radius:6px;border:1px solid var(--border);cursor:pointer;background:var(--card-bg)">';
+    html += '<input type="checkbox" class="te-cmp-chk" value="' + t.id + '" onchange="teUpdateCompare()"> [' + t.id + '] ' + teEscapeHtml(t.title.substring(0, 30)) + '</label>';
+  });
+  html += '</div><div id="teCompareResult"></div></div>';
+  panel.innerHTML = html;
+}
+
+function teUpdateCompare() {
+  var checks = document.querySelectorAll('.te-cmp-chk:checked');
+  var ids = [];
+  checks.forEach(function(c) { ids.push(parseInt(c.value)); });
+  if (ids.length > 4) {
+    // Uncheck the last one
+    checks[checks.length - 1].checked = false;
+    ids.pop();
+  }
+  var result = document.getElementById('teCompareResult');
+  if (!result || ids.length < 2) {
+    if (result) result.innerHTML = '<p style="color:var(--text-muted);font-size:.85rem">2개 이상 선택하세요.</p>';
+    return;
+  }
+  var tasks = ids.map(function(id) { return DATA.tasks.find(function(t) { return t.id === id; }); }).filter(Boolean);
+  var html = '<div style="overflow-x:auto"><table class="cmp-table"><thead><tr><th>항목</th>';
+  tasks.forEach(function(t) { html += '<th style="max-width:180px">[' + t.id + '] ' + teEscapeHtml(t.title.substring(0, 20)) + '</th>'; });
+  html += '</tr></thead><tbody>';
+  // Row: 과제명
+  html += '<tr><td style="font-weight:600">과제명</td>';
+  tasks.forEach(function(t) { html += '<td style="font-size:.82rem">' + teEscapeHtml(t.title) + '</td>'; });
+  html += '</tr>';
+  // Row: 전략분야
+  html += '<tr><td style="font-weight:600">전략분야</td>';
+  tasks.forEach(function(t) { html += '<td>' + (t.strategic_area_name || 'N/A') + '</td>'; });
+  html += '</tr>';
+  // Row: 정책축
+  html += '<tr><td style="font-weight:600">정책축</td>';
+  tasks.forEach(function(t) { html += '<td>' + (t.policy_axis_name || 'N/A') + '</td>'; });
+  html += '</tr>';
+  // Row: 부처
+  html += '<tr><td style="font-weight:600">부처</td>';
+  tasks.forEach(function(t) {
+    var mins = [...new Set((t.recommendations || []).map(function(r) { return r.ministry || '미정'; }))];
+    html += '<td style="font-size:.78rem">' + mins.join(', ') + '</td>';
+  });
+  html += '</tr>';
+  // Row: 권고사항 수
+  html += '<tr><td style="font-weight:600">권고사항 수</td>';
+  tasks.forEach(function(t) { html += '<td>' + (t.recommendations || []).length + '건</td>'; });
+  html += '</tr>';
+  // Row: 기한 범위
+  html += '<tr><td style="font-weight:600">기한 범위</td>';
+  tasks.forEach(function(t) {
+    var dls = (t.recommendations || []).map(function(r) { return r.deadline || ''; }).filter(Boolean).sort();
+    html += '<td style="font-size:.78rem">' + (dls.length ? dls[0] + ' ~ ' + dls[dls.length - 1] : '미정') + '</td>';
+  });
+  html += '</tr>';
+  // Row: 종합 등급
+  html += '<tr><td style="font-weight:600">종합 등급</td>';
+  tasks.forEach(function(t) {
+    var recs = t.recommendations || [];
+    var urgentCount = recs.filter(function(r) { return r.deadline && (r.deadline.indexOf('26Q1') >= 0 || r.deadline.indexOf('26Q2') >= 0); }).length;
+    var grade = urgentCount >= 3 ? 'A (긴급)' : urgentCount >= 1 ? 'B (주의)' : 'C (관찰)';
+    var gc = urgentCount >= 3 ? '#C62828' : urgentCount >= 1 ? '#E65100' : '#2E7D32';
+    html += '<td><span style="padding:2px 8px;border-radius:10px;background:' + gc + '18;color:' + gc + ';font-weight:600;font-size:.8rem">' + grade + '</span></td>';
+  });
+  html += '</tr></tbody></table></div>';
+  result.innerHTML = html;
+}
+
+/* ================================================================
+   D3: 캘린더 히트맵
+   ================================================================ */
+function teRenderCalendarHeatmap(task, containerEl) {
+  var recs = task.recommendations || [];
+  if (recs.length === 0) return;
+
+  // Parse deadlines into year-month buckets
+  var monthCounts = {};
+  var quarterToMonths = {
+    'Q1': [1, 2, 3], 'Q2': [4, 5, 6], 'Q3': [7, 8, 9], 'Q4': [10, 11, 12]
+  };
+  recs.forEach(function(r) {
+    var dl = r.deadline || '';
+    var m = dl.match(/(\d{2})(Q[1-4])/);
+    if (m) {
+      var year = 2000 + parseInt(m[1]);
+      var months = quarterToMonths[m[2]] || [];
+      // Place in last month of quarter
+      var month = months[months.length - 1];
+      if (month && year >= 2026 && year <= 2030) {
+        var key = year + '-' + month;
+        monthCounts[key] = (monthCounts[key] || 0) + 1;
+      }
+    }
+  });
+
+  var monthNames = ['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
+  var html = '<div class="card" style="margin-top:12px"><div class="card-title">\u{1F4C5} 권고사항 기한 캘린더 히트맵</div>';
+  html += '<p style="font-size:.78rem;color:var(--text-muted);margin-bottom:10px">이 과제의 권고사항 기한을 월별로 표시합니다. 진할수록 해당 월 기한 권고사항이 많습니다.</p>';
+
+  // Header row
+  html += '<div style="overflow-x:auto"><table style="border-collapse:collapse;font-size:.72rem;width:100%"><thead><tr><th style="padding:4px 8px;text-align:left;font-size:.75rem">연도</th>';
+  monthNames.forEach(function(mn) { html += '<th style="padding:4px 6px;text-align:center;color:var(--text-muted)">' + mn + '</th>'; });
+  html += '</tr></thead><tbody>';
+
+  for (var y = 2026; y <= 2030; y++) {
+    html += '<tr><td style="padding:4px 8px;font-weight:600;font-size:.78rem">' + y + '</td>';
+    for (var m = 1; m <= 12; m++) {
+      var key = y + '-' + m;
+      var count = monthCounts[key] || 0;
+      var bg = count === 0 ? 'var(--light)' : count === 1 ? '#bbdefb' : count === 2 ? '#64b5f6' : '#1565C0';
+      var fg = count >= 2 ? '#fff' : 'var(--text)';
+      html += '<td style="padding:4px 6px;text-align:center;background:' + bg + ';color:' + fg + ';border-radius:3px;border:1px solid var(--border);font-weight:' + (count ? '600' : '400') + '">' + (count || '') + '</td>';
+    }
+    html += '</tr>';
+  }
+  html += '</tbody></table></div>';
+  html += '<div style="display:flex;gap:8px;margin-top:8px;font-size:.7rem;color:var(--text-muted)"><span>범례:</span>';
+  html += '<span style="padding:1px 6px;background:var(--light);border-radius:3px">0</span>';
+  html += '<span style="padding:1px 6px;background:#bbdefb;border-radius:3px">1</span>';
+  html += '<span style="padding:1px 6px;background:#64b5f6;color:#fff;border-radius:3px">2</span>';
+  html += '<span style="padding:1px 6px;background:#1565C0;color:#fff;border-radius:3px">3+</span></div>';
+  html += '</div>';
+
+  containerEl.insertAdjacentHTML('beforeend', html);
+}
+
+/* ================================================================
+   D4: 미디어/뉴스 연동 (TE accordion section)
+   ================================================================ */
+function teRenderNews(task) {
+  var el = document.getElementById('te-sec-news');
+  if (!el) return;
+
+  var title = task.title || '';
+  // Extract keywords from task title
+  var keywords = title.replace(/[^\w\uAC00-\uD7AF\s]/g, '').split(/\s+/).filter(function(w) { return w.length >= 2; });
+  var searchQuery = encodeURIComponent(title);
+  var keywordsShort = keywords.slice(0, 5);
+
+  var html = '<div class="card"><div class="card-title">\u{1F4F0} 관련 뉴스 · 동향 검색</div>';
+  html += '<p style="font-size:.82rem;color:var(--text-muted);margin-bottom:14px">이 과제와 관련된 최신 뉴스와 정책 동향을 외부 사이트에서 검색할 수 있습니다.</p>';
+
+  // Search links
+  html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-bottom:16px">';
+
+  var links = [
+    { icon: '\u{1F4F0}', name: '네이버 뉴스 검색', url: 'https://search.naver.com/search.naver?where=news&query=' + searchQuery, color: '#03C75A' },
+    { icon: '\u{1F310}', name: '구글 뉴스 검색', url: 'https://news.google.com/search?q=' + searchQuery + '&hl=ko', color: '#4285F4' },
+    { icon: '\u{1F3DB}\uFE0F', name: '국회 입법정보 검색', url: 'https://likms.assembly.go.kr/bill/billSearchResult.do?query=' + searchQuery, color: '#1565C0' },
+    { icon: '\u{1F4DA}', name: 'NIA 정보화진흥원', url: 'https://www.nia.or.kr/site/nia_kor/ex/bbs/List.do?cbIdx=81918&searchKey=1&searchVal=' + searchQuery, color: '#E65100' },
+    { icon: '\u{1F50D}', name: '정책브리핑 검색', url: 'https://www.korea.kr/search/searchList.do?srchType=allSearch&query=' + searchQuery, color: '#003087' },
+    { icon: '\u{1F4C4}', name: '국가법령정보센터', url: 'https://www.law.go.kr/LSW/lsSearchByKwd.do?&searchWord=' + searchQuery, color: '#6A1B9A' }
+  ];
+
+  links.forEach(function(l) {
+    html += '<a href="' + l.url + '" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:8px;border:1px solid ' + l.color + '33;background:' + l.color + '08;text-decoration:none;transition:background .2s">';
+    html += '<span style="font-size:1.3rem">' + l.icon + '</span>';
+    html += '<div><div style="font-weight:600;font-size:.85rem;color:' + l.color + '">' + l.name + '</div>';
+    html += '<div style="font-size:.72rem;color:var(--text-muted)">새 탭에서 열기</div></div></a>';
+  });
+  html += '</div>';
+
+  // Keywords
+  if (keywordsShort.length > 0) {
+    html += '<div style="margin-top:8px"><div style="font-size:.82rem;font-weight:600;margin-bottom:6px">추출 검색 키워드</div>';
+    html += '<div style="display:flex;flex-wrap:wrap;gap:6px">';
+    keywordsShort.forEach(function(kw) {
+      html += '<span style="padding:4px 10px;border-radius:12px;background:var(--primary);color:#fff;font-size:.78rem;cursor:default">' + teEscapeHtml(kw) + '</span>';
+    });
+    html += '</div></div>';
+  }
+
+  html += '</div>';
+  el.innerHTML = html;
+}
+
+/* ================================================================
+   O1: 주석/메모 시스템
+   ================================================================ */
+function initMemoSystem() {
+  // Create floating memo button
+  var fab = document.createElement('div');
+  fab.id = 'memoFab';
+  fab.innerHTML = '\u{1F5D2}\uFE0F';
+  fab.title = '메모 열기';
+  fab.style.cssText = 'position:fixed;bottom:24px;right:80px;width:48px;height:48px;border-radius:50%;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;font-size:1.4rem;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,.3);z-index:999;transition:transform .2s';
+  fab.addEventListener('mouseenter', function() { fab.style.transform = 'scale(1.1)'; });
+  fab.addEventListener('mouseleave', function() { fab.style.transform = 'scale(1)'; });
+  fab.addEventListener('click', toggleMemoPanel);
+  document.body.appendChild(fab);
+
+  // Badge
+  var badge = document.createElement('span');
+  badge.id = 'memoBadge';
+  badge.style.cssText = 'position:absolute;top:-4px;right:-4px;background:var(--danger);color:#fff;font-size:.65rem;width:18px;height:18px;border-radius:50%;display:none;align-items:center;justify-content:center;font-weight:700';
+  fab.appendChild(badge);
+
+  // Panel
+  var panel = document.createElement('div');
+  panel.id = 'memoPanel';
+  panel.style.cssText = 'display:none;position:fixed;bottom:80px;right:24px;width:360px;max-height:50vh;background:var(--card-bg);border:2px solid var(--primary);border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.2);z-index:1000;overflow:hidden';
+  panel.innerHTML = '<div style="background:var(--primary);color:#fff;padding:10px 14px;display:flex;justify-content:space-between;align-items:center"><strong>\u{1F5D2}\uFE0F 메모</strong><button onclick="toggleMemoPanel()" style="background:none;border:none;color:#fff;font-size:1.2rem;cursor:pointer">&times;</button></div>' +
+    '<div style="padding:12px"><textarea id="memoTextarea" placeholder="이 페이지에 대한 메모를 작성하세요..." style="width:100%;height:150px;border:1px solid var(--border);border-radius:8px;padding:10px;font-family:var(--font);font-size:.85rem;resize:vertical;background:var(--card-bg);color:var(--text)"></textarea>' +
+    '<div style="display:flex;justify-content:space-between;margin-top:8px"><span id="memoStatus" style="font-size:.75rem;color:var(--text-muted)"></span>' +
+    '<button onclick="saveMemo()" style="padding:6px 16px;background:var(--primary);color:#fff;border:none;border-radius:6px;cursor:pointer;font-family:var(--font);font-size:.82rem">저장</button></div></div>';
+  document.body.appendChild(panel);
+
+  updateMemoBadge();
+}
+
+function getMemoKey() {
+  var tabId = STATE.currentTab || 'overview';
+  var taskId = STATE.teSelectedTaskId || 0;
+  return 'memo_' + tabId + '_' + taskId;
+}
+
+function toggleMemoPanel() {
+  var panel = document.getElementById('memoPanel');
+  if (!panel) return;
+  var visible = panel.style.display !== 'none';
+  panel.style.display = visible ? 'none' : 'block';
+  if (!visible) {
+    var ta = document.getElementById('memoTextarea');
+    var key = getMemoKey();
+    if (ta) ta.value = localStorage.getItem(key) || '';
+    var status = document.getElementById('memoStatus');
+    if (status) status.textContent = '키: ' + key;
+  }
+}
+
+function saveMemo() {
+  var ta = document.getElementById('memoTextarea');
+  if (!ta) return;
+  var key = getMemoKey();
+  var val = ta.value.trim();
+  if (val) {
+    localStorage.setItem(key, val);
+  } else {
+    localStorage.removeItem(key);
+  }
+  updateMemoBadge();
+  var status = document.getElementById('memoStatus');
+  if (status) status.textContent = val ? '저장 완료!' : '메모 삭제됨';
+}
+
+function updateMemoBadge() {
+  var badge = document.getElementById('memoBadge');
+  if (!badge) return;
+  var count = 0;
+  for (var i = 0; i < localStorage.length; i++) {
+    if (localStorage.key(i).indexOf('memo_') === 0 && localStorage.getItem(localStorage.key(i))) count++;
+  }
+  if (count > 0) {
+    badge.style.display = 'flex';
+    badge.textContent = count > 9 ? '9+' : count;
+  } else {
+    badge.style.display = 'none';
+  }
+}
+
+function teGetSavedMemo(task) {
+  var key = 'memo_taskeval_' + (task ? task.id : 0);
+  return localStorage.getItem(key) || '';
+}
+
+/* ================================================================
+   O3: AI 기반 과제 추천 (유사 과제 추천)
+   ================================================================ */
+function teRenderSimilarTasks(task, containerEl) {
+  if (!DATA || !DATA.tasks || DATA.tasks.length < 2) return;
+
+  // Build keyword vectors for simple TF-IDF-like similarity
+  function extractKeywords(t) {
+    var text = (t.title + ' ' + (t.background || '').substring(0, 300) + ' ' + (t.strategic_area_name || '') + ' ' + (t.policy_axis_name || '')).toLowerCase();
+    var words = text.replace(/[^\w\uAC00-\uD7AF]/g, ' ').split(/\s+/).filter(function(w) { return w.length >= 2; });
+    var freq = {};
+    words.forEach(function(w) { freq[w] = (freq[w] || 0) + 1; });
+    return freq;
+  }
+
+  var taskKws = extractKeywords(task);
+  var taskKwKeys = Object.keys(taskKws);
+  if (taskKwKeys.length === 0) return;
+
+  // Compute similarity for all other tasks
+  var similarities = [];
+  DATA.tasks.forEach(function(t) {
+    if (t.id === task.id) return;
+    var otherKws = extractKeywords(t);
+    // Cosine-like overlap
+    var dotProduct = 0;
+    var normA = 0;
+    var normB = 0;
+    taskKwKeys.forEach(function(k) {
+      var a = taskKws[k];
+      var b = otherKws[k] || 0;
+      dotProduct += a * b;
+      normA += a * a;
+    });
+    Object.keys(otherKws).forEach(function(k) { normB += otherKws[k] * otherKws[k]; });
+    var sim = (normA > 0 && normB > 0) ? dotProduct / (Math.sqrt(normA) * Math.sqrt(normB)) : 0;
+    if (sim > 0.05) similarities.push({ task: t, score: sim });
+  });
+
+  similarities.sort(function(a, b) { return b.score - a.score; });
+  var top5 = similarities.slice(0, 5);
+  if (top5.length === 0) return;
+
+  var html = '<div class="card" style="margin-top:14px"><div class="card-title">\u{1F916} 유사 과제 추천</div>';
+  html += '<p style="font-size:.82rem;color:var(--text-muted);margin-bottom:10px">키워드 유사도 기반으로 가장 관련 높은 과제를 추천합니다.</p>';
+  html += '<div style="display:grid;gap:8px">';
+  top5.forEach(function(item) {
+    var pct = Math.round(item.score * 100);
+    var barColor = pct >= 50 ? '#2E7D32' : pct >= 30 ? '#1565C0' : '#E65100';
+    html += '<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:var(--card-bg);cursor:pointer" onclick="STATE.teSelectedTaskId=' + item.task.id + ';document.getElementById(\'teTaskSelect\').value=' + item.task.id + ';teUpdateUrl();teRenderAll()">';
+    html += '<div style="min-width:50px;text-align:center"><span style="font-size:1.1rem;font-weight:700;color:' + barColor + '">' + pct + '%</span></div>';
+    html += '<div style="flex:1"><div style="font-weight:600;font-size:.85rem">' + taskLink(item.task.id, '[' + item.task.id + ']') + ' ' + teEscapeHtml(item.task.title) + '</div>';
+    html += '<div style="font-size:.75rem;color:var(--text-muted)">' + (item.task.strategic_area_name || '') + ' · ' + (item.task.policy_axis_name || '') + '</div></div>';
+    html += '<div style="width:80px;height:6px;background:var(--border);border-radius:3px;overflow:hidden"><div style="width:' + pct + '%;height:100%;background:' + barColor + ';border-radius:3px"></div></div>';
+    html += '</div>';
+  });
+  html += '</div></div>';
+
+  containerEl.insertAdjacentHTML('beforeend', html);
+}
+
+/* ================================================================
+   O4: 변경 이력 타임라인 (Changelog)
+   ================================================================ */
+function renderChangelog() {
+  var el = document.getElementById('tab-changelog');
+  if (!el) return;
+
+  var milestones = [
+    { ver: 'v0.1', date: '2026-02-25', desc: '프로젝트 초기화, 디렉토리 생성, 팀 구성', type: 'feat' },
+    { ver: 'v0.3', date: '2026-02-25', desc: 'index.html 초기 대시보드 5개 뷰 구현', type: 'feat' },
+    { ver: 'v0.8', date: '2026-02-25', desc: '글로벌협력·표준화현황 탭 추가 → 총 10개 탭', type: 'feat' },
+    { ver: 'v1.0', date: '2026-02-25', desc: '다중 키워드 검색, 글로벌협력 세부 정책 권고 전개', type: 'feat' },
+    { ver: 'v1.2', date: '2026-02-26', desc: '북마크 기능(★), 참고자료/각주 재추출', type: 'feat' },
+    { ver: 'v1.8', date: '2026-02-26', desc: '기한초과 과제 정확 분류: 실제 날짜 기반 전환', type: 'fix' },
+    { ver: 'v2.0', date: '2026-02-26', desc: 'Sankey 흐름도 신규 페이지(sankey.html) 추가', type: 'arch' },
+    { ver: 'v2.6', date: '2026-02-26', desc: 'TF-IDF 코사인 유사도, 복합위험도, Force-directed 그래프', type: 'arch' },
+    { ver: 'v2.7', date: '2026-02-27', desc: 'aiact.html 신규 생성: AI기본법 연계 분석 6개 탭', type: 'feat' },
+    { ver: 'v2.8', date: '2026-02-27', desc: '글로벌 AI 정책 동향 120개 사례 통합', type: 'feat' },
+    { ver: 'v2.11', date: '2026-02-27', desc: '글로벌 정책 비교 PDF 상세 데이터 통합', type: 'feat' },
+    { ver: 'v2.20', date: '2026-02-27', desc: '타임라인 클릭→권고사항 자동 스크롤', type: 'fix' },
+    { ver: 'v2.46', date: '2026-03-01', desc: '가이드 투어, 과제 비교, 갭 분석, 컴플라이언스 등 7가지 기능', type: 'feat' },
+    { ver: 'v2.55', date: '2026-03-01', desc: 'Gantt 보기 대폭 강화: 기한미정 표시, 필터 연동', type: 'feat' },
+    { ver: 'v2.62', date: '2026-03-02', desc: 'aiact.html 컴플라이언스 탭 신설', type: 'feat' },
+    { ver: 'v2.71', date: '2026-03-03', desc: '복수 주무 부처 전면 적용 (42개 부처/기관 사전)', type: 'arch' },
+    { ver: 'v2.80', date: '2026-03-03', desc: '표준화 현황 과제 번호 형식 통일', type: 'fix' },
+    { ver: 'v2.84', date: '2026-03-04', desc: '부처 추출 강화, 연도 기한 추출, 타임라인 복수 기한', type: 'feat' },
+    { ver: 'v2.91', date: '2026-03-05', desc: '도움말·FAQ·매뉴얼 페이지 신규 생성 (help.html)', type: 'feat' },
+    { ver: 'v3.0', date: '2026-03-29', desc: 'MiroFish 멀티 에이전트 대시보드 (mirofish.html)', type: 'arch' },
+    { ver: 'v3.1', date: '2026-03-29', desc: 'PWA 지원, 메모 시스템, 크리티컬 패스, 비교 모드, 뉴스 연동, 변경이력 탭', type: 'feat' }
+  ];
+
+  var typeConfig = {
+    feat: { label: '기능', color: '#2E7D32', bg: '#e8f5e9' },
+    fix: { label: '수정', color: '#1565C0', bg: '#e3f2fd' },
+    arch: { label: '아키텍처', color: '#6A1B9A', bg: '#f3e5f5' }
+  };
+
+  var html = '<h2 class="section-title">\u{1F4DC} 변경 이력 타임라인</h2>';
+  html += '<p class="section-desc">프로젝트 v0.1부터 현재까지의 주요 마일스톤을 시각적으로 표시합니다.</p>';
+
+  html += '<div style="position:relative;padding-left:40px;margin-top:24px">';
+  html += '<div style="position:absolute;left:18px;top:0;bottom:0;width:3px;background:linear-gradient(to bottom,var(--primary),var(--accent));border-radius:2px"></div>';
+
+  milestones.forEach(function(m, i) {
+    var tc = typeConfig[m.type] || typeConfig.feat;
+    var isLast = i === milestones.length - 1;
+    html += '<div style="position:relative;margin-bottom:' + (isLast ? '0' : '20') + 'px">';
+    // Dot
+    html += '<div style="position:absolute;left:-30px;top:6px;width:16px;height:16px;border-radius:50%;background:' + tc.color + ';border:3px solid var(--card-bg);box-shadow:0 0 0 2px ' + tc.color + '"></div>';
+    // Content
+    html += '<div class="card" style="border-left:3px solid ' + tc.color + '">';
+    html += '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px">';
+    html += '<div style="display:flex;align-items:center;gap:8px">';
+    html += '<span style="padding:3px 10px;border-radius:10px;background:' + tc.color + ';color:#fff;font-size:.78rem;font-weight:700">' + m.ver + '</span>';
+    html += '<span style="padding:2px 8px;border-radius:8px;background:' + tc.bg + ';color:' + tc.color + ';font-size:.72rem">' + tc.label + '</span></div>';
+    html += '<span style="font-size:.78rem;color:var(--text-muted)">' + m.date + '</span></div>';
+    html += '<p style="margin-top:8px;font-size:.88rem">' + teEscapeHtml(m.desc) + '</p>';
+    html += '</div></div>';
+  });
+
+  html += '</div>';
+  el.innerHTML = html;
+}
+
+/* ================================================================
    INIT
    ================================================================ */
 document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -18332,6 +18877,9 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
 
 loadData().then(() => {
   document.getElementById('loadingIndicator').style.display = 'none';
+
+  // O1: Initialize memo system
+  initMemoSystem();
 
   // URL routing: mirofish.html?task=34#taskeval → 과제 34 종합 평가 직접 진입
   var urlParams = new URLSearchParams(window.location.search);
@@ -18347,6 +18895,13 @@ loadData().then(() => {
     renderOverview();
   }
 });
+
+// D5: PWA Service Worker registration
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function() {
+    navigator.serviceWorker.register('./sw.js').catch(function() {});
+  });
+}
 </script>
 </body>
 </html>

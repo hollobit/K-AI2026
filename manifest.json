@@ -1,0 +1,17 @@
+{
+  "name": "대한민국 AI 행동계획 - 미래 전략 분석",
+  "short_name": "AI행동계획",
+  "description": "MiroFish 멀티 에이전트 시뮬레이션 프레임워크 기반 정책 분석 대시보드",
+  "start_url": "./mirofish.html",
+  "display": "standalone",
+  "background_color": "#f0f4f8",
+  "theme_color": "#003087",
+  "lang": "ko",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🇰🇷</text></svg>",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}
