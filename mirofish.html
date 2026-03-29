@@ -7,6 +7,7 @@
   <meta name="description" content="MiroFish 멀티 에이전트 시뮬레이션 프레임워크 기반 정책 분석 대시보드">
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="../data/task_eval/task_eval_data.js" defer></script>
   <style>
 :root {
   --primary: #003087;
@@ -262,6 +263,25 @@ a:hover { text-decoration: underline; }
 .loading { text-align: center; padding: 60px; color: var(--text-muted); }
 .loading .spinner { display: inline-block; width: 40px; height: 40px; border: 4px solid var(--border); border-top-color: var(--primary); border-radius: 50%; animation: spin .8s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
+
+/* Task Eval Accordion */
+.te-accordion { border: 1px solid var(--border); border-radius: var(--radius); }
+.te-accordion[open] { border-color: var(--primary); }
+.te-accordion-header::-webkit-details-marker { display: none; }
+.te-accordion-header:hover { background: var(--table-hover); border-radius: var(--radius); }
+
+/* Print styles for task eval */
+@media print {
+  .tabs, .header, .header-nav, .dark-toggle, #teTaskNav, #insightPanel, .chat-fab { display: none !important; }
+  .tab-content:not(.active) { display: none !important; }
+  .tab-content.active { display: block !important; }
+  .te-accordion { break-inside: avoid; border: 1px solid #ccc !important; }
+  details[open] > summary ~ * { display: block !important; }
+  details summary { font-size: .9rem !important; }
+  .content { max-width: 100%; padding: 10px; }
+  body { background: #fff; color: #000; font-size: 11pt; }
+  .card { box-shadow: none !important; border: 1px solid #ddd !important; page-break-inside: avoid; }
+}
   </style>
 </head>
 <body>
@@ -304,6 +324,7 @@ a:hover { text-decoration: underline; }
   <button class="tab-btn" data-tab="interactions">&#x1F504; 전략 상호작용</button>
   <button class="tab-btn" data-tab="stratonto">&#x1F9EC; 전략 온톨로지</button>
   <button class="tab-btn" data-tab="techtrends">&#x1F680; AI 기술 트렌드</button>
+  <button class="tab-btn" data-tab="taskeval">&#x1F4CB; 과제별 전략</button>
   <button class="tab-btn" data-tab="report">&#x1F4DD; 종합 보고서</button>
   <button class="tab-btn" data-tab="sns">&#x1F4E1; SNS 여론</button>
   <button class="tab-btn" data-tab="trust">&#x1F6E1;&#xFE0F; 정보 신뢰성</button>
@@ -476,6 +497,51 @@ a:hover { text-decoration: underline; }
     <p class="section-desc">AI 정책 오보 확산 분석 및 취약성 평가 — 팩트체크 전략 수립 지원</p>
     <div class="sub-tabs" id="trustSubTabs"></div>
     <div id="trustContent"></div>
+  </div>
+
+  <!-- TAB: Task Comprehensive Evaluation -->
+  <div class="tab-content" id="tab-taskeval">
+    <h2 class="section-title">&#x1F4CB; 과제별 전략</h2>
+    <p class="section-desc">99개 과제별 종합 분석 — 이해관계자·시나리오·갭·전략·경제영향·AI트렌드를 한눈에</p>
+
+    <!-- Task Selector -->
+    <div class="card" style="margin-bottom:20px">
+      <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center">
+        <div style="flex:1;min-width:250px">
+          <label style="font-size:.8rem;color:var(--text-muted);display:block;margin-bottom:4px">과제 선택</label>
+          <select id="teTaskSelect" style="width:100%;padding:10px 12px;border:2px solid var(--border);border-radius:8px;font-size:.9rem;background:var(--card-bg);color:var(--text);font-family:var(--font)">
+            <option value="">-- 과제를 선택하세요 --</option>
+          </select>
+        </div>
+        <div style="min-width:160px">
+          <label style="font-size:.8rem;color:var(--text-muted);display:block;margin-bottom:4px">정책축 필터</label>
+          <select id="teAxisFilter" style="width:100%;padding:10px 12px;border:2px solid var(--border);border-radius:8px;font-size:.85rem;background:var(--card-bg);color:var(--text);font-family:var(--font)">
+            <option value="">전체</option>
+          </select>
+        </div>
+        <div style="min-width:160px">
+          <label style="font-size:.8rem;color:var(--text-muted);display:block;margin-bottom:4px">전략분야 필터</label>
+          <select id="teAreaFilter" style="width:100%;padding:10px 12px;border:2px solid var(--border);border-radius:8px;font-size:.85rem;background:var(--card-bg);color:var(--text);font-family:var(--font)">
+            <option value="">전체</option>
+          </select>
+        </div>
+        <div style="min-width:200px">
+          <label style="font-size:.8rem;color:var(--text-muted);display:block;margin-bottom:4px">키워드 검색</label>
+          <input id="teKeywordSearch" type="text" placeholder="과제명 검색..." style="width:100%;padding:10px 12px;border:2px solid var(--border);border-radius:8px;font-size:.85rem;background:var(--card-bg);color:var(--text);font-family:var(--font)">
+        </div>
+      </div>
+      <div id="teTaskNav" style="margin-top:12px;display:none;justify-content:space-between;align-items:center">
+        <button onclick="teNavTask(-1)" style="padding:6px 14px;border:1px solid var(--border);border-radius:6px;background:var(--card-bg);color:var(--text);cursor:pointer;font-family:var(--font)">◀ 이전 과제</button>
+        <span id="teTaskPosition" style="font-size:.85rem;color:var(--text-muted)"></span>
+        <button onclick="teNavTask(1)" style="padding:6px 14px;border:1px solid var(--border);border-radius:6px;background:var(--card-bg);color:var(--text);cursor:pointer;font-family:var(--font)">다음 과제 ▶</button>
+        <button onclick="teToggleAll(true)" style="padding:6px 14px;border:1px solid var(--border);border-radius:6px;background:var(--card-bg);color:var(--text);cursor:pointer;font-family:var(--font)">📂 전체 펼치기</button>
+        <button onclick="teToggleAll(false)" style="padding:6px 14px;border:1px solid var(--border);border-radius:6px;background:var(--card-bg);color:var(--text);cursor:pointer;font-family:var(--font)">📁 전체 접기</button>
+        <button onclick="tePrintAll()" style="padding:6px 14px;border:1px solid var(--border);border-radius:6px;background:var(--card-bg);color:var(--text);cursor:pointer;font-family:var(--font)">🖨 인쇄</button>
+      </div>
+    </div>
+
+    <!-- 12 Accordion Sections -->
+    <div id="teAccordionContainer"></div>
   </div>
 
 <!-- InsightForge / PanoramaSearch floating tool -->
@@ -10150,7 +10216,7 @@ const INLINE_GLOBAL = {
    ================================================================ */
 let DATA = { tasks: [], ministries: [], globalCases: [], meta: {} };
 const API_CONFIG = { baseUrl: 'http://localhost:5500', available: false, graphAvailable: false };
-let STATE = { currentTab: 'overview', darkMode: false, selectedScenario: 'baseline', selectedAgent: 'government' };
+let STATE = { currentTab: 'overview', darkMode: false, selectedScenario: 'baseline', selectedAgent: 'government', teSelectedTaskId: 0, teExpanded: null };
 let GRAPH_DATA = null; // PolicyGraph full export cache
 const chartInstances = {};
 
@@ -11000,6 +11066,14 @@ function switchTab(tabId) {
   STATE.currentTab = tabId;
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tabId));
   document.querySelectorAll('.tab-content').forEach(c => c.classList.toggle('active', c.id === 'tab-' + tabId));
+  // URL에 현재 탭 반영 (taskeval은 teUpdateUrl에서 처리)
+  if (tabId !== 'taskeval') {
+    var url = new URL(window.location);
+    url.hash = tabId;
+    url.searchParams.delete('task');
+    url.searchParams.delete('expand');
+    history.replaceState(null, '', url);
+  }
   renderCurrentTab();
 }
 
@@ -11018,6 +11092,7 @@ function renderCurrentTab() {
     case 'report': renderReport(); break;
     case 'sns': renderSNS(); break;
     case 'trust': renderTrust(); break;
+    case 'taskeval': renderTaskEval(); break;
   }
 }
 
@@ -16951,6 +17026,1304 @@ function toggleChapter(header) {
 }
 
 /* ================================================================
+   SECTION 14: TASK COMPREHENSIVE EVALUATION (과제별 전략)
+   ================================================================ */
+
+// -- Task Eval cache for LLM responses --
+const TE_CACHE = {};
+
+function renderTaskEval() {
+  const sel = document.getElementById('teTaskSelect');
+  const axisFilter = document.getElementById('teAxisFilter');
+  const areaFilter = document.getElementById('teAreaFilter');
+  const keyword = document.getElementById('teKeywordSearch');
+
+  // Populate task dropdown if empty
+  if (sel.options.length <= 1) {
+    // Populate axis filter
+    const axes = [...new Set(DATA.tasks.map(t => t.policy_axis_name))].sort();
+    axisFilter.innerHTML = '<option value="">전체</option>' + axes.map(a => '<option value="' + a + '">' + a + '</option>').join('');
+    // Populate area filter
+    const areas = [...new Set(DATA.tasks.map(t => t.strategic_area_name))].sort();
+    areaFilter.innerHTML = '<option value="">전체</option>' + areas.map(a => '<option value="' + a + '">' + a + '</option>').join('');
+    // Populate tasks
+    tePopulateTaskList();
+    // Event listeners
+    sel.addEventListener('change', () => { STATE.teSelectedTaskId = parseInt(sel.value) || 0; teUpdateUrl(); teRenderAll(); });
+    axisFilter.addEventListener('change', tePopulateTaskList);
+    areaFilter.addEventListener('change', tePopulateTaskList);
+    keyword.addEventListener('input', tePopulateTaskList);
+  }
+
+  // Check URL parameter
+  if (!STATE.teSelectedTaskId) {
+    const urlParams = new URLSearchParams(window.location.search);
+    const taskParam = parseInt(urlParams.get('task'));
+    if (taskParam && DATA.tasks.find(t => t.id === taskParam)) {
+      STATE.teSelectedTaskId = taskParam;
+      sel.value = taskParam;
+    }
+  }
+
+  teRenderAll();
+}
+
+function tePopulateTaskList() {
+  const sel = document.getElementById('teTaskSelect');
+  const axisVal = document.getElementById('teAxisFilter').value;
+  const areaVal = document.getElementById('teAreaFilter').value;
+  const kwVal = (document.getElementById('teKeywordSearch').value || '').toLowerCase();
+  let filtered = DATA.tasks;
+  if (axisVal) filtered = filtered.filter(t => t.policy_axis_name === axisVal);
+  if (areaVal) filtered = filtered.filter(t => t.strategic_area_name === areaVal);
+  if (kwVal) filtered = filtered.filter(t => t.title.toLowerCase().includes(kwVal) || (t.background || '').toLowerCase().includes(kwVal));
+  const prev = sel.value;
+  sel.innerHTML = '<option value="">-- 과제를 선택하세요 (' + filtered.length + '개) --</option>' +
+    filtered.map(t => '<option value="' + t.id + '">[' + t.id + '] ' + t.title + '</option>').join('');
+  if (prev && filtered.find(t => t.id === parseInt(prev))) sel.value = prev;
+}
+
+function teNavTask(dir) {
+  const sel = document.getElementById('teTaskSelect');
+  const opts = [...sel.options].filter(o => o.value);
+  const idx = opts.findIndex(o => o.value == STATE.teSelectedTaskId);
+  const next = idx + dir;
+  if (next >= 0 && next < opts.length) {
+    sel.value = opts[next].value;
+    STATE.teSelectedTaskId = parseInt(opts[next].value);
+    teUpdateUrl();
+    teRenderAll();
+  }
+}
+
+function teToggleBg(btn) {
+  var targetId = btn.dataset.target;
+  var taskId = parseInt(btn.dataset.taskid);
+  var el = document.getElementById(targetId);
+  if (!el) return;
+  var task = DATA.tasks.find(function(t) { return t.id === taskId; });
+  if (!task) return;
+  if (el.dataset.expanded === '1') {
+    el.textContent = (task.background || '').substring(0, 500) + '...';
+    el.dataset.expanded = '0';
+    btn.textContent = '더보기';
+  } else {
+    el.textContent = task.background || '';
+    el.dataset.expanded = '1';
+    btn.textContent = '접기';
+  }
+}
+
+function teToggleAll(open) {
+  var container = document.getElementById('teAccordionContainer');
+  if (!container) return;
+  container.querySelectorAll('details').forEach(function(d) {
+    d.open = open;
+    var arrow = d.querySelector('.te-accordion-arrow');
+    if (arrow) arrow.style.transform = open ? 'rotate(90deg)' : '';
+  });
+  STATE.teExpanded = open;
+  teUpdateUrl();
+}
+
+function tePrintAll() {
+  var container = document.getElementById('teAccordionContainer');
+  if (!container) return;
+
+  // 1) 모든 아코디언(details) 펼치기
+  var allDetails = container.querySelectorAll('details');
+  var prevStates = [];
+  allDetails.forEach(function(d) {
+    prevStates.push(d.open);
+    d.open = true;
+  });
+
+  // 2) 내부의 <details> (기타 전략, 전체 SWOT 등)도 모두 펼치기
+  var innerDetails = container.querySelectorAll('details details');
+  var innerStates = [];
+  innerDetails.forEach(function(d) {
+    innerStates.push(d.open);
+    d.open = true;
+  });
+
+  // 3) 인쇄
+  requestAnimationFrame(function() {
+    window.print();
+
+    // 4) 원래 상태 복원
+    allDetails.forEach(function(d, i) { d.open = prevStates[i]; });
+    innerDetails.forEach(function(d, i) { d.open = innerStates[i]; });
+  });
+}
+
+function teUpdateUrl() {
+  var url = new URL(window.location);
+  if (STATE.teSelectedTaskId) {
+    url.searchParams.set('task', STATE.teSelectedTaskId);
+    url.hash = 'taskeval';
+  } else {
+    url.searchParams.delete('task');
+  }
+  if (STATE.teExpanded === true) {
+    url.searchParams.set('expand', '1');
+  } else if (STATE.teExpanded === false) {
+    url.searchParams.delete('expand');
+  }
+  history.replaceState(null, '', url);
+}
+
+const TE_SECTIONS = [
+  { id: 'overview', icon: '\u{1F4CC}', title: '과제 개요', open: true },
+  { id: 'stakeholders', icon: '\u{1F465}', title: '이해관계자 분석 (10대 페르소나 SWOT)', open: true },
+  { id: 'ai-interview', icon: '\u{1F9E0}', title: 'AI 인터뷰 (페르소나별 성공·위험·협력 종합)', open: false },
+  { id: 'scenarios', icon: '\u{1F52E}', title: '시나리오 분석 (비관/기본/낙관)', open: false },
+  { id: 'gaps', icon: '\u{1F3AF}', title: '갭 분석 (10대 관점 SWOT 매트릭스)', open: false },
+  { id: 'strategy', icon: '\u{1F5FA}\uFE0F', title: '전략 로드맵 (단기/중기/장기)', open: false },
+  { id: 'economic', icon: '\u{1F4B0}', title: '경제영향 분석', open: false },
+  { id: 'interactions', icon: '\u{1F504}', title: '상호작용 매트릭스', open: false },
+  { id: 'techtrends', icon: '\u{1F680}', title: 'AI 기술 트렌드 대응', open: false },
+  { id: 'summary', icon: '\u{1F4CA}', title: '종합 평가 요약', open: false },
+];
+
+function teRenderAll() {
+  const container = document.getElementById('teAccordionContainer');
+  const nav = document.getElementById('teTaskNav');
+  const task = DATA.tasks.find(t => t.id === STATE.teSelectedTaskId);
+
+  if (!task) {
+    container.innerHTML = '<div class="card" style="text-align:center;padding:60px;color:var(--text-muted)"><div style="font-size:3rem;margin-bottom:16px">\u{1F4CB}</div><h3>과제를 선택하세요</h3><p style="margin-top:8px">위 드롭다운에서 분석할 과제를 선택하면 종합 평가를 확인할 수 있습니다.</p></div>';
+    nav.style.display = 'none';
+    return;
+  }
+
+  nav.style.display = 'flex';
+  const sel = document.getElementById('teTaskSelect');
+  const opts = [...sel.options].filter(o => o.value);
+  const idx = opts.findIndex(o => o.value == task.id);
+  document.getElementById('teTaskPosition').textContent = '[' + task.id + '] ' + task.title + ' (' + (idx + 1) + '/' + opts.length + ')';
+
+  container.innerHTML = TE_SECTIONS.map(sec => {
+    const openAttr = sec.open ? ' open' : '';
+    return '<details class="te-accordion card" style="margin-bottom:12px"' + openAttr + '>' +
+      '<summary class="te-accordion-header" style="padding:14px 18px;cursor:pointer;font-weight:600;font-size:.95rem;list-style:none;display:flex;align-items:center;gap:8px">' +
+      '<span class="te-accordion-arrow" style="transition:transform .2s">\u25B6</span> ' + sec.icon + ' ' + sec.title + '</summary>' +
+      '<div class="te-accordion-body" style="padding:0 18px 18px" id="te-sec-' + sec.id + '">' +
+      '<div style="text-align:center;padding:30px;color:var(--text-muted)"><div class="spinner" style="width:24px;height:24px;border-width:3px;margin:0 auto 8px"></div>데이터 로딩 중...</div>' +
+      '</div></details>';
+  }).join('');
+
+  // Arrow rotation for open/close
+  container.querySelectorAll('details.te-accordion').forEach(d => {
+    d.addEventListener('toggle', () => {
+      d.querySelector('.te-accordion-arrow').style.transform = d.open ? 'rotate(90deg)' : '';
+    });
+    if (d.open) d.querySelector('.te-accordion-arrow').style.transform = 'rotate(90deg)';
+  });
+
+  // Render each section
+  teRenderOverview(task);
+  teRenderStakeholders(task);
+  teRenderScenarios(task);
+  teRenderGaps(task);
+  teRenderStrategy(task);
+  teRenderEconomic(task);
+  teRenderInteractions(task);
+  teRenderTechTrends(task);
+  teRenderSummary(task);
+  // AI interview — 통합 페르소나별 뷰
+  teRenderAIInterview(task);
+
+  // URL expand=1 파라미터 처리
+  var expandParam = new URLSearchParams(window.location.search).get('expand');
+  if (expandParam === '1') {
+    STATE.teExpanded = true;
+    teToggleAll(true);
+  }
+}
+
+// ================================================================
+// Phase 8.2: Task Explorer Section Renderers
+// ================================================================
+
+function teRenderOverview(task) {
+  var el = document.getElementById('te-sec-overview');
+  if (!el) return;
+  var html = '';
+  // Task header card
+  html += '<div class="card" style="border-left:4px solid var(--primary)">';
+  html += '<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">';
+  html += '<span style="font-size:1.6rem;font-weight:700;color:var(--primary)">' + taskLink(task.id, '[' + task.id + ']') + '</span>';
+  html += '<h3 style="margin:0;flex:1;min-width:200px">' + task.title + '</h3>';
+  html += '</div>';
+  // Badges
+  html += '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">';
+  html += '<span style="display:inline-block;padding:4px 10px;border-radius:12px;background:rgba(21,101,192,.12);color:#1565C0;font-size:.8rem;font-weight:600">정책축: ' + (task.policy_axis_name || 'N/A') + '</span>';
+  html += '<span style="display:inline-block;padding:4px 10px;border-radius:12px;background:rgba(106,27,154,.12);color:#6A1B9A;font-size:.8rem;font-weight:600">전략분야: ' + (task.strategic_area_name || 'N/A') + '</span>';
+  html += '</div>';
+  // Background
+  var bg = task.background || '';
+  if (bg) {
+    var truncated = bg.length > 500;
+    var bgId = 'te-bg-full-' + task.id;
+    html += '<div style="margin-top:14px;padding:12px;background:var(--card-bg);border-radius:8px;border:1px solid var(--border)">';
+    html += '<div style="font-weight:600;margin-bottom:6px;font-size:.85rem;color:var(--text-muted)">배경</div>';
+    html += '<div id="' + bgId + '" style="font-size:.88rem;line-height:1.6">' + teEscapeHtml(truncated ? bg.substring(0, 500) + '...' : bg) + '</div>';
+    if (truncated) {
+      html += '<button data-target="' + bgId + '" data-taskid="' + task.id + '" onclick="teToggleBg(this)" style="margin-top:6px;border:none;background:none;color:var(--primary);cursor:pointer;font-size:.82rem;padding:0">더보기</button>';
+    }
+    html += '</div>';
+  }
+  html += '</div>';
+
+  // Recommendations table
+  var recs = task.recommendations || [];
+  if (recs.length > 0) {
+    html += '<div class="card" style="margin-top:12px"><div class="card-title">권고사항 (' + recs.length + '건)</div>';
+    html += '<div style="overflow-x:auto"><table class="top-tasks"><thead><tr><th style="width:40px">순번</th><th>담당부처</th><th>기한</th><th>내용</th><th style="width:60px">상태</th></tr></thead><tbody>';
+    recs.forEach(function(r) {
+      var statusColor = r.status === '완료' ? '#2E7D32' : r.status === '진행중' ? '#1565C0' : '#F57C00';
+      html += '<tr>';
+      html += '<td style="text-align:center;font-weight:600">' + r.seq + '</td>';
+      html += '<td>' + (r.ministry || '미정') + '</td>';
+      html += '<td style="white-space:nowrap">' + (r.deadline_label || r.deadline || '미정') + '</td>';
+      html += '<td style="font-size:.85rem">' + r.content + '</td>';
+      html += '<td style="text-align:center"><span style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:.75rem;background:' + statusColor + '22;color:' + statusColor + '">' + (r.status || '미정') + '</span></td>';
+      html += '</tr>';
+    });
+    html += '</tbody></table></div></div>';
+  } else {
+    html += '<div class="card" style="margin-top:12px;text-align:center;padding:30px;color:var(--text-muted)">권고사항 데이터 없음</div>';
+  }
+  el.innerHTML = html;
+}
+
+function teRenderStakeholders(task) {
+  var el = document.getElementById('te-sec-stakeholders');
+  if (!el) return;
+  if (!AGENT_PROFILES) { el.innerHTML = '<p style="color:var(--text-muted)">데이터 없음</p>'; return; }
+  var agentKeys = Object.keys(AGENT_PROFILES).filter(function(k) { return k !== 'leadership'; });
+  var html = '';
+
+  agentKeys.forEach(function(k) {
+    var ap = AGENT_PROFILES[k];
+    var score = Math.round(MiroFishEngine.evaluateTask(task, ap));
+    var barColor = score >= 60 ? '#2E7D32' : score >= 30 ? '#F57C00' : '#C62828';
+
+    html += '<div class="card" style="margin-bottom:14px;border-left:4px solid ' + ap.color + '">';
+    // Header with score
+    html += '<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">';
+    html += '<h4 style="margin:0;color:' + ap.color + '">' + ap.icon + ' ' + ap.name + '</h4>';
+    html += '<div style="display:flex;align-items:center;gap:8px"><span style="font-size:.8rem;color:var(--text-muted)">관련도</span>';
+    html += '<div style="width:120px;height:8px;background:var(--border);border-radius:4px;overflow:hidden"><div style="width:' + score + '%;height:100%;background:' + barColor + ';border-radius:4px"></div></div>';
+    html += '<strong style="color:' + barColor + '">' + score + '</strong></div></div>';
+
+    // SWOT 4-quadrant grid
+    html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px">';
+    var swotData = [
+      { key: 'strengths', label: 'S - 강점', bg: '#1b5e2015', color: '#1b5e20' },
+      { key: 'weaknesses', label: 'W - 약점', bg: '#e6510015', color: '#e65100' },
+      { key: 'opportunities', label: 'O - 기회', bg: '#0d47a115', color: '#0d47a1' },
+      { key: 'threats', label: 'T - 위협', bg: '#b71c1c15', color: '#b71c1c' }
+    ];
+    swotData.forEach(function(sd) {
+      var items = (ap.swot && ap.swot[sd.key]) || [];
+      html += '<div style="padding:10px;border-radius:8px;background:' + sd.bg + ';border:1px solid ' + sd.color + '22">';
+      html += '<div style="font-weight:600;font-size:.8rem;color:' + sd.color + ';margin-bottom:6px">' + sd.label + '</div>';
+      html += '<ul style="margin:0;padding-left:16px;font-size:.78rem;line-height:1.5">';
+      items.forEach(function(item) {
+        var highlighted = teHighlightKeywords(item, task.title);
+        html += '<li>' + highlighted + '</li>';
+      });
+      html += '</ul></div>';
+    });
+    html += '</div>';
+
+    // Countermeasures (from SWOT_STRATEGIES)
+    var strats = typeof SWOT_STRATEGIES !== 'undefined' ? SWOT_STRATEGIES[k] : null;
+    if (strats) {
+      html += '<div style="margin-top:12px">';
+      html += '<div style="font-weight:600;font-size:.85rem;margin-bottom:8px">대응전략</div>';
+      var stratEntries = [
+        { key: 'so', label: 'SO 전략' },
+        { key: 'wo', label: 'WO 전략' },
+        { key: 'st', label: 'ST 전략' },
+        { key: 'wt', label: 'WT 전략' }
+      ];
+      html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">';
+      stratEntries.forEach(function(se) {
+        var s = strats[se.key];
+        if (!s) return;
+        // Filter items related to this task
+        var relevantItems = (s.items || []).filter(function(item) {
+          return (item.tasks || []).indexOf(task.id) >= 0;
+        });
+        var displayItems = relevantItems.length > 0 ? relevantItems : (s.items || []).slice(0, 1);
+        html += '<div style="padding:8px;border-radius:6px;background:' + s.color + '10;border:1px solid ' + s.color + '22;font-size:.78rem">';
+        html += '<div style="font-weight:600;color:' + s.color + ';margin-bottom:4px">' + se.label + '</div>';
+        displayItems.forEach(function(item) {
+          html += '<div style="margin-bottom:4px">' + item.strategy + '</div>';
+        });
+        html += '</div>';
+      });
+      html += '</div></div>';
+    }
+    html += '</div>';
+  });
+
+  el.innerHTML = html;
+}
+
+function teHighlightKeywords(text, title) {
+  if (!title || !text) return text;
+  var keywords = title.replace(/[^\w\uAC00-\uD7AF\s]/g, '').split(/\s+/).filter(function(w) { return w.length >= 2; });
+  var result = text;
+  keywords.forEach(function(kw) {
+    var regex = new RegExp('(' + kw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi');
+    result = result.replace(regex, '<mark style="background:#FFEB3B66;padding:0 2px;border-radius:2px">$1</mark>');
+  });
+  return result;
+}
+
+function teRenderScenarios(task) {
+  var el = document.getElementById('te-sec-scenarios');
+  if (!el) return;
+  if (!SCENARIOS) { el.innerHTML = '<p style="color:var(--text-muted)">데이터 없음</p>'; return; }
+  var html = '';
+  var recs = task.recommendations || [];
+  var recCount = recs.length;
+  // Calculate deadline proximity (how many deadlines are in 26Q1-26Q2)
+  var urgentDeadlines = recs.filter(function(r) {
+    return r.deadline && (r.deadline.indexOf('26Q1') >= 0 || r.deadline.indexOf('26Q2') >= 0);
+  }).length;
+  // Count unique ministries
+  var ministries = {};
+  recs.forEach(function(r) { if (r.ministry) ministries[r.ministry] = true; });
+  var ministryCount = Object.keys(ministries).length;
+
+  html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px">';
+  ['pessimistic', 'baseline', 'optimistic'].forEach(function(key) {
+    var sc = SCENARIOS[key];
+    if (!sc) return;
+    var sim = MiroFishEngine.simulateScenario(key);
+    var params = sc.params;
+    // Task-specific impact adjustment
+    var complexityFactor = Math.min(1.5, 1 + recCount * 0.05);
+    var urgencyFactor = 1 + urgentDeadlines * 0.1;
+    var coordFactor = 1 + (ministryCount > 2 ? 0.15 : 0);
+    var taskCompletionRate = [];
+    sim.rates.forEach(function(r) {
+      var adjusted = Math.round(r / (complexityFactor * urgencyFactor) * params.coordination_factor * coordFactor);
+      taskCompletionRate.push(Math.max(0, Math.min(100, adjusted)));
+    });
+
+    html += '<div class="card" style="border-top:4px solid ' + sc.color + '">';
+    html += '<h4 style="color:' + sc.color + ';margin:0 0 8px">' + sc.icon + ' ' + sc.name + '</h4>';
+    html += '<p style="font-size:.82rem;color:var(--text-muted);margin-bottom:12px">' + sc.description + '</p>';
+    // Params
+    html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;font-size:.78rem;margin-bottom:12px">';
+    html += '<div>예산 계수: <strong>' + params.budget_factor.toFixed(1) + '</strong></div>';
+    html += '<div>협력 계수: <strong>' + params.coordination_factor.toFixed(1) + '</strong></div>';
+    html += '<div>외부 리스크: <strong>' + (params.external_risk * 100).toFixed(0) + '%</strong></div>';
+    html += '<div>부처 수: <strong>' + ministryCount + '개</strong></div>';
+    html += '</div>';
+    // Completion rate timeline
+    html += '<div style="font-weight:600;font-size:.8rem;margin-bottom:6px">분기별 예상 이행률</div>';
+    html += '<div style="display:flex;gap:2px;align-items:flex-end;height:80px">';
+    sim.quarters.forEach(function(q, i) {
+      var rate = taskCompletionRate[i];
+      var barH = Math.max(2, rate * 0.7);
+      html += '<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px">';
+      html += '<span style="font-size:.65rem;font-weight:600;color:' + sc.color + '">' + rate + '%</span>';
+      html += '<div style="width:100%;height:' + barH + 'px;background:' + sc.color + ';border-radius:3px 3px 0 0;opacity:.8"></div>';
+      html += '<span style="font-size:.6rem;color:var(--text-muted)">' + q + '</span>';
+      html += '</div>';
+    });
+    html += '</div>';
+    // Final rate
+    var finalRate = taskCompletionRate[taskCompletionRate.length - 1];
+    var rateColor = finalRate >= 70 ? '#2E7D32' : finalRate >= 40 ? '#F57C00' : '#C62828';
+    html += '<div style="text-align:center;margin-top:10px;padding:8px;border-radius:6px;background:' + rateColor + '15">';
+    html += '<span style="font-size:.8rem;color:var(--text-muted)">27Q4 예상 이행률</span><br>';
+    html += '<strong style="font-size:1.3rem;color:' + rateColor + '">' + finalRate + '%</strong></div>';
+    html += '</div>';
+  });
+  html += '</div>';
+
+  // Task-specific risk factors
+  html += '<div class="card" style="margin-top:12px"><div class="card-title">과제 특성 리스크 요인</div>';
+  html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px;font-size:.82rem">';
+  html += '<div style="padding:10px;border-radius:6px;background:rgba(21,101,192,.08)"><strong>권고사항 수:</strong> ' + recCount + '건' + (recCount > 5 ? ' <span style="color:#C62828">(복잡도 높음)</span>' : '') + '</div>';
+  html += '<div style="padding:10px;border-radius:6px;background:rgba(230,81,0,.08)"><strong>긴급 기한:</strong> ' + urgentDeadlines + '건 (26Q1-Q2)' + (urgentDeadlines > 2 ? ' <span style="color:#C62828">(시급)</span>' : '') + '</div>';
+  html += '<div style="padding:10px;border-radius:6px;background:rgba(106,27,154,.08)"><strong>관련 부처:</strong> ' + ministryCount + '개' + (ministryCount > 2 ? ' <span style="color:#F57C00">(부처 간 조정 필요)</span>' : '') + '</div>';
+  html += '</div></div>';
+
+  el.innerHTML = html;
+}
+
+function teRenderGaps(task) {
+  var el = document.getElementById('te-sec-gaps');
+  if (!el) return;
+  if (!AGENT_PROFILES) { el.innerHTML = '<p style="color:var(--text-muted)">데이터 없음</p>'; return; }
+
+  // 과제 키워드 추출: 제목 + 배경 + 권고사항 + 부처 + 전략분야
+  var recs = task.recommendations || [];
+  var ministries = recs.map(function(r) { return r.ministry; });
+  var recTexts = recs.map(function(r) { return r.content || ''; }).join(' ');
+  var allText = task.title + ' ' + (task.background || '').substring(0, 300) + ' ' + recTexts.substring(0, 400) + ' ' + task.strategic_area_name + ' ' + task.policy_axis_name + ' ' + ministries.join(' ');
+  var taskKws = allText.replace(/[^\w\uAC00-\uD7AF\s]/g, '').split(/\s+/).filter(function(w) { return w.length >= 2; });
+  taskKws = taskKws.filter(function(v, i, a) { return a.indexOf(v) === i; }); // 중복 제거
+
+  function itemRelevance(text) {
+    var tl = text.toLowerCase ? text.toLowerCase() : text;
+    return taskKws.reduce(function(s, kw) { return s + (tl.indexOf(kw) >= 0 ? 1 : 0); }, 0);
+  }
+
+  var agentKeys = Object.keys(AGENT_PROFILES);
+  var html = '';
+
+  // 1) 과제 핵심 요약
+  html += '<div class="card" style="margin-bottom:14px;border-left:4px solid var(--primary)">';
+  html += '<div class="card-title">\u{1F4CC} 과제 [' + task.id + '] 갭 분석 요약</div>';
+  html += '<p style="font-size:.84rem;margin-bottom:8px"><strong>' + task.title + '</strong> — ' + task.strategic_area_name + '</p>';
+  html += '<p style="font-size:.8rem;color:var(--text-muted)">10대 관점의 SWOT 항목 중 이 과제와 직접 관련된 내용만 추출하여 표시합니다. 관련도가 높은 관점이 먼저 표시됩니다.</p>';
+  html += '</div>';
+
+  // 2) 관점별 관련 SWOT 항목 수집 및 점수 계산
+  var perspectiveData = agentKeys.map(function(k) {
+    var ap = AGENT_PROFILES[k];
+    var evalScore = Math.round(MiroFishEngine.evaluateTask(task, ap));
+    var swot = ap.swot || {};
+    var cats = ['strengths', 'weaknesses', 'opportunities', 'threats'];
+    var catLabels = { strengths: '강점', weaknesses: '약점', opportunities: '기회', threats: '위협' };
+    var catColors = { strengths: '#2E7D32', weaknesses: '#E65100', opportunities: '#1565C0', threats: '#B71C1C' };
+    var catIcons = { strengths: '💪', weaknesses: '⚡', opportunities: '🌟', threats: '🔥' };
+
+    var relItems = [];
+    var totalItems = 0;
+    cats.forEach(function(cat) {
+      (swot[cat] || []).forEach(function(item) {
+        totalItems++;
+        var score = itemRelevance(item);
+        if (score >= 2) {
+          relItems.push({ text: item, cat: cat, label: catLabels[cat], color: catColors[cat], icon: catIcons[cat], score: score });
+        }
+      });
+    });
+    relItems.sort(function(a, b) { return b.score - a.score; });
+
+    return { key: k, ap: ap, evalScore: evalScore, relItems: relItems, totalItems: totalItems };
+  });
+
+  // 관련 항목이 있는 관점 먼저, 관련도 점수 내림차순
+  perspectiveData.sort(function(a, b) {
+    if (b.relItems.length !== a.relItems.length) return b.relItems.length - a.relItems.length;
+    return b.evalScore - a.evalScore;
+  });
+
+  // 3) 과제 관련 SWOT 통합 카드 (관련 항목이 있는 관점만)
+  var hasAnyRelevant = perspectiveData.some(function(p) { return p.relItems.length > 0; });
+  if (hasAnyRelevant) {
+    html += '<div class="card" style="margin-bottom:14px"><div class="card-title">\u{1F3AF} 이 과제에 해당하는 SWOT 항목</div>';
+    perspectiveData.forEach(function(p) {
+      if (p.relItems.length === 0) return;
+      html += '<div style="margin-bottom:12px;padding:10px 14px;border-radius:8px;border-left:4px solid ' + p.ap.color + ';background:' + p.ap.color + '06">';
+      html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">';
+      html += '<span style="font-weight:600;color:' + p.ap.color + '">' + p.ap.icon + ' ' + p.ap.name + '</span>';
+      html += '<span style="font-size:.72rem;color:var(--text-muted)">관련 ' + p.relItems.length + '/' + p.totalItems + '개 | 관심도 ' + p.evalScore + '</span>';
+      html += '</div>';
+      html += '<div style="display:flex;flex-wrap:wrap;gap:6px">';
+      p.relItems.forEach(function(item) {
+        html += '<div style="flex:1;min-width:200px;padding:8px 10px;border-radius:6px;font-size:.8rem;line-height:1.5;border:1px solid ' + item.color + '33;background:' + item.color + '08">';
+        html += '<span style="font-size:.7rem;font-weight:600;color:' + item.color + '">' + item.icon + ' ' + item.label + '</span><br>';
+        html += teHighlightKeywords(item.text, task.title);
+        html += '</div>';
+      });
+      html += '</div></div>';
+    });
+    html += '</div>';
+  } else {
+    html += '<div class="card" style="margin-bottom:14px;text-align:center;padding:20px;color:var(--text-muted)">';
+    html += '<p>10대 관점의 SWOT 항목 중 이 과제와 직접 매칭되는 항목이 없습니다.</p></div>';
+  }
+
+  // 4) 과제 중심 갭 분석: 이 과제의 약점+위협 vs 강점+기회
+  var allWeakThreats = [];
+  var allStrengthOpps = [];
+  perspectiveData.forEach(function(p) {
+    p.relItems.forEach(function(item) {
+      if (item.cat === 'weaknesses' || item.cat === 'threats') allWeakThreats.push({ text: item.text, cat: item.label, icon: item.icon, color: item.color, persona: p.ap.name });
+      if (item.cat === 'strengths' || item.cat === 'opportunities') allStrengthOpps.push({ text: item.text, cat: item.label, icon: item.icon, color: item.color, persona: p.ap.name });
+    });
+  });
+
+  if (allWeakThreats.length > 0 || allStrengthOpps.length > 0) {
+    html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">';
+    // 긍정 요인
+    html += '<div class="card" style="border-top:4px solid #2E7D32"><div class="card-title" style="color:#2E7D32">\u{1F4AA} 긍정 요인 (강점+기회)</div>';
+    if (allStrengthOpps.length > 0) {
+      allStrengthOpps.forEach(function(item) {
+        html += '<div style="padding:6px 8px;margin-bottom:4px;border-radius:4px;font-size:.8rem;line-height:1.5;border-left:3px solid ' + item.color + '">';
+        html += '<span style="font-size:.68rem;color:var(--text-muted)">' + item.icon + ' ' + item.cat + ' · ' + item.persona + '</span><br>' + item.text + '</div>';
+      });
+    } else {
+      html += '<p style="font-size:.82rem;color:var(--text-muted);font-style:italic">관련 긍정 요인 없음</p>';
+    }
+    html += '</div>';
+    // 부정 요인
+    html += '<div class="card" style="border-top:4px solid #C62828"><div class="card-title" style="color:#C62828">\u{1F525} 부정 요인 (약점+위협)</div>';
+    if (allWeakThreats.length > 0) {
+      allWeakThreats.forEach(function(item) {
+        html += '<div style="padding:6px 8px;margin-bottom:4px;border-radius:4px;font-size:.8rem;line-height:1.5;border-left:3px solid ' + item.color + '">';
+        html += '<span style="font-size:.68rem;color:var(--text-muted)">' + item.icon + ' ' + item.cat + ' · ' + item.persona + '</span><br>' + item.text + '</div>';
+      });
+    } else {
+      html += '<p style="font-size:.82rem;color:var(--text-muted);font-style:italic">관련 부정 요인 없음</p>';
+    }
+    html += '</div></div>';
+  }
+
+  // 5) 전체 SWOT 매트릭스 (접힘)
+  html += '<details class="card" style="margin-top:14px"><summary class="card-title" style="cursor:pointer">10대 관점 전체 SWOT 매트릭스 (펼쳐서 보기)</summary>';
+  html += '<div style="overflow-x:auto;margin-top:8px"><table class="top-tasks" style="font-size:.75rem">';
+  html += '<thead><tr><th style="width:90px">관점</th><th style="background:#1b5e2010">강점</th><th style="background:#e6510010">약점</th><th style="background:#0d47a110">기회</th><th style="background:#b71c1c10">위협</th><th style="width:40px">점수</th></tr></thead><tbody>';
+  perspectiveData.forEach(function(p) {
+    var swot = p.ap.swot || {};
+    var renderList = function(items) {
+      if (!items || !items.length) return '-';
+      return '<ul style="margin:0;padding-left:12px;line-height:1.3">' + items.map(function(item) {
+        var rel = itemRelevance(item) >= 2;
+        return '<li' + (rel ? ' style="background:#FFEB3B44;border-radius:3px;padding:1px 3px"' : '') + '>' + item + '</li>';
+      }).join('') + '</ul>';
+    };
+    html += '<tr style="vertical-align:top"><td style="color:' + p.ap.color + ';font-weight:600">' + p.ap.icon + ' ' + p.ap.name + '</td>';
+    html += '<td>' + renderList(swot.strengths) + '</td><td>' + renderList(swot.weaknesses) + '</td>';
+    html += '<td>' + renderList(swot.opportunities) + '</td><td>' + renderList(swot.threats) + '</td>';
+    html += '<td style="text-align:center"><strong>' + p.evalScore + '</strong></td></tr>';
+  });
+  html += '</tbody></table></div></details>';
+
+  el.innerHTML = html;
+}
+
+function teRenderStrategy(task) {
+  var el = document.getElementById('te-sec-strategy');
+  if (!el) return;
+
+  var recs = task.recommendations || [];
+  var ministries = [...new Set(recs.map(function(r) { return r.ministry; }))];
+  var html = '';
+
+  // 기한 파싱: "26Q2" → { year:2026, quarter:2, raw:"26Q2" }
+  function parseDL(dl) {
+    if (!dl) return null;
+    var m = dl.match(/(\d{2})Q(\d)/);
+    if (m) return { year: 2000 + parseInt(m[1]), quarter: parseInt(m[2]), raw: dl };
+    var m2 = dl.match(/(\d{2})\+/);
+    if (m2) return { year: 2000 + parseInt(m2[1]), quarter: 4, raw: dl };
+    return null;
+  }
+  function dlToMonths(parsed) {
+    if (!parsed) return 999;
+    // 2026년 1분기 기준으로 개월 수 계산
+    return (parsed.year - 2026) * 12 + (parsed.quarter - 1) * 3;
+  }
+
+  // 권고사항을 기한별로 분류
+  var shortRecs = []; // ~12개월 (26Q1~26Q4)
+  var midRecs = [];   // 12~36개월 (27Q1~28Q4)
+  var longRecs = [];  // 36개월+ (29Q1~)
+  recs.forEach(function(r) {
+    var p = parseDL(r.deadline);
+    var months = dlToMonths(p);
+    var item = { rec: r, parsed: p, months: months };
+    if (months <= 12) shortRecs.push(item);
+    else if (months <= 36) midRecs.push(item);
+    else longRecs.push(item);
+  });
+
+  // 과제 요약 카드
+  var allDeadlines = recs.map(function(r) { return r.deadline || ''; }).filter(Boolean).sort();
+  html += '<div class="card" style="margin-bottom:14px;border-left:4px solid var(--primary)">';
+  html += '<div class="card-title">\u{1F4CC} 과제 [' + task.id + '] 전략 로드맵</div>';
+  html += '<p style="font-size:.84rem;margin-bottom:8px"><strong>' + task.title + '</strong></p>';
+  html += '<div style="display:flex;gap:16px;flex-wrap:wrap;font-size:.82rem;margin-bottom:8px">';
+  html += '<div><span style="color:var(--text-muted)">전략분야:</span> ' + task.strategic_area_name + '</div>';
+  html += '<div><span style="color:var(--text-muted)">담당부처:</span> <strong>' + ministries.join(', ') + '</strong></div>';
+  html += '<div><span style="color:var(--text-muted)">권고사항:</span> ' + recs.length + '건</div>';
+  html += '<div><span style="color:var(--text-muted)">기한 범위:</span> ' + (allDeadlines[0] || '미정') + ' ~ ' + (allDeadlines[allDeadlines.length - 1] || '미정') + '</div>';
+  html += '</div>';
+  // 기한별 분포 바
+  html += '<div style="display:flex;height:8px;border-radius:4px;overflow:hidden;margin-top:4px">';
+  var total = recs.length || 1;
+  if (shortRecs.length) html += '<div style="width:' + (shortRecs.length / total * 100) + '%;background:#FF6F00" title="단기 ' + shortRecs.length + '건"></div>';
+  if (midRecs.length) html += '<div style="width:' + (midRecs.length / total * 100) + '%;background:#1565C0" title="중기 ' + midRecs.length + '건"></div>';
+  if (longRecs.length) html += '<div style="width:' + (longRecs.length / total * 100) + '%;background:#2E7D32" title="장기 ' + longRecs.length + '건"></div>';
+  html += '</div>';
+  html += '<div style="display:flex;gap:12px;font-size:.72rem;color:var(--text-muted);margin-top:4px">';
+  html += '<span>\u{1F7E0} 단기 ' + shortRecs.length + '건</span>';
+  html += '<span>\u{1F535} 중기 ' + midRecs.length + '건</span>';
+  html += '<span>\u{1F7E2} 장기 ' + longRecs.length + '건</span>';
+  html += '</div></div>';
+
+  // 3단계 로드맵 카드
+  var phases = [
+    { label: '단기 전략', icon: '\u26A1', desc: '~1년 이내 (26Q1~26Q4)', color: '#FF6F00', items: shortRecs },
+    { label: '중기 전략', icon: '\u{1F4C5}', desc: '1~3년 (27Q1~28Q4)', color: '#1565C0', items: midRecs },
+    { label: '장기 전략', icon: '\u{1F5FA}\uFE0F', desc: '3년 이상 (29Q1~)', color: '#2E7D32', items: longRecs }
+  ];
+
+  html += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">';
+  phases.forEach(function(phase) {
+    html += '<div class="card" style="border-top:4px solid ' + phase.color + '">';
+    html += '<h4 style="color:' + phase.color + ';margin:0 0 4px">' + phase.icon + ' ' + phase.label + '</h4>';
+    html += '<div style="font-size:.72rem;color:var(--text-muted);margin-bottom:10px">' + phase.desc + ' · ' + phase.items.length + '건</div>';
+
+    if (phase.items.length === 0) {
+      html += '<p style="font-size:.8rem;color:var(--text-muted);font-style:italic">해당 기간 권고사항 없음</p>';
+    } else {
+      phase.items.sort(function(a, b) { return a.months - b.months; });
+      phase.items.forEach(function(item) {
+        var r = item.rec;
+        html += '<div style="margin-bottom:10px;padding:10px;border-radius:6px;border:1px solid ' + phase.color + '33;background:' + phase.color + '06">';
+        html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">';
+        html += '<span style="font-size:.72rem;padding:2px 8px;border-radius:10px;background:' + phase.color + '18;color:' + phase.color + ';font-weight:600">' + (r.deadline_label || r.deadline || '미정') + '</span>';
+        html += '<span style="font-size:.72rem;padding:2px 8px;border-radius:10px;background:var(--border);color:var(--text-muted)">' + r.ministry + '</span>';
+        html += '</div>';
+        html += '<div style="font-size:.82rem;line-height:1.6">' + r.content + '</div>';
+        html += '</div>';
+      });
+    }
+    html += '</div>';
+  });
+  html += '</div>';
+
+  // 관련 STRATEGIES (전체 프레임워크)에서 매칭되는 항목 — 접힘 참고
+  if (typeof STRATEGIES !== 'undefined' && STRATEGIES) {
+    var taskKws = (task.title + ' ' + (task.background || '').substring(0, 200) + ' ' + task.strategic_area_name + ' ' + ministries.join(' ')).toLowerCase()
+      .replace(/[^\w\uAC00-\uD7AF\s]/g, '').split(/\s+/).filter(function(w) { return w.length >= 2; });
+    taskKws = taskKws.filter(function(v, i, a) { return a.indexOf(v) === i; });
+
+    function relScore(text) { var tl = text.toLowerCase(); return taskKws.reduce(function(s, kw) { return s + (tl.indexOf(kw) >= 0 ? 1 : 0); }, 0); }
+
+    var matchedItems = [];
+    ['short', 'medium', 'long'].forEach(function(k) {
+      var strat = STRATEGIES[k];
+      if (!strat) return;
+      (strat.items || []).forEach(function(item) {
+        var score = relScore(item.text + ' ' + (item.evidence || ''));
+        if (score >= 2) matchedItems.push({ text: item.text, evidence: item.evidence, period: strat.title, color: strat.color, score: score });
+      });
+    });
+
+    if (matchedItems.length > 0) {
+      matchedItems.sort(function(a, b) { return b.score - a.score; });
+      html += '<details class="card" style="margin-top:12px"><summary class="card-title" style="cursor:pointer">\u{1F4D6} 전체 전략 프레임워크에서 관련 항목 (' + matchedItems.length + '건)</summary>';
+      html += '<div style="margin-top:8px">';
+      matchedItems.forEach(function(item) {
+        html += '<div style="margin-bottom:6px;padding:6px 10px;border-radius:4px;border-left:3px solid ' + item.color + ';font-size:.82rem">';
+        html += '<span style="font-size:.7rem;padding:1px 6px;border-radius:8px;background:' + item.color + '18;color:' + item.color + '">' + item.period + '</span> ';
+        html += '<strong>' + item.text + '</strong>';
+        if (item.evidence) html += '<br><span style="font-size:.72rem;color:var(--text-muted)">근거: ' + item.evidence + '</span>';
+        html += '</div>';
+      });
+      html += '</div></details>';
+    }
+  }
+
+  // KEY_STRATEGIES 연결
+  if (typeof KEY_STRATEGIES !== 'undefined' && KEY_STRATEGIES.length > 0) {
+    var relStrats = KEY_STRATEGIES.filter(function(ks) {
+      return (ks.related_tasks || []).some(function(rt) { return rt.id === task.id; }) ||
+             (ks.indirect_tasks || []).some(function(rt) { return rt.id === task.id; });
+    });
+    if (relStrats.length > 0) {
+      html += '<div class="card" style="margin-top:12px"><div class="card-title">\u{1F3AF} 이 과제와 연결된 핵심 전략</div>';
+      html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:8px">';
+      relStrats.forEach(function(ks) {
+        var directRef = (ks.related_tasks || []).find(function(rt) { return rt.id === task.id; });
+        var indirectRef = (ks.indirect_tasks || []).find(function(rt) { return rt.id === task.id; });
+        var ref = directRef || indirectRef;
+        var relType = directRef ? '직접 관련' : '간접 관련';
+        html += '<div style="padding:10px;border-radius:8px;border:1px solid ' + ks.color + '44;background:' + ks.color + '08">';
+        html += '<div style="font-weight:600;color:' + ks.color + '">' + ks.icon + ' ' + ks.name + '</div>';
+        html += '<div style="font-size:.78rem;color:var(--text-muted);margin-top:4px">' + ks.desc + '</div>';
+        if (ref) html += '<div style="font-size:.72rem;margin-top:4px;color:' + ks.color + '">' + relType + ': ' + ref.reason + '</div>';
+        html += '</div>';
+      });
+      html += '</div></div>';
+    }
+  }
+
+  el.innerHTML = html;
+}
+
+function teRenderEconomic(task) {
+  var el = document.getElementById('te-sec-economic');
+  if (!el) return;
+  if (typeof ECON_MODEL === 'undefined') { el.innerHTML = '<p style="color:var(--text-muted)">데이터 없음</p>'; return; }
+
+  var recs = task.recommendations || [];
+  var ministries = [...new Set(recs.map(function(r) { return r.ministry; }))];
+  var areaName = task.strategic_area_name || '';
+  var recTexts = recs.map(function(r) { return r.content || ''; }).join(' ');
+  var taskContext = (task.title + ' ' + (task.background || '').substring(0, 200) + ' ' + recTexts.substring(0, 200)).toLowerCase();
+
+  function isRelSector(sectorName) {
+    var sl = sectorName.toLowerCase();
+    var tkws = taskContext.split(/[\s,·.()]+/).filter(function(w) { return w.length >= 2; });
+    var hits = tkws.filter(function(w) { return sl.indexOf(w) >= 0; }).length;
+    return hits >= 1;
+  }
+
+  var html = '';
+
+  // 1) 과제 경제영향 요약 카드
+  html += '<div class="card" style="margin-bottom:14px;border-left:4px solid var(--primary)">';
+  html += '<div class="card-title">📌 과제 [' + task.id + '] 경제영향 요약</div>';
+  html += '<table style="font-size:.84rem;width:100%"><tbody>';
+  html += '<tr><td style="width:100px;color:var(--text-muted);padding:4px 0">과제명</td><td><strong>' + task.title + '</strong></td></tr>';
+  html += '<tr><td style="color:var(--text-muted);padding:4px 0">전략분야</td><td>' + areaName + ' (정책축: ' + task.policy_axis_name + ')</td></tr>';
+  html += '<tr><td style="color:var(--text-muted);padding:4px 0">담당부처</td><td>' + ministries.join(', ') + '</td></tr>';
+  html += '<tr><td style="color:var(--text-muted);padding:4px 0">권고사항</td><td>' + recs.length + '건</td></tr>';
+  html += '</tbody></table></div>';
+
+  // 2) 이 과제의 전략분야 수출·산업경쟁력
+  var exportData = ECON_MODEL.export_impact && ECON_MODEL.export_impact.strategic_areas ? ECON_MODEL.export_impact.strategic_areas[areaName] : null;
+  if (exportData) {
+    html += '<div class="card" style="margin-bottom:12px"><div class="card-title">이 과제가 속한 「' + areaName + '」 분야 수출·산업경쟁력</div>';
+    html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-top:8px">';
+    html += '<div style="text-align:center;padding:14px;border-radius:8px;background:rgba(21,101,192,.08)">';
+    html += '<div style="font-size:.75rem;color:var(--text-muted)">수출 잠재력</div>';
+    html += '<div style="font-size:1.8rem;font-weight:700;color:#1565C0">' + exportData.export_potential + '<span style="font-size:.8rem">/100</span></div></div>';
+    html += '<div style="text-align:center;padding:14px;border-radius:8px;background:rgba(46,125,50,.08)">';
+    html += '<div style="font-size:.75rem;color:var(--text-muted)">GDP 기여율</div>';
+    html += '<div style="font-size:1.8rem;font-weight:700;color:#2E7D32">' + exportData.gdp_pct + '<span style="font-size:.8rem">%</span></div></div>';
+    html += '<div style="padding:14px;border-radius:8px;background:rgba(106,27,154,.08)">';
+    html += '<div style="font-size:.75rem;color:var(--text-muted)">핵심 수출 산업</div>';
+    html += '<div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:6px">';
+    (exportData.sectors || []).forEach(function(s) {
+      html += '<span style="display:inline-block;padding:2px 8px;border-radius:10px;background:#6A1B9A22;color:#6A1B9A;font-size:.75rem">' + s + '</span>';
+    });
+    html += '</div></div></div></div>';
+  }
+
+  // 3) 관련 경제 분야 (과제 키워드 매칭) — 관련 분야만 상단, 나머지 접힘
+  if (ECON_MODEL.gdp_impact && ECON_MODEL.gdp_impact.sector_impact) {
+    var sectors = ECON_MODEL.gdp_impact.sector_impact;
+    var relSectors = sectors.filter(function(s) { return isRelSector(s.sector); });
+    var otherSectors = sectors.filter(function(s) { return !isRelSector(s.sector); });
+
+    html += '<div class="card" style="margin-bottom:12px"><div class="card-title">이 과제와 관련된 경제 분야 (' + relSectors.length + '/' + sectors.length + '개)</div>';
+    html += '<div style="font-size:.82rem">';
+
+    if (relSectors.length > 0) {
+      relSectors.forEach(function(s) {
+        html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;background:#FFEB3B33;padding:6px 10px;border-radius:6px;border-left:3px solid var(--primary)">';
+        html += '<span style="width:140px;flex-shrink:0;font-weight:600">' + s.sector + '</span>';
+        html += '<div style="flex:1;height:10px;background:var(--border);border-radius:4px;overflow:hidden"><div style="width:' + Math.min(100, s.gdp_add * 3.3) + '%;height:100%;background:var(--primary);border-radius:4px"></div></div>';
+        html += '<span style="width:60px;text-align:right;font-weight:700">' + s.gdp_add + '조</span>';
+        html += '<span style="width:65px;text-align:right;color:var(--text-muted)">' + (s.jobs / 10000).toFixed(1) + '만명</span>';
+        html += '</div>';
+      });
+    } else {
+      html += '<p style="color:var(--text-muted);font-style:italic">직접 매칭되는 경제 분야가 없습니다.</p>';
+    }
+
+    if (otherSectors.length > 0) {
+      html += '<details style="margin-top:8px"><summary style="font-size:.78rem;color:var(--text-muted);cursor:pointer">기타 경제 분야 (' + otherSectors.length + '개)</summary>';
+      html += '<div style="margin-top:4px;opacity:.6">';
+      otherSectors.forEach(function(s) {
+        html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:3px">';
+        html += '<span style="width:140px;flex-shrink:0">' + s.sector + '</span>';
+        html += '<div style="flex:1;height:6px;background:var(--border);border-radius:3px;overflow:hidden"><div style="width:' + Math.min(100, s.gdp_add * 3.3) + '%;height:100%;background:var(--border);border-radius:3px"></div></div>';
+        html += '<span style="width:60px;text-align:right;font-size:.78rem">' + s.gdp_add + '조</span>';
+        html += '</div>';
+      });
+      html += '</div></details>';
+    }
+    html += '</div></div>';
+  }
+
+  // 4) AI G3 지표 — 이 과제의 전략분야 관련만
+  if (ECON_MODEL.ai_g3_index) {
+    var dims = ECON_MODEL.ai_g3_index.dimensions || [];
+    var relatedDims = dims.filter(function(d) {
+      return (d.related_areas || []).some(function(a) { return a === task.strategic_area_id; });
+    });
+    if (relatedDims.length > 0) {
+      html += '<div class="card" style="margin-bottom:12px"><div class="card-title">이 과제가 기여하는 AI G3 지표</div>';
+      relatedDims.forEach(function(d) {
+        var gap = d.target - d.current;
+        html += '<div style="margin-bottom:10px">';
+        html += '<div style="display:flex;justify-content:space-between;font-size:.82rem;margin-bottom:4px"><span>' + d.name + '</span><span>현재 <strong>' + d.current + '</strong> → 목표 <strong>' + d.target + '</strong> (갭: ' + gap + ')</span></div>';
+        html += '<div style="width:100%;height:14px;background:var(--border);border-radius:7px;overflow:hidden;position:relative">';
+        html += '<div style="position:absolute;top:0;left:0;width:' + d.current + '%;height:100%;background:var(--primary);border-radius:7px"></div>';
+        html += '</div></div>';
+      });
+      html += '</div>';
+    }
+  }
+
+  // 5) 시나리오별 GDP 영향 (전체, 참고용 접힘)
+  if (ECON_MODEL.gdp_impact && ECON_MODEL.gdp_impact.scenarios) {
+    html += '<details class="card" style="margin-bottom:12px"><summary class="card-title" style="cursor:pointer">시나리오별 전체 경제 파급효과 (참고)</summary>';
+    html += '<table class="top-tasks" style="font-size:.82rem;margin-top:8px"><thead><tr><th>시나리오</th><th>AI GDP 기여(27)</th><th>AI GDP 기여(30)</th><th>일자리 창출</th><th>수출 성장률</th></tr></thead><tbody>';
+    ['optimistic', 'baseline', 'pessimistic'].forEach(function(k) {
+      var s = ECON_MODEL.gdp_impact.scenarios[k];
+      var sc = SCENARIOS[k];
+      if (!s || !sc) return;
+      html += '<tr><td style="color:' + sc.color + ';font-weight:600">' + sc.icon + ' ' + sc.name + '</td>';
+      html += '<td>' + s.ai_gdp_2027 + '%</td><td>' + s.ai_gdp_2030 + '%</td>';
+      html += '<td>' + (s.jobs_created / 10000).toFixed(1) + '만명</td><td>+' + s.export_growth + '%</td></tr>';
+    });
+    html += '</tbody></table></details>';
+  }
+
+  if (!html) html = '<div class="card" style="text-align:center;padding:30px;color:var(--text-muted)">이 과제의 전략분야에 대한 경제 영향 데이터가 없습니다.</div>';
+  el.innerHTML = html;
+}
+
+function teRenderInteractions(task) {
+  var el = document.getElementById('te-sec-interactions');
+  if (!el) return;
+  if (typeof STRATEGY_INTERACTIONS === 'undefined' || typeof KEY_STRATEGIES === 'undefined') {
+    el.innerHTML = '<p style="color:var(--text-muted)">데이터 없음</p>'; return;
+  }
+
+  // 과제 키워드 추출
+  var recs = task.recommendations || [];
+  var ministries = [...new Set(recs.map(function(r) { return r.ministry; }))];
+  var recTexts = recs.map(function(r) { return r.content || ''; }).join(' ');
+  var taskContext = (task.title + ' ' + (task.background || '').substring(0, 300) + ' ' + recTexts.substring(0, 300) + ' ' + task.strategic_area_name + ' ' + task.policy_axis_name + ' ' + ministries.join(' ')).toLowerCase();
+  var taskKws = taskContext.replace(/[^\w\uAC00-\uD7AF\s]/g, '').split(/\s+/).filter(function(w) { return w.length >= 2; });
+  taskKws = taskKws.filter(function(v, i, a) { return a.indexOf(v) === i; });
+
+  function relevanceScore(text) {
+    var tl = text.toLowerCase();
+    return taskKws.reduce(function(s, kw) { return s + (tl.indexOf(kw) >= 0 ? 1 : 0); }, 0);
+  }
+
+  var stratMap = {};
+  KEY_STRATEGIES.forEach(function(ks) { stratMap[ks.id] = ks; });
+
+  // 1단계: 직접 관련 전략 (related_tasks에 이 과제 포함)
+  var directStratIds = [];
+  KEY_STRATEGIES.forEach(function(ks) {
+    if ((ks.related_tasks || []).some(function(rt) { return rt.id === task.id; })) {
+      directStratIds.push(ks.id);
+    }
+  });
+
+  // 2단계: 간접 관련 전략 (indirect_tasks에 이 과제 포함)
+  var indirectStratIds = [];
+  KEY_STRATEGIES.forEach(function(ks) {
+    if (directStratIds.indexOf(ks.id) < 0 && (ks.indirect_tasks || []).some(function(rt) { return rt.id === task.id; })) {
+      indirectStratIds.push(ks.id);
+    }
+  });
+
+  // 3단계: 키워드 연관 전략 (직접/간접 아니면서 키워드 3개 이상 매칭)
+  var kwStratIds = [];
+  KEY_STRATEGIES.forEach(function(ks) {
+    if (directStratIds.indexOf(ks.id) >= 0 || indirectStratIds.indexOf(ks.id) >= 0) return;
+    var score = relevanceScore(ks.name + ' ' + ks.desc + ' ' + (ks.objectives || []).join(' '));
+    if (score >= 3) kwStratIds.push(ks.id);
+  });
+
+  var allRelatedIds = directStratIds.concat(indirectStratIds).concat(kwStratIds);
+
+  var html = '';
+
+  // 과제 정보 요약
+  html += '<div class="card" style="margin-bottom:14px;border-left:4px solid var(--primary)">';
+  html += '<div class="card-title">\u{1F4CC} 과제 [' + task.id + '] 상호작용 분석</div>';
+  html += '<p style="font-size:.84rem;margin-bottom:6px"><strong>' + task.title + '</strong></p>';
+  html += '<div style="display:flex;gap:8px;flex-wrap:wrap;font-size:.78rem">';
+  html += '<span style="padding:2px 10px;border-radius:10px;background:#2E7D3218;color:#2E7D32">직접 관련 전략: ' + directStratIds.length + '개</span>';
+  html += '<span style="padding:2px 10px;border-radius:10px;background:#1565C018;color:#1565C0">간접 관련 전략: ' + indirectStratIds.length + '개</span>';
+  html += '<span style="padding:2px 10px;border-radius:10px;background:#6A1B9A18;color:#6A1B9A">키워드 연관: ' + kwStratIds.length + '개</span>';
+  html += '</div></div>';
+
+  // 관련 전략 카드
+  if (allRelatedIds.length > 0) {
+    html += '<div class="card" style="margin-bottom:14px"><div class="card-title">\u{1F3AF} 이 과제와 연결된 전략</div>';
+    html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px">';
+    allRelatedIds.forEach(function(sid) {
+      var ks = stratMap[sid];
+      if (!ks) return;
+      var relType = directStratIds.indexOf(sid) >= 0 ? '직접' : (indirectStratIds.indexOf(sid) >= 0 ? '간접' : '키워드');
+      var relColor = relType === '직접' ? '#2E7D32' : (relType === '간접' ? '#1565C0' : '#6A1B9A');
+      var ref = (ks.related_tasks || []).find(function(rt) { return rt.id === task.id; }) || (ks.indirect_tasks || []).find(function(rt) { return rt.id === task.id; });
+      html += '<div style="padding:10px;border-radius:8px;border:1px solid ' + ks.color + '44;background:' + ks.color + '06">';
+      html += '<div style="display:flex;justify-content:space-between;align-items:center">';
+      html += '<span style="font-weight:600;color:' + ks.color + ';font-size:.85rem">' + ks.icon + ' ' + ks.name + '</span>';
+      html += '<span style="padding:1px 6px;border-radius:8px;background:' + relColor + '18;color:' + relColor + ';font-size:.68rem">' + relType + '</span></div>';
+      html += '<div style="font-size:.76rem;color:var(--text-muted);margin-top:4px">' + ks.desc + '</div>';
+      if (ref) html += '<div style="font-size:.72rem;margin-top:4px;color:' + relColor + '">\u2192 ' + ref.reason + '</div>';
+      html += '</div>';
+    });
+    html += '</div></div>';
+  }
+
+  // 상호작용: 직접 관련 전략 간 → 간접 포함 순으로 표시
+  var typeLabels = { synergy: '\u{1F91D} 시너지', dependency: '\u{1F517} 의존', tension: '\u26A0\uFE0F 긴장', competitive: '\u{1F3C1} 경쟁' };
+  var typeColors = { synergy: '#2E7D32', dependency: '#1565C0', tension: '#C62828', competitive: '#E65100' };
+
+  // 직접 관련 전략 간 상호작용
+  var directInteractions = STRATEGY_INTERACTIONS.filter(function(si) {
+    return directStratIds.indexOf(si.from) >= 0 || directStratIds.indexOf(si.to) >= 0;
+  });
+  // 간접/키워드 포함 상호작용 (직접에 없는 것만)
+  var directSet = directInteractions.map(function(si) { return si.from + '_' + si.to; });
+  var indirectInteractions = STRATEGY_INTERACTIONS.filter(function(si) {
+    if (directSet.indexOf(si.from + '_' + si.to) >= 0) return false;
+    return allRelatedIds.indexOf(si.from) >= 0 || allRelatedIds.indexOf(si.to) >= 0;
+  });
+
+  function renderInterTable(interactions, title) {
+    if (interactions.length === 0) return '';
+    var h = '<div class="card" style="margin-bottom:12px"><div class="card-title">' + title + ' (' + interactions.length + '건)</div>';
+    h += '<div style="overflow-x:auto"><table class="top-tasks" style="font-size:.82rem">';
+    h += '<thead><tr><th>전략 A</th><th></th><th>전략 B</th><th>유형</th><th>강도</th><th>설명</th></tr></thead><tbody>';
+    interactions.sort(function(a, b) { return b.strength - a.strength; }).forEach(function(si) {
+      var fromS = stratMap[si.from];
+      var toS = stratMap[si.to];
+      var tc = typeColors[si.type] || '#666';
+      h += '<tr>';
+      h += '<td style="color:' + (fromS ? fromS.color : '#666') + ';font-weight:600;font-size:.8rem">' + (fromS ? fromS.icon + ' ' + fromS.name : si.from) + '</td>';
+      h += '<td style="text-align:center">\u2194</td>';
+      h += '<td style="color:' + (toS ? toS.color : '#666') + ';font-weight:600;font-size:.8rem">' + (toS ? toS.icon + ' ' + toS.name : si.to) + '</td>';
+      h += '<td><span style="padding:2px 8px;border-radius:10px;background:' + tc + '18;color:' + tc + ';font-size:.72rem">' + (typeLabels[si.type] || si.type) + '</span></td>';
+      h += '<td style="text-align:center"><strong>' + si.strength + '</strong></td>';
+      h += '<td style="font-size:.78rem;color:var(--text-muted)">' + si.desc + '</td></tr>';
+    });
+    h += '</tbody></table></div></div>';
+    return h;
+  }
+
+  html += renderInterTable(directInteractions, '\u{1F525} 직접 관련 전략 간 상호작용');
+
+  if (indirectInteractions.length > 0) {
+    html += '<details class="card" style="margin-bottom:12px"><summary class="card-title" style="cursor:pointer">간접·키워드 관련 상호작용 (' + indirectInteractions.length + '건)</summary>';
+    var innerH = renderInterTable(indirectInteractions, '');
+    // renderInterTable wraps in card, extract inner content
+    html += '<div style="overflow-x:auto;margin-top:8px">' + innerH + '</div></details>';
+  }
+
+  // 유형별 요약
+  var allShown = directInteractions.concat(indirectInteractions);
+  if (allShown.length > 0) {
+    html += '<div class="card" style="margin-top:12px"><div class="card-title">상호작용 유형 분포</div>';
+    html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px">';
+    var typeCounts = {};
+    allShown.forEach(function(si) { typeCounts[si.type] = (typeCounts[si.type] || 0) + 1; });
+    Object.keys(typeCounts).forEach(function(t) {
+      var tc = typeColors[t] || '#666';
+      html += '<div style="text-align:center;padding:12px;border-radius:8px;background:' + tc + '10;border:1px solid ' + tc + '33">';
+      html += '<div style="font-size:1.4rem;font-weight:700;color:' + tc + '">' + typeCounts[t] + '</div>';
+      html += '<div style="font-size:.78rem;color:' + tc + '">' + (typeLabels[t] || t) + '</div></div>';
+    });
+    html += '</div></div>';
+  }
+
+  if (!html || allRelatedIds.length === 0) {
+    html = '<div class="card" style="text-align:center;padding:30px;color:var(--text-muted)">이 과제와 직접 연결된 전략 상호작용이 없습니다.</div>';
+  }
+
+  el.innerHTML = html;
+}
+
+function teRenderTechTrends(task) {
+  var el = document.getElementById('te-sec-techtrends');
+  if (!el) return;
+  if (typeof AI_TECH_DOMAINS === 'undefined') { el.innerHTML = '<p style="color:var(--text-muted)">데이터 없음</p>'; return; }
+  var html = '';
+
+  // Find tech domains relevant to this task
+  var relevantDomains = AI_TECH_DOMAINS.filter(function(d) {
+    var directMatch = (d.action_plan_coverage.direct_tasks || []).indexOf(task.id) >= 0;
+    var indirectMatch = (d.action_plan_coverage.indirect_tasks || []).indexOf(task.id) >= 0;
+    var kwMatch = (d.keywords || []).some(function(kw) { return task.title.indexOf(kw) >= 0; });
+    return directMatch || indirectMatch || kwMatch;
+  });
+
+  // If no direct match, show all with area overlap
+  if (relevantDomains.length === 0) {
+    relevantDomains = AI_TECH_DOMAINS.filter(function(d) {
+      return (d.action_plan_coverage.direct_tasks || []).concat(d.action_plan_coverage.indirect_tasks || []).some(function(tid) {
+        var t = DATA.tasks.find(function(tt) { return tt.id === tid; });
+        return t && t.strategic_area_id === task.strategic_area_id;
+      });
+    });
+  }
+
+  if (relevantDomains.length === 0) {
+    el.innerHTML = '<div class="card" style="text-align:center;padding:30px;color:var(--text-muted)">이 과제와 관련된 기술 트렌드가 없습니다.</div>';
+    return;
+  }
+
+  relevantDomains.forEach(function(d) {
+    var level = d.korea_status ? d.korea_status.level : 0;
+    var levelColor = level >= 60 ? '#2E7D32' : level >= 40 ? '#F57C00' : '#C62828';
+    var isDirect = (d.action_plan_coverage.direct_tasks || []).indexOf(task.id) >= 0;
+
+    html += '<div class="card" style="margin-bottom:12px;border-left:4px solid ' + d.color + (isDirect ? ';box-shadow:0 0 0 1px ' + d.color + '44' : '') + '">';
+    html += '<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">';
+    html += '<h4 style="margin:0;color:' + d.color + '">' + d.icon + ' ' + d.name + (isDirect ? ' <span style="font-size:.7rem;padding:2px 6px;border-radius:8px;background:' + d.color + '22;vertical-align:middle">직접 관련</span>' : '') + '</h4>';
+    html += '<div style="display:flex;gap:6px;flex-wrap:wrap">';
+    html += '<span style="padding:2px 8px;border-radius:10px;font-size:.73rem;background:' + (SPEED_COLORS[d.speed] || '#666') + '18;color:' + (SPEED_COLORS[d.speed] || '#666') + '">' + (SPEED_LABELS[d.speed] || d.speed) + '</span>';
+    html += '<span style="padding:2px 8px;border-radius:10px;font-size:.73rem;background:#6A1B9A18;color:#6A1B9A">' + (MATURITY_LABELS[d.maturity] || d.maturity) + '</span>';
+    html += '<span style="padding:2px 8px;border-radius:10px;font-size:.73rem;background:' + (d.disruption_risk === 'extreme' || d.disruption_risk === 'very_high' ? '#C6282818' : '#F57C0018') + ';color:' + (d.disruption_risk === 'extreme' || d.disruption_risk === 'very_high' ? '#C62828' : '#F57C00') + '">위험: ' + (RISK_LABELS[d.disruption_risk] || d.disruption_risk) + '</span>';
+    html += '</div></div>';
+    html += '<p style="font-size:.82rem;color:var(--text-muted);margin:8px 0">' + d.desc + '</p>';
+
+    // Korea readiness gauge
+    html += '<div style="margin:10px 0"><div style="display:flex;justify-content:space-between;font-size:.8rem;margin-bottom:4px"><span>한국 기술 준비도</span><strong style="color:' + levelColor + '">' + level + '/100</strong></div>';
+    html += '<div style="width:100%;height:16px;background:var(--border);border-radius:8px;overflow:hidden;position:relative">';
+    html += '<div style="width:' + level + '%;height:100%;background:linear-gradient(90deg,' + levelColor + ',' + d.color + ');border-radius:8px;transition:width .3s"></div>';
+    html += '</div></div>';
+
+    // Coverage info
+    var cov = d.action_plan_coverage;
+    html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:6px;font-size:.78rem;margin-top:8px">';
+    html += '<div style="padding:6px 8px;border-radius:6px;background:var(--card-bg);border:1px solid var(--border)">행동계획 커버리지: <strong>' + cov.coverage_pct + '%</strong></div>';
+    html += '<div style="padding:6px 8px;border-radius:6px;background:var(--card-bg);border:1px solid var(--border)">특허: <strong>' + (d.korea_status.patents || 0) + '</strong> / 논문: <strong>' + (d.korea_status.papers || 0) + '</strong></div>';
+    html += '<div style="padding:6px 8px;border-radius:6px;background:var(--card-bg);border:1px solid var(--border)">제품/서비스: <strong>' + (d.korea_status.products || 0) + '</strong></div>';
+    html += '</div>';
+
+    // Gap
+    if (cov.gap) {
+      html += '<div style="margin-top:8px;padding:8px 10px;border-radius:6px;background:#C6282810;border-left:3px solid #C62828;font-size:.8rem">';
+      html += '<strong style="color:#C62828">갭:</strong> ' + cov.gap + '</div>';
+    }
+
+    // Global leaders
+    html += '<div style="margin-top:8px;font-size:.78rem;color:var(--text-muted)">글로벌 리더: ' + (d.global_leaders || []).join(', ') + '</div>';
+    html += '</div>';
+  });
+
+  el.innerHTML = html;
+}
+
+function teRenderSummary(task) {
+  var el = document.getElementById('te-sec-summary');
+  if (!el) return;
+  var html = '';
+
+  // Compute 4 scores (0-100)
+  var recs = task.recommendations || [];
+  var recCount = recs.length;
+
+  // 1. Implementation risk (higher = more risky -> invert for "readiness")
+  var urgentDeadlines = recs.filter(function(r) { return r.deadline && (r.deadline.indexOf('26Q1') >= 0 || r.deadline.indexOf('26Q2') >= 0); }).length;
+  var ministrySet = {};
+  recs.forEach(function(r) { if (r.ministry) ministrySet[r.ministry] = true; });
+  var ministryCount = Object.keys(ministrySet).length;
+  var riskScore = Math.min(100, Math.max(0, 100 - (recCount * 3 + urgentDeadlines * 10 + ministryCount * 5)));
+
+  // 2. Stakeholder consensus
+  var agentKeys = Object.keys(AGENT_PROFILES).filter(function(k) { return k !== 'leadership'; });
+  var scores = agentKeys.map(function(k) { return MiroFishEngine.evaluateTask(task, AGENT_PROFILES[k]); });
+  var avgScore = scores.reduce(function(a, b) { return a + b; }, 0) / scores.length;
+  var variance = scores.reduce(function(s, v) { return s + Math.pow(v - avgScore, 2); }, 0) / scores.length;
+  var consensusScore = Math.min(100, Math.max(0, Math.round(avgScore * 1.2 - Math.sqrt(variance) * 0.5)));
+
+  // 3. Economic impact
+  var econScore = 50;
+  if (typeof ECON_MODEL !== 'undefined' && ECON_MODEL.export_impact && ECON_MODEL.export_impact.strategic_areas) {
+    var areaData = ECON_MODEL.export_impact.strategic_areas[task.strategic_area_name];
+    if (areaData) {
+      econScore = Math.round((areaData.export_potential * 0.6 + areaData.gdp_pct * 10) * 0.8);
+      econScore = Math.min(100, Math.max(0, econScore));
+    }
+  }
+
+  // 4. Tech readiness
+  var techScore = 50;
+  if (typeof AI_TECH_DOMAINS !== 'undefined') {
+    var relevantTech = AI_TECH_DOMAINS.filter(function(d) {
+      return (d.action_plan_coverage.direct_tasks || []).indexOf(task.id) >= 0;
+    });
+    if (relevantTech.length > 0) {
+      techScore = Math.round(relevantTech.reduce(function(s, d) { return s + (d.korea_status ? d.korea_status.level : 40); }, 0) / relevantTech.length);
+    }
+  }
+
+  var allScores = [
+    { label: '이행 안정도', score: riskScore, color: '#1565C0', desc: '기한·부처·복잡도 기반' },
+    { label: '이해관계자 합의도', score: consensusScore, color: '#2E7D32', desc: '9개 관점 관련도·분산 기반' },
+    { label: '경제 파급력', score: econScore, color: '#E65100', desc: '수출잠재력·GDP 기여 기반' },
+    { label: '기술 준비도', score: techScore, color: '#6A1B9A', desc: '관련 기술분야 준비 수준' }
+  ];
+  var totalAvg = Math.round(allScores.reduce(function(s, d) { return s + d.score; }, 0) / allScores.length);
+  var grade = totalAvg >= 80 ? 'A' : totalAvg >= 60 ? 'B' : totalAvg >= 40 ? 'C' : 'D';
+  var gradeColor = grade === 'A' ? '#2E7D32' : grade === 'B' ? '#1565C0' : grade === 'C' ? '#F57C00' : '#C62828';
+
+  // Overall grade card
+  html += '<div class="card" style="text-align:center;padding:20px;border:2px solid ' + gradeColor + '44">';
+  html += '<div style="font-size:3rem;font-weight:800;color:' + gradeColor + '">' + grade + '</div>';
+  html += '<div style="font-size:1.1rem;font-weight:600;color:var(--text-muted)">종합 등급 (평균 ' + totalAvg + '점)</div>';
+  html += '</div>';
+
+  // Score cards with bar visualization (radar substitute)
+  html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin-top:12px">';
+  allScores.forEach(function(d) {
+    var scoreGrade = d.score >= 80 ? 'A' : d.score >= 60 ? 'B' : d.score >= 40 ? 'C' : 'D';
+    html += '<div class="card" style="border-left:4px solid ' + d.color + ';text-align:center;padding:14px">';
+    html += '<div style="font-size:.82rem;color:var(--text-muted)">' + d.label + '</div>';
+    html += '<div style="font-size:2rem;font-weight:700;color:' + d.color + ';margin:6px 0">' + d.score + '</div>';
+    html += '<div style="width:100%;height:10px;background:var(--border);border-radius:5px;overflow:hidden;margin:6px 0"><div style="width:' + d.score + '%;height:100%;background:' + d.color + ';border-radius:5px"></div></div>';
+    html += '<div style="font-size:.7rem;color:var(--text-muted)">' + d.desc + '</div>';
+    html += '</div>';
+  });
+  html += '</div>';
+
+  // Radar chart approximation using CSS polygon
+  html += '<div class="card" style="margin-top:12px"><div class="card-title">4차원 평가 레이더</div>';
+  html += '<div style="display:flex;justify-content:center;padding:20px">';
+  html += '<div style="position:relative;width:220px;height:220px">';
+  // Background grid
+  [100, 75, 50, 25].forEach(function(pct) {
+    var size = pct * 2.2;
+    html += '<div style="position:absolute;left:' + (110 - size / 2) + 'px;top:' + (110 - size / 2) + 'px;width:' + size + 'px;height:' + size + 'px;border:1px solid var(--border);border-radius:50%;opacity:.4"></div>';
+  });
+  // Axes
+  html += '<div style="position:absolute;left:109px;top:0;width:1px;height:220px;background:var(--border);opacity:.3"></div>';
+  html += '<div style="position:absolute;top:109px;left:0;width:220px;height:1px;background:var(--border);opacity:.3"></div>';
+  // Labels
+  var labelPositions = [
+    { x: 80, y: -8 },  // top
+    { x: 224, y: 102 },  // right
+    { x: 55, y: 226 },  // bottom
+    { x: -80, y: 102 }   // left
+  ];
+  allScores.forEach(function(d, i) {
+    var pos = labelPositions[i];
+    html += '<div style="position:absolute;left:' + pos.x + 'px;top:' + pos.y + 'px;font-size:.7rem;font-weight:600;color:' + d.color + ';white-space:nowrap">' + d.label + ' ' + d.score + '</div>';
+  });
+  // Draw polygon using SVG
+  var cx = 110, cy = 110, maxR = 100;
+  var points = allScores.map(function(d, i) {
+    var angle = (-Math.PI / 2) + (i * Math.PI * 2 / 4);
+    var r = d.score / 100 * maxR;
+    return (cx + r * Math.cos(angle)).toFixed(1) + ',' + (cy + r * Math.sin(angle)).toFixed(1);
+  });
+  html += '<svg width="220" height="220" style="position:absolute;top:0;left:0">';
+  html += '<polygon points="' + points.join(' ') + '" fill="rgba(21,101,192,.15)" stroke="#1565C0" stroke-width="2"/>';
+  allScores.forEach(function(d, i) {
+    var angle = (-Math.PI / 2) + (i * Math.PI * 2 / 4);
+    var r = d.score / 100 * maxR;
+    html += '<circle cx="' + (cx + r * Math.cos(angle)).toFixed(1) + '" cy="' + (cy + r * Math.sin(angle)).toFixed(1) + '" r="4" fill="' + d.color + '"/>';
+  });
+  html += '</svg>';
+  html += '</div></div></div>';
+
+  // Key recommendations
+  html += '<div class="card" style="margin-top:12px"><div class="card-title">핵심 권고사항</div>';
+  html += '<ul style="padding-left:18px;font-size:.85rem;line-height:1.8">';
+  if (riskScore < 50) {
+    html += '<li style="color:#C62828"><strong>[이행 리스크 높음]</strong> 권고사항 ' + recCount + '건, 관련 부처 ' + ministryCount + '개로 복잡도가 높습니다. 우선순위 재조정 및 부처 간 협의체 가동이 필요합니다.</li>';
+  }
+  if (consensusScore < 50) {
+    html += '<li style="color:#E65100"><strong>[이해관계자 이견]</strong> 관점별 관련도 편차가 크므로, 이해관계자 간 사전 협의 및 공론화가 필요합니다.</li>';
+  }
+  if (econScore >= 70) {
+    html += '<li style="color:#2E7D32"><strong>[경제적 고영향]</strong> 수출 잠재력과 GDP 기여도가 높은 과제입니다. 예산 우선 배정 및 민간 협력 강화를 권고합니다.</li>';
+  }
+  if (techScore < 40) {
+    html += '<li style="color:#6A1B9A"><strong>[기술 준비 미흡]</strong> 관련 기술 분야의 국내 준비도가 낮습니다. R&D 투자 확대 및 글로벌 협력이 필요합니다.</li>';
+  }
+  if (totalAvg >= 60) {
+    html += '<li>전반적으로 <strong>양호한 추진 여건</strong>을 갖추고 있으나, 약점 분야에 대한 보완이 필요합니다.</li>';
+  } else {
+    html += '<li>종합 점수가 낮으므로, <strong>집중적인 관리와 지원</strong>이 필요한 과제입니다.</li>';
+  }
+  html += '</ul></div>';
+
+  el.innerHTML = html;
+}
+
+var AI_TYPES = [
+  { type: 'success', label: '\u{1F3AF} 성공/실패', shortLabel: '성공/실패' },
+  { type: 'risk', label: '\u26A0\uFE0F 위험\u00B7고려', shortLabel: '위험\u00B7고려' },
+  { type: 'cooperation', label: '\u{1F91D} 타과제 협력', shortLabel: '타과제 협력' }
+];
+
+function teRenderAIInterview(task) {
+  var el = document.getElementById('te-sec-ai-interview');
+  if (!el) return;
+  if (typeof TASK_EVAL_DATA === 'undefined') {
+    el.innerHTML = '<p style="color:var(--text-muted);text-align:center;padding:20px">AI 인터뷰 데이터(task_eval_data.js)가 로드되지 않았습니다.</p>';
+    return;
+  }
+
+  var successData = TASK_EVAL_DATA[task.id + '_success'];
+  var riskData = TASK_EVAL_DATA[task.id + '_risk'];
+  var coopData = TASK_EVAL_DATA[task.id + '_cooperation'];
+
+  if (!successData && !riskData && !coopData) {
+    el.innerHTML = '<div style="text-align:center;padding:30px"><p style="color:var(--warning)">\u26A0\uFE0F 이 과제의 AI 인터뷰 데이터가 아직 생성되지 않았습니다.</p></div>';
+    return;
+  }
+
+  var meta = successData || riskData || coopData;
+  var html = '<div style="margin-bottom:12px;padding:10px 16px;background:rgba(40,167,69,.08);border-radius:8px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">';
+  html += '<div><span style="color:var(--success);font-weight:600">\u2705 Claude AI 인터뷰 결과</span>';
+  html += '<span style="font-size:.78rem;color:var(--text-muted);margin-left:12px">생성: ' + (meta.generated_at || '').replace('T', ' ').substring(0, 19) + '</span>';
+  html += '<span style="font-size:.78rem;color:var(--text-muted);margin-left:8px">(' + (meta.model || 'Claude') + ')</span></div>';
+  html += '<span style="font-size:.72rem;color:var(--text-muted)">3유형 \u00D7 10페르소나 = 30개 분석</span></div>';
+
+  var AI_COLORS = { success: '#2E7D32', risk: '#E65100', cooperation: '#1565C0' };
+  var personas = Object.keys(AGENT_PROFILES);
+  personas.forEach(function(pKey) {
+    var ap = AGENT_PROFILES[pKey];
+    var successResp = successData ? (successData.results || []).find(function(r) { return r.persona === pKey; }) : null;
+    var riskResp = riskData ? (riskData.results || []).find(function(r) { return r.persona === pKey; }) : null;
+    var coopResp = coopData ? (coopData.results || []).find(function(r) { return r.persona === pKey; }) : null;
+    if (!successResp && !riskResp && !coopResp) return;
+
+    html += '<div class="card" style="margin-bottom:14px;border-left:4px solid ' + ap.color + '">';
+    html += '<div class="card-title" style="color:' + ap.color + ';margin-bottom:12px">' + ap.icon + ' ' + ap.name + '</div>';
+
+    // 3개 위젯을 가로로 나란히 표시
+    html += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">';
+    AI_TYPES.forEach(function(at) {
+      var resp = at.type === 'success' ? successResp : (at.type === 'risk' ? riskResp : coopResp);
+      var c = AI_COLORS[at.type];
+      html += '<div style="border:1px solid ' + c + '33;border-top:3px solid ' + c + ';border-radius:8px;padding:12px;background:' + c + '04">';
+      html += '<div style="font-size:.8rem;font-weight:700;color:' + c + ';margin-bottom:8px">' + at.label + '</div>';
+      if (resp && resp.response) {
+        html += '<div style="font-size:.8rem;line-height:1.7">' + teFormatMarkdown(resp.response) + '</div>';
+      } else {
+        html += '<p style="font-size:.8rem;color:var(--text-muted);font-style:italic">데이터 없음</p>';
+      }
+      html += '</div>';
+    });
+    html += '</div></div>';
+  });
+
+  el.innerHTML = html;
+}
+
+function teEscapeHtml(str) {
+  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function teFormatMarkdown(text) {
+  // XSS 방지: HTML 이스케이프 후 마크다운 변환
+  return teEscapeHtml(text)
+    .replace(/## (.+)/g, '<h4 style="margin:14px 0 6px;color:var(--primary)">$1</h4>')
+    .replace(/### (.+)/g, '<h5 style="margin:10px 0 4px;font-weight:600">$1</h5>')
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/^\- \[[ x]\] (.+)$/gm, '<label style="display:block;margin:2px 0"><input type="checkbox" disabled> $1</label>')
+    .replace(/^\- (.+)$/gm, '<li style="margin-left:16px;list-style:disc">$1</li>')
+    .replace(/^(\d+)\. (.+)$/gm, '<li style="margin-left:16px;list-style:decimal">$2</li>')
+    .replace(/\[상\]/g, '<span style="background:#C62828;color:#fff;padding:1px 6px;border-radius:4px;font-size:.75rem">상</span>')
+    .replace(/\[중\]/g, '<span style="background:#EF6C00;color:#fff;padding:1px 6px;border-radius:4px;font-size:.75rem">중</span>')
+    .replace(/\[하\]/g, '<span style="background:#2E7D32;color:#fff;padding:1px 6px;border-radius:4px;font-size:.75rem">하</span>');
+}
+
+/* ================================================================
    INIT
    ================================================================ */
 document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -16959,7 +18332,20 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
 
 loadData().then(() => {
   document.getElementById('loadingIndicator').style.display = 'none';
-  renderOverview();
+
+  // URL routing: mirofish.html?task=34#taskeval → 과제 34 종합 평가 직접 진입
+  var urlParams = new URLSearchParams(window.location.search);
+  var initHash = window.location.hash.replace('#', '');
+  var taskParam = parseInt(urlParams.get('task'));
+
+  if (taskParam && DATA.tasks.find(t => t.id === taskParam)) {
+    STATE.teSelectedTaskId = taskParam;
+    switchTab('taskeval');
+  } else if (initHash && document.querySelector('.tab-btn[data-tab="' + initHash + '"]')) {
+    switchTab(initHash);
+  } else {
+    renderOverview();
+  }
 });
 </script>
 </body>
