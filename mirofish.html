@@ -12495,6 +12495,10 @@ function renderStakeholders() {
   subTabsEl.querySelectorAll('.sub-tab[data-agent]').forEach(btn => {
     btn.addEventListener('click', () => {
       STATE.selectedAgent = btn.dataset.agent;
+      // URL에 agent 파라미터 반영
+      var url = new URL(window.location);
+      url.searchParams.set('agent', btn.dataset.agent);
+      history.replaceState(null, '', url);
       renderStakeholders();
     });
   });
@@ -19106,6 +19110,13 @@ loadData().then(() => {
   var urlParams = new URLSearchParams(window.location.search);
   var initHash = window.location.hash.replace('#', '');
   var taskParam = parseInt(urlParams.get('task'));
+
+  // ?agent= 파라미터로 이해관계자 서브탭 직접 진입
+  var agentParam = urlParams.get('agent');
+  if (agentParam) {
+    var validAgents = Object.keys(AGENT_PROFILES).concat('_help');
+    if (validAgents.indexOf(agentParam) >= 0) STATE.selectedAgent = agentParam;
+  }
 
   if (taskParam && DATA.tasks.find(t => t.id === taskParam)) {
     STATE.teSelectedTaskId = taskParam;
