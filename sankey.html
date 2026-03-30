@@ -416,10 +416,52 @@ function openTaskPanel(taskId) {
   });
   body += '</div>';
 
+  // 권고사항 기한 캘린더 히트맵
+  body += renderSankeyCalendarHeatmap(td);
+
   document.getElementById('dpBody').innerHTML = body;
   document.getElementById('dpBody').scrollTop = 0;
   document.getElementById('detailPanel').classList.add('open');
   document.getElementById('panelOverlay').classList.add('visible');
+}
+
+function renderSankeyCalendarHeatmap(task) {
+  if (!task) return '';
+  var recs = task.recommendations || [];
+  if (recs.length === 0) return '';
+  var monthCounts = {};
+  var q2m = { 'Q1': 3, 'Q2': 6, 'Q3': 9, 'Q4': 12 };
+  recs.forEach(function(r) {
+    var dl = r.deadline || '';
+    var m = dl.match(/(\d{2})(Q[1-4])/);
+    if (m) {
+      var year = 2000 + parseInt(m[1]);
+      var month = q2m[m[2]];
+      if (month && year >= 2025 && year <= 2030) {
+        var key = year + '-' + month;
+        monthCounts[key] = (monthCounts[key] || 0) + 1;
+      }
+    }
+  });
+  if (Object.keys(monthCounts).length === 0) return '';
+  var mNames = ['1','2','3','4','5','6','7','8','9','10','11','12'];
+  var html = '<div style="margin-top:14px;padding:12px;background:rgba(255,255,255,0.04);border-radius:8px;border:1px solid rgba(255,255,255,0.08)">';
+  html += '<div style="font-size:.82rem;font-weight:600;color:#ffe87c;margin-bottom:8px">&#128197; 권고사항 기한 캘린더</div>';
+  html += '<table style="border-collapse:collapse;font-size:.68rem;width:100%;color:#b8d0e8"><thead><tr><th style="padding:3px 6px;text-align:left"></th>';
+  mNames.forEach(function(mn) { html += '<th style="padding:3px 4px;text-align:center;opacity:.6">' + mn + '월</th>'; });
+  html += '</tr></thead><tbody>';
+  for (var y = 2025; y <= 2028; y++) {
+    html += '<tr><td style="padding:3px 6px;font-weight:600">' + y + '</td>';
+    for (var mi = 1; mi <= 12; mi++) {
+      var count = monthCounts[y + '-' + mi] || 0;
+      var bg = count === 0 ? 'rgba(255,255,255,0.03)' : count === 1 ? 'rgba(100,181,246,0.3)' : count === 2 ? 'rgba(100,181,246,0.6)' : 'rgba(21,101,192,0.9)';
+      var fg = count >= 2 ? '#fff' : (count === 0 ? 'rgba(255,255,255,0.15)' : '#b8d0e8');
+      html += '<td style="padding:3px 4px;text-align:center;background:' + bg + ';color:' + fg + ';border-radius:2px;font-weight:' + (count ? '600' : '400') + '">' + (count || '') + '</td>';
+    }
+    html += '</tr>';
+  }
+  html += '</tbody></table></div>';
+  return html;
 }
 
 function closePanel() {

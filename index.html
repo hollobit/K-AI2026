@@ -2563,6 +2563,52 @@ function resetFilters() {
 // ============================================================
 // Enhanced Task Modal with Navigation
 // ============================================================
+function renderCalendarHeatmap(task) {
+  if (!task) return '';
+  var recs = task.recommendations || [];
+  if (recs.length === 0) return '';
+  var monthCounts = {};
+  var q2m = { 'Q1': 3, 'Q2': 6, 'Q3': 9, 'Q4': 12 };
+  recs.forEach(function(r) {
+    var dl = r.deadline || '';
+    var m = dl.match(/(\d{2})(Q[1-4])/);
+    if (m) {
+      var year = 2000 + parseInt(m[1]);
+      var month = q2m[m[2]];
+      if (month && year >= 2025 && year <= 2030) {
+        var key = year + '-' + month;
+        monthCounts[key] = (monthCounts[key] || 0) + 1;
+      }
+    }
+  });
+  if (Object.keys(monthCounts).length === 0) return '';
+  var mNames = ['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
+  var html = '<div class="modal-section" style="margin-top:16px"><h4>&#128197; 권고사항 기한 캘린더 히트맵</h4>';
+  html += '<p style="font-size:.78rem;color:var(--gray);margin-bottom:8px">이 과제의 권고사항 기한을 월별로 표시합니다. 진할수록 해당 월 기한 권고사항이 많습니다.</p>';
+  html += '<div style="overflow-x:auto"><table style="border-collapse:collapse;font-size:.72rem;width:100%"><thead><tr><th style="padding:4px 8px;text-align:left;font-size:.75rem">연도</th>';
+  mNames.forEach(function(mn) { html += '<th style="padding:4px 6px;text-align:center;color:var(--gray)">' + mn + '</th>'; });
+  html += '</tr></thead><tbody>';
+  for (var y = 2025; y <= 2028; y++) {
+    html += '<tr><td style="padding:4px 8px;font-weight:600;font-size:.78rem">' + y + '</td>';
+    for (var m = 1; m <= 12; m++) {
+      var key = y + '-' + m;
+      var count = monthCounts[key] || 0;
+      var bg = count === 0 ? 'var(--light)' : count === 1 ? '#bbdefb' : count === 2 ? '#64b5f6' : '#1565C0';
+      var fg = count >= 2 ? '#fff' : 'var(--dark)';
+      html += '<td style="padding:4px 6px;text-align:center;background:' + bg + ';color:' + fg + ';border-radius:3px;border:1px solid var(--border);font-weight:' + (count ? '600' : '400') + '">' + (count || '') + '</td>';
+    }
+    html += '</tr>';
+  }
+  html += '</tbody></table></div>';
+  html += '<div style="display:flex;gap:8px;margin-top:6px;font-size:.7rem;color:var(--gray)">';
+  html += '<span>범례:</span><span style="padding:1px 6px;background:var(--light);border-radius:3px">0</span>';
+  html += '<span style="padding:1px 6px;background:#bbdefb;border-radius:3px">1</span>';
+  html += '<span style="padding:1px 6px;background:#64b5f6;color:#fff;border-radius:3px">2</span>';
+  html += '<span style="padding:1px 6px;background:#1565C0;color:#fff;border-radius:3px">3+</span></div>';
+  html += '</div>';
+  return html;
+}
+
 function openTaskModal(taskId, recSeq) {
   const task = DATA.tasks.tasks.find(t => t.id === taskId);
   if (!task) return;
@@ -2664,6 +2710,9 @@ function openTaskModal(taskId, recSeq) {
     });
     html += '</div>';
   }
+
+  // 권고사항 기한 캘린더 히트맵
+  html += renderCalendarHeatmap(task);
 
   // MiroFish deep analysis links
   html += '<div style="margin-top:16px;padding-top:12px;border-top:1px solid var(--border)">';
@@ -6317,8 +6366,12 @@ document.addEventListener('DOMContentLoaded', function() {
   var params = new URLSearchParams(window.location.search);
   var viewParam = params.get('view');
   // M5: URL hash routing — hash takes priority if no ?view= param
+  // ministry_, task_ 등 deep link 해시는 viewParam으로 사용하지 않음 (하단 hash handler에서 처리)
   if (!viewParam && location.hash && location.hash.length > 1) {
-    viewParam = location.hash.substring(1);
+    var _h = location.hash.substring(1);
+    if (!_h.startsWith('ministry_') && !_h.startsWith('task_') && !_h.startsWith('tasks_area_')) {
+      viewParam = _h;
+    }
   }
   var taskParam = params.get('task');
   var keywordParam = params.get('keyword');
