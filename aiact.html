@@ -1727,7 +1727,10 @@ tbody td { padding: 11px 14px; font-size: 0.85rem; border-bottom: 1px solid var(
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px">
     <!-- 최근 발의 법안 -->
     <div style="background:white;border-radius:var(--radius);box-shadow:var(--shadow);padding:18px">
-      <h4 style="margin:0 0 12px;font-size:.95rem;color:var(--dark)">&#128227; 최근 발의 법안 <span style="font-size:.72rem;padding:2px 6px;background:#6610f2;color:white;border-radius:8px;margin-left:4px">MCP</span> <span id="legRecentCount" style="font-size:.78rem;color:var(--gray)"></span></h4>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <h4 style="margin:0;font-size:.95rem;color:var(--dark)">&#128227; 최근 발의 법안 <span id="legRecentKw" style="font-size:.78rem;color:var(--primary);font-weight:400"></span> <span style="font-size:.72rem;padding:2px 6px;background:#6610f2;color:white;border-radius:8px;margin-left:4px">MCP</span> <span id="legRecentCount" style="font-size:.78rem;color:var(--gray)"></span></h4>
+        <label style="font-size:.78rem;color:var(--gray);cursor:pointer;white-space:nowrap"><input type="checkbox" id="legRecentNoFilter" onchange="_loadRecentBills(this.checked ? '' : window._legCurrentKw || '인공지능')" style="margin-right:4px;cursor:pointer"> 전체 (필터 없음)</label>
+      </div>
       <div id="legRecentList" style="max-height:350px;overflow-y:auto">
         <div style="text-align:center;padding:20px;color:var(--text-muted)">로딩 대기 중</div>
       </div>
@@ -1735,7 +1738,10 @@ tbody td { padding: 11px 14px; font-size: 0.85rem; border-bottom: 1px solid var(
 
     <!-- 처리 완료 법안 -->
     <div style="background:white;border-radius:var(--radius);box-shadow:var(--shadow);padding:18px">
-      <h4 style="margin:0 0 12px;font-size:.95rem;color:var(--dark)">&#9989; 처리 완료 법안 <span style="font-size:.72rem;padding:2px 6px;background:#6610f2;color:white;border-radius:8px;margin-left:4px">MCP</span> <span id="legProcessedCount" style="font-size:.78rem;color:var(--gray)"></span></h4>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <h4 style="margin:0;font-size:.95rem;color:var(--dark)">&#9989; 처리 완료 법안 <span id="legProcessedKw" style="font-size:.78rem;color:var(--primary);font-weight:400"></span> <span style="font-size:.72rem;padding:2px 6px;background:#6610f2;color:white;border-radius:8px;margin-left:4px">MCP</span> <span id="legProcessedCount" style="font-size:.78rem;color:var(--gray)"></span></h4>
+        <label style="font-size:.78rem;color:var(--gray);cursor:pointer;white-space:nowrap"><input type="checkbox" id="legProcessedNoFilter" onchange="_loadProcessedBills(this.checked ? '' : window._legCurrentKw || '인공지능')" style="margin-right:4px;cursor:pointer"> 전체 (필터 없음)</label>
+      </div>
       <div id="legProcessedList" style="max-height:350px;overflow-y:auto">
         <div style="text-align:center;padding:20px;color:var(--text-muted)">로딩 대기 중</div>
       </div>
@@ -4815,6 +4821,7 @@ function loadLegislation() {
   var pkw = document.getElementById('legPetitionKw'); if (pkw) pkw.textContent = kwLabel;
   var akw = document.getElementById('legActivityKw'); if (akw) akw.textContent = kwLabel;
   var rkw = document.getElementById('legResearchKw'); if (rkw) rkw.textContent = kwLabel;
+  window._legCurrentKw = kw;
   // 모든 섹션 키워드 연동 로드
   _loadBills(kw);
   _loadNotices(kw);
@@ -6447,6 +6454,11 @@ loadLegislation = function() {
 function _loadRecentBills(filterKw) {
   var el = document.getElementById('legRecentList');
   if (!el) return;
+  var kwLabel = document.getElementById('legRecentKw');
+  if (kwLabel) kwLabel.textContent = filterKw ? '"' + filterKw + '"' : '';
+  var noFilterCb = document.getElementById('legRecentNoFilter');
+  if (noFilterCb && !filterKw) noFilterCb.checked = true;
+  if (noFilterCb && filterKw) noFilterCb.checked = false;
   el.innerHTML = '<div style="text-align:center;padding:16px"><div class="spinner" style="width:16px;height:16px;border-width:2px;margin:0 auto 4px"></div></div>';
   fetch(_API_BASE + '/api/assembly/recent-bills?days=30')
     .then(function(r) { return r.json(); })
@@ -6454,16 +6466,18 @@ function _loadRecentBills(filterKw) {
       var cnt = document.getElementById('legRecentCount');
       if (d.error) { cnt.textContent = '(MCP 필요)'; el.innerHTML = '<div style="padding:12px;text-align:center;color:var(--text-muted);font-size:.82rem">assembly-api-mcp 연결 시 최근 발의 법안을 표시합니다</div>'; return; }
       var bills = d.bills || [];
-      // 키워드 필터 (의안명, 제안자, 위원회 등 모든 필드에서)
-      if (filterKw && filterKw !== '인공지능') {
+      var totalAll = bills.length;
+      if (filterKw) {
         var kl = filterKw.toLowerCase();
         bills = bills.filter(function(b) {
           return Object.values(b).map(function(v){return String(v||'')}).join(' ').toLowerCase().indexOf(kl) >= 0;
         });
+        cnt.textContent = bills.length + '/' + totalAll + '건';
+      } else {
+        cnt.textContent = bills.length + '건';
       }
-      cnt.textContent = bills.length + '건';
       if (bills.length === 0) { el.innerHTML = '<div style="padding:12px;text-align:center;color:var(--text-muted)">최근 30일 발의 법안 없음</div>'; return; }
-      el.innerHTML = bills.slice(0, 20).map(_renderBillCard).join('');
+      el.innerHTML = bills.slice(0, 30).map(_renderBillCard).join('');
     })
     .catch(function(err) { el.innerHTML = '<div style="padding:8px;color:var(--accent);font-size:.82rem">' + _esc(err.message) + '</div>'; });
 }
@@ -6471,16 +6485,20 @@ function _loadRecentBills(filterKw) {
 function _loadProcessedBills(keyword) {
   var el = document.getElementById('legProcessedList');
   if (!el) return;
+  var kwLabel = document.getElementById('legProcessedKw');
+  if (kwLabel) kwLabel.textContent = keyword ? '"' + keyword + '"' : '';
+  var noFilterCb = document.getElementById('legProcessedNoFilter');
+  if (noFilterCb && !keyword) noFilterCb.checked = true;
+  if (noFilterCb && keyword) noFilterCb.checked = false;
   el.innerHTML = '<div style="text-align:center;padding:16px"><div class="spinner" style="width:16px;height:16px;border-width:2px;margin:0 auto 4px"></div></div>';
-  fetch(_API_BASE + '/api/assembly/processed-bills?keyword=' + encodeURIComponent(keyword))
+  fetch(_API_BASE + '/api/assembly/processed-bills?keyword=' + encodeURIComponent(keyword || ''))
     .then(function(r) { return r.json(); })
     .then(function(d) {
       var cnt = document.getElementById('legProcessedCount');
       if (d.error) { cnt.textContent = '(MCP 필요)'; el.innerHTML = '<div style="padding:12px;text-align:center;color:var(--text-muted);font-size:.82rem">assembly-api-mcp 연결 시 처리 완료 법안을 표시합니다</div>'; return; }
       var bills = d.bills || [];
-      // 의원명/위원회명 필터 보강 — API에서 법안명으로만 검색되므로 클라이언트에서 추가 필터
+      var totalAll = bills.length;
       if (bills.length === 0 && keyword) {
-        // 빈 결과면 전체 조회 후 클라이언트 필터
         fetch(_API_BASE + '/api/assembly/processed-bills?keyword=')
           .then(function(r2) { return r2.json(); })
           .then(function(d2) {
@@ -6489,15 +6507,19 @@ function _loadProcessedBills(keyword) {
             var filtered = all.filter(function(b) {
               return Object.values(b).map(function(v){return String(v||'')}).join(' ').toLowerCase().indexOf(kl) >= 0;
             });
-            cnt.textContent = filtered.length + '건';
+            cnt.textContent = filtered.length + '/' + all.length + '건';
             if (filtered.length === 0) { el.innerHTML = '<div style="padding:12px;text-align:center;color:var(--text-muted)">처리 완료 법안 없음</div>'; return; }
-            el.innerHTML = filtered.slice(0, 20).map(_renderBillCard).join('');
+            el.innerHTML = filtered.slice(0, 30).map(_renderBillCard).join('');
           }).catch(function() { el.innerHTML = ''; });
         return;
       }
-      cnt.textContent = bills.length + '건';
+      if (keyword) {
+        cnt.textContent = bills.length + '건 (키워드 필터)';
+      } else {
+        cnt.textContent = bills.length + '건';
+      }
       if (bills.length === 0) { el.innerHTML = '<div style="padding:12px;text-align:center;color:var(--text-muted)">처리 완료 법안 없음</div>'; return; }
-      el.innerHTML = bills.slice(0, 20).map(_renderBillCard).join('');
+      el.innerHTML = bills.slice(0, 30).map(_renderBillCard).join('');
     })
     .catch(function(err) { el.innerHTML = '<div style="padding:8px;color:var(--accent);font-size:.82rem">' + _esc(err.message) + '</div>'; });
 }
@@ -6663,7 +6685,7 @@ function _loadMeetings(keyword) {
   var mInput = document.getElementById('legMeetingKeyword');
   if (mInput && !mInput.value) mInput.value = kw;
   el.innerHTML = '<div style="text-align:center;padding:16px"><div class="spinner" style="width:16px;height:16px;border-width:2px;margin:0 auto 4px"></div></div>';
-  var url = '/api/assembly/meetings?keyword=' + encodeURIComponent(kw);
+  var url = _API_BASE + '/api/assembly/meetings?keyword=' + encodeURIComponent(kw);
   if (meetingType) url += '&meeting_type=' + encodeURIComponent(meetingType);
   fetch(url)
     .then(function(r) { return r.json(); })
