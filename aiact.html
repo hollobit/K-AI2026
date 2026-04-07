@@ -2560,13 +2560,16 @@ window.addEventListener('DOMContentLoaded', function() {
         }, 500);
       }
     } else if (viewParam === 'legislation') {
-      if (!_legAiMode) toggleLegAiMode();
-      if (aiQuery) {
-        setTimeout(function() {
-          document.getElementById('legAiQuery').value = aiQuery;
-          runLegAiSearch(false);
-        }, 500);
-      }
+      // loadLegislation() 완료 후 AI 모드 활성화
+      setTimeout(function() {
+        if (!_legAiMode) toggleLegAiMode();
+        if (aiQuery) {
+          setTimeout(function() {
+            document.getElementById('legAiQuery').value = aiQuery;
+            runLegAiSearch(false);
+          }, 500);
+        }
+      }, 300);
     }
   }
   _renderLawSearchHistory();
@@ -4903,7 +4906,7 @@ function loadLegislation() {
   // LLM 프로바이더 로드 (AI 입법 분석용)
   if (typeof _legLlmLoaded === 'undefined') {
     _legLlmLoaded = true;
-    _loadLegAiProviders();
+    _initLegAiProviders();
   }
 }
 
