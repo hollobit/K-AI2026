@@ -7229,7 +7229,7 @@ function renderForceGraph(graphData) {
 }
 
 function hasLawConnection(nodeId, edges) {
-  var lawEdges = new Set(['REGULATES','IMPLEMENTS','CITED_IN','INTERPRETED_BY','ADMINISTERS','APPLIES_TO','COMPARABLE_REGULATION','RESPONSIBLE_FOR']);
+  var lawEdges = new Set(['REGULATES','IMPLEMENTS','CITED_IN','INTERPRETED_BY','ADMINISTERS','APPLIES_TO','COMPARABLE_REGULATION','RESPONSIBLE_FOR','PROPOSED_BY','REVIEWED_BY','AMENDS','AFFECTS','DISCUSSES','DISCUSSED_IN','OVERSEES','BELONGS_TO','RELATED_TO','CONTAINS','HAS_DEADLINE','REFERENCES','COOPERATES_WITH']);
   return (edges || []).some(function(e) {
     return lawEdges.has(e.relation) && (e.source === nodeId || e.target === nodeId);
   });
