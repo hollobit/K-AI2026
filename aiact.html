@@ -4960,7 +4960,7 @@ function _showBillDocViewer(docUrl, docTitle) {
   badges.innerHTML = '<span style="padding:3px 10px;background:#7b1fa2;color:white;border-radius:12px;font-size:.78rem">&#128196; 의안 문서</span>';
   modal.classList.add('open');
 
-  var proxyUrl = '/api/assembly/bill-doc?url=' + encodeURIComponent(docUrl);
+  var proxyUrl = _API_BASE + '/api/assembly/bill-doc?url=' + encodeURIComponent(docUrl);
 
   body.innerHTML = '<div style="margin-bottom:10px;display:flex;gap:8px;flex-wrap:wrap">' +
     '<button onclick="document.getElementById(\'billDocPdfContainer\').style.display=\'block\';document.getElementById(\'billDocMdContainer\').style.display=\'none\'" style="padding:6px 14px;background:#7b1fa2;color:white;border:none;border-radius:6px;font-size:.82rem;cursor:pointer">&#128196; PDF 보기</button>' +
@@ -5070,7 +5070,7 @@ function _showRecordViewer(recordUrl, meetingTitle) {
   modal.classList.add('open');
 
   // 프록시 URL로 PDF를 가져와 인라인 표시 (다운로드 프롬프트 없음)
-  var proxyUrl = '/api/assembly/record-pdf?url=' + encodeURIComponent(recordUrl);
+  var proxyUrl = _API_BASE + '/api/assembly/record-pdf?url=' + encodeURIComponent(recordUrl);
 
   body.innerHTML = '<div style="margin-bottom:10px;display:flex;gap:8px;flex-wrap:wrap">' +
     '<button onclick="document.getElementById(\'recordPdfContainer\').style.display=\'block\';document.getElementById(\'recordMdContainer\').style.display=\'none\'" style="padding:6px 14px;background:#7b1fa2;color:white;border:none;border-radius:6px;font-size:.82rem;cursor:pointer">&#128196; PDF 보기</button>' +
