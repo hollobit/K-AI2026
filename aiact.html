@@ -1654,16 +1654,16 @@ tbody td { padding: 11px 14px; font-size: 0.85rem; border-bottom: 1px solid var(
       </div>
     </div>
 
-    <!-- 입법예고 -->
-    <div style="background:white;border-radius:var(--radius);box-shadow:var(--shadow);padding:18px">
+    <!-- 입법예고 (LAWMAKING_API_KEY 필요) -->
+    <div id="legNoticeWidget" style="background:white;border-radius:var(--radius);box-shadow:var(--shadow);padding:18px">
       <h4 style="margin:0 0 12px;font-size:.95rem;color:var(--dark)">&#128227; 입법예고 <span id="legNoticeCount" style="font-size:.78rem;color:var(--gray)"></span></h4>
       <div id="legNoticeList" style="max-height:350px;overflow-y:auto">
         <div style="text-align:center;padding:20px;color:var(--text-muted)">로딩 대기 중</div>
       </div>
     </div>
 
-    <!-- 법률쟁점 -->
-    <div style="background:white;border-radius:var(--radius);box-shadow:var(--shadow);padding:18px">
+    <!-- 법률쟁점 (NANET_API_KEY 필요) -->
+    <div id="legIssueWidget" style="background:white;border-radius:var(--radius);box-shadow:var(--shadow);padding:18px">
       <h4 style="margin:0 0 12px;font-size:.95rem;color:var(--dark)">&#9878;&#65039; 법률쟁점 <span id="legIssueCount" style="font-size:.78rem;color:var(--gray)"></span></h4>
       <div id="legIssueList" style="max-height:350px;overflow-y:auto">
         <div style="text-align:center;padding:20px;color:var(--text-muted)">로딩 대기 중</div>
@@ -2603,6 +2603,7 @@ function saveApiKeys() {
   st.style.display = 'block';
   setTimeout(function() { st.style.display = 'none'; }, 2000);
   _updateApiKeyIndicator();
+  _updateLegWidgetVisibility();
 }
 
 function clearApiKeys() {
@@ -2617,6 +2618,7 @@ function clearApiKeys() {
   st.style.display = 'block';
   setTimeout(function() { st.style.display = 'none'; st.style.color = 'var(--success)'; }, 2000);
   _updateApiKeyIndicator();
+  _updateLegWidgetVisibility();
 }
 
 function _updateApiKeyIndicator() {
@@ -2624,7 +2626,26 @@ function _updateApiKeyIndicator() {
   if (ind) ind.style.background = _hasAnyApiKey() ? '#4caf50' : '#ff9800';
 }
 
-document.addEventListener('DOMContentLoaded', function() { _updateApiKeyIndicator(); });
+function _isServiceKeyAvailable(keyType) {
+  // 사용자가 키를 직접 설정했으면 항상 사용 가능
+  if (localStorage.getItem(_API_KEY_STORAGE[keyType])) return true;
+  // 서버 기본 키 사용이 허용되는 레벨인지 확인
+  var level = _allowDefaultKeys || 'all';
+  if (level === 'all') return true;
+  if (level === 'none') return false;
+  var lawKeys = ['assembly', 'law', 'lawmaking', 'nanet', 'nabo'];
+  if (level === 'law-keys' || level === 'claude-law') return lawKeys.indexOf(keyType) >= 0;
+  return false;
+}
+
+function _updateLegWidgetVisibility() {
+  var nw = document.getElementById('legNoticeWidget');
+  var iw = document.getElementById('legIssueWidget');
+  if (nw) nw.style.display = _isServiceKeyAvailable('lawmaking') ? '' : 'none';
+  if (iw) iw.style.display = _isServiceKeyAvailable('nanet') ? '' : 'none';
+}
+
+document.addEventListener('DOMContentLoaded', function() { _updateApiKeyIndicator(); _updateLegWidgetVisibility(); });
 
 function _fetchLawApi(endpoint, params) {
   var p = Object.assign({}, params, { endpoint: endpoint });
@@ -4822,10 +4843,12 @@ function loadLegislation() {
   var akw = document.getElementById('legActivityKw'); if (akw) akw.textContent = kwLabel;
   var rkw = document.getElementById('legResearchKw'); if (rkw) rkw.textContent = kwLabel;
   window._legCurrentKw = kw;
+  // 키 유무에 따라 위젯 가시성 제어
+  _updateLegWidgetVisibility();
   // 모든 섹션 키워드 연동 로드
   _loadBills(kw);
-  _loadNotices(kw);
-  _loadIssues(kw);
+  if (_isServiceKeyAvailable('lawmaking')) _loadNotices(kw);
+  if (_isServiceKeyAvailable('nanet')) _loadIssues(kw);
   _loadSchedule(kw);
   _loadTrack(kw);
   _loadMembersByKeyword(kw);
@@ -5618,12 +5641,79 @@ function _showBillDetail(billData) {
             el.innerHTML = '<div style="padding:8px 12px;background:#fff8e1;border-radius:6px;font-size:.82rem;color:#795548">&#128161; 상세 콘텐츠를 자동 추출할 수 없습니다. <a href="' + _esc(d.detail_link || '') + '" target="_blank" style="color:var(--primary)">국회 의안정보시스템에서 확인</a></div>';
             return;
           }
-          // 폴백 모드: proposal_reason/main_content 필드 처리
-          if (bc.fallback && (bc.proposal_reason || bc.main_content || bc.summary_content)) {
+          // 폴백 모드: API 기반 상세 정보 표시
+          if (bc.fallback) {
             var fh = '';
+            // 의안 기본 정보 카드
+            if (bc.committee || bc.proposer || bc.propose_date) {
+              fh += '<div style="padding:12px;background:#e3f2fd;border-radius:8px;margin-bottom:12px;display:flex;align-items:flex-start;gap:12px">';
+              if (bc.proposer_photo) {
+                fh += '<img src="' + _esc(bc.proposer_photo) + '" onerror="this.style.display=\'none\'" style="width:60px;height:80px;object-fit:cover;border-radius:6px;border:1px solid #ddd">';
+              }
+              fh += '<div style="font-size:.84rem;line-height:1.8">';
+              if (bc.proposer) fh += '<div><b>제안자:</b> ' + _esc(bc.proposer) + '</div>';
+              if (bc.rst_proposer && bc.publ_proposer) fh += '<div style="font-size:.78rem;color:#555"><b>대표발의:</b> ' + _esc(bc.rst_proposer) + ' / <b>공동발의:</b> ' + _esc(bc.publ_proposer) + '</div>';
+              if (bc.committee) fh += '<div><b>소관위원회:</b> ' + _esc(bc.committee) + '</div>';
+              if (bc.propose_date) fh += '<div><b>제안일:</b> ' + _esc(bc.propose_date) + '</div>';
+              if (bc.proc_result) fh += '<div><b>처리상태:</b> <span style="padding:2px 8px;border-radius:10px;font-size:.75rem;background:' + (bc.proc_result === '계류의안' ? '#fff3e0;color:#e65100' : '#e8f5e9;color:#2e7d32') + '">' + _esc(bc.proc_result) + '</span></div>';
+              if (bc.member_list_url) fh += '<div style="margin-top:4px"><a href="' + _esc(bc.member_list_url) + '" target="_blank" style="font-size:.78rem;color:var(--primary)">공동발의자 목록 보기</a></div>';
+              fh += '</div></div>';
+            }
+            // 제안이유/주요내용
             if (bc.proposal_reason) fh += '<details open style="margin-bottom:10px"><summary style="cursor:pointer;font-weight:600;font-size:.88rem;color:#333">&#128203; 제안이유</summary><div style="padding:10px 12px;font-size:.85rem;line-height:1.7;background:#f8f9fa;border-radius:6px;margin-top:4px">' + _esc(bc.proposal_reason) + '</div></details>';
             if (bc.main_content) fh += '<details open style="margin-bottom:10px"><summary style="cursor:pointer;font-weight:600;font-size:.88rem;color:#333">&#128221; 주요내용</summary><div style="padding:10px 12px;font-size:.85rem;line-height:1.7;background:#f8f9fa;border-radius:6px;margin-top:4px">' + _esc(bc.main_content) + '</div></details>';
-            if (bc.summary_content) fh += '<div style="padding:8px 12px;background:#fff8e1;border-radius:6px;font-size:.82rem;color:#795548">' + _esc(bc.summary_content) + '</div>';
+            // 심사 진행 타임라인
+            if (bc.timeline && bc.timeline.length > 0) {
+              fh += '<details open style="margin-bottom:10px"><summary style="cursor:pointer;font-weight:600;font-size:.88rem;color:#333">&#9202; 심사 진행 현황</summary>';
+              fh += '<div style="padding:10px 12px;margin-top:4px;background:#f8f9fa;border-radius:6px">';
+              bc.timeline.forEach(function(t, idx) {
+                var isLast = idx === bc.timeline.length - 1;
+                var color = t.결과 ? '#2e7d32' : '#1565c0';
+                fh += '<div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:' + (isLast ? '0' : '8px') + '">';
+                fh += '<div style="min-width:10px;display:flex;flex-direction:column;align-items:center">';
+                fh += '<div style="width:10px;height:10px;border-radius:50%;background:' + color + ';border:2px solid ' + color + '"></div>';
+                if (!isLast) fh += '<div style="width:2px;height:20px;background:#ddd"></div>';
+                fh += '</div>';
+                fh += '<div style="font-size:.84rem"><b>' + _esc(t['단계']) + '</b> <span style="color:var(--gray)">' + _esc(t['일자']) + '</span>';
+                if (t['결과']) fh += ' <span style="padding:1px 6px;border-radius:8px;font-size:.72rem;background:#e8f5e9;color:#2e7d32">' + _esc(t['결과']) + '</span>';
+                fh += '</div></div>';
+              });
+              fh += '</div></details>';
+            }
+            // 심사경과 테이블 (MCP)
+            if (bc.review_table && bc.review_table.rows && bc.review_table.rows.length > 0) {
+              fh += '<details style="margin-bottom:10px"><summary style="cursor:pointer;font-weight:600;font-size:.88rem;color:#333">&#128203; 심사경과 상세</summary>';
+              fh += '<table style="width:100%;border-collapse:collapse;margin-top:4px;font-size:.82rem">';
+              fh += '<tr style="background:#f5f5f5">';
+              var firstRow = bc.review_table.rows[0];
+              var keys = Object.keys(firstRow);
+              keys.forEach(function(k) { fh += '<th style="padding:6px 8px;border:1px solid #e0e0e0;text-align:left;font-size:.78rem">' + _esc(k) + '</th>'; });
+              fh += '</tr>';
+              bc.review_table.rows.forEach(function(row) {
+                fh += '<tr>';
+                keys.forEach(function(k) { fh += '<td style="padding:5px 8px;border:1px solid #e0e0e0;font-size:.8rem">' + _esc(String(row[k] || '')) + '</td>'; });
+                fh += '</tr>';
+              });
+              fh += '</table></details>';
+            }
+            // 공동발의자 사진
+            if (bc.publ_proposer && bc.publ_photos && bc.publ_photos.length > 0) {
+              var names = bc.publ_proposer.split(',');
+              fh += '<details style="margin-bottom:10px"><summary style="cursor:pointer;font-weight:600;font-size:.88rem;color:#333">&#128101; 공동발의자 (' + names.length + '인)</summary>';
+              fh += '<div style="display:flex;flex-wrap:wrap;gap:8px;padding:10px 12px;margin-top:4px;background:#f8f9fa;border-radius:6px">';
+              names.forEach(function(n, i) {
+                var photo = bc.publ_photos[i] || '';
+                fh += '<div style="text-align:center;width:52px">';
+                if (photo) fh += '<img src="' + _esc(photo) + '" onerror="this.style.display=\'none\'" style="width:40px;height:52px;object-fit:cover;border-radius:4px;border:1px solid #ddd">';
+                fh += '<div style="font-size:.7rem;color:#555;margin-top:2px">' + _esc(n.trim()) + '</div></div>';
+              });
+              fh += '</div></details>';
+            }
+            // 의안정보시스템 링크
+            fh += '<div style="padding:10px 12px;background:#e3f2fd;border-radius:6px;font-size:.84rem;margin-top:8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">';
+            fh += '&#128279; <a href="' + _esc(bc.detail_link || d.detail_link || bc.url || '') + '" target="_blank" style="color:var(--primary);font-weight:600">국회 의안정보시스템에서 원문 확인</a>';
+            if (bc.session) fh += '<span style="font-size:.78rem;padding:2px 8px;background:#f3e5f5;border-radius:8px;color:#6a1b9a">' + _esc(bc.session) + '</span>';
+            fh += '</div>';
             el.innerHTML = fh;
             return;
           }
