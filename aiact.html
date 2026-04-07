@@ -2627,9 +2627,12 @@ function _updateApiKeyIndicator() {
 }
 
 function _isServiceKeyAvailable(keyType) {
-  // 사용자가 키를 직접 설정했으면 항상 사용 가능
+  // 1. 사용자가 키를 직접 설정했으면 항상 사용 가능
   if (localStorage.getItem(_API_KEY_STORAGE[keyType])) return true;
-  // 서버 기본 키 사용이 허용되는 레벨인지 확인
+  // 2. 서버에 해당 키가 설정되어 있는지 확인
+  var serverHasKey = _serverApiKeys.indexOf(keyType) >= 0;
+  if (!serverHasKey) return false;
+  // 3. 서버 키 사용이 허용되는 레벨인지 확인
   var level = _allowDefaultKeys || 'all';
   if (level === 'all') return true;
   if (level === 'none') return false;
@@ -3530,10 +3533,7 @@ var _AI_LAW_HISTORY_KEY = 'aiact_ai_law_history';
 var _llmProviders = [];
 var _llmProvidersLoaded = false;
 var _allowDefaultKeys = 'all';
-
-function _isDefaultKeyLevel(level) {
-  return level === 'all';
-}
+var _serverApiKeys = [];
 
 function loadLlmProviders() {
   if (_llmProvidersLoaded) return;
@@ -3541,6 +3541,7 @@ function loadLlmProviders() {
     _llmProviders = d.providers || [];
     _llmProvidersLoaded = true;
     if (typeof d.allow_default_keys !== 'undefined') _allowDefaultKeys = d.allow_default_keys;
+    if (d.server_api_keys) _serverApiKeys = d.server_api_keys;
     var sel = document.getElementById('aiLawProvider');
     sel.innerHTML = '';
     _llmProviders.forEach(function(p) {
@@ -3551,6 +3552,7 @@ function loadLlmProviders() {
       sel.appendChild(opt);
     });
     onProviderChange();
+    _updateLegWidgetVisibility();
     if (_allowDefaultKeys === 'none' && !_hasAnyApiKey()) {
       _showApiKeyRequired();
     } else if (_allowDefaultKeys !== 'all' && !_hasAnyApiKey()) {
