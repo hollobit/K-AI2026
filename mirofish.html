@@ -573,6 +573,18 @@ a:hover { text-decoration: underline; }
 </div>
 
 <script>
+var _API_BASE = (function() {
+  var h = window.location.hostname;
+  if (h === 'localhost' || h === '127.0.0.1') return '';
+  return 'https://aiap3-api.fly.dev';
+})();
+var _API_KEY_STORAGE = { anthropic: 'aiap3_key_anthropic', openai: 'aiap3_key_openai', gemini: 'aiap3_key_gemini', assembly: 'aiap3_key_assembly', law: 'aiap3_key_law', lawmaking: 'aiap3_key_lawmaking', nanet: 'aiap3_key_nanet', nabo: 'aiap3_key_nabo' };
+function _getApiKeyHeaders() {
+  var headers = {};
+  var m = { anthropic: 'X-Anthropic-Key', openai: 'X-OpenAI-Key', gemini: 'X-Gemini-Key', assembly: 'X-Assembly-Key', law: 'X-Law-Key', lawmaking: 'X-Lawmaking-Key', nanet: 'X-Nanet-Key', nabo: 'X-Nabo-Key' };
+  for (var k in m) { var v = localStorage.getItem(_API_KEY_STORAGE[k]); if (v) headers[m[k]] = v; }
+  return headers;
+}
 /* ================================================================
    INLINE DATA (for file:// protocol support)
    ================================================================ */
@@ -17419,6 +17431,8 @@ const TE_SECTIONS = [
   { id: 'interactions', icon: '\u{1F504}', title: '상호작용 매트릭스', open: false },
   { id: 'techtrends', icon: '\u{1F680}', title: 'AI 기술 트렌드 대응', open: false },
   { id: 'summary', icon: '\u{1F4CA}', title: '종합 평가 요약', open: false },
+  { id: 'legal', icon: '\u2696\uFE0F', title: '법적 쟁점 분석 (AI기본법 연계)', open: false },
+  { id: 'legislation', icon: '\u{1F3DB}\uFE0F', title: '입법 동향 (국회 법률안)', open: false },
   { id: 'news', icon: '\u{1F4F0}', title: '관련 뉴스·동향', open: false },
 ];
 
@@ -17469,6 +17483,10 @@ function teRenderAll() {
   teRenderSummary(task);
   // AI interview — 통합 페르소나별 뷰
   teRenderAIInterview(task);
+  // 법적 쟁점 분석
+  teRenderLegal(task);
+  // 입법 동향
+  teRenderLegislation(task);
   // D4: 뉴스·동향 검색 허브
   teRenderNews(task);
 
@@ -17539,7 +17557,53 @@ function teRenderOverview(task) {
     html += '<div class="card" style="margin-top:12px;border-left:4px solid var(--warning)"><div class="card-title">\u{1F5D2}\uFE0F 저장된 메모</div>';
     html += '<div style="font-size:.85rem;white-space:pre-wrap;line-height:1.6;background:var(--light);padding:10px;border-radius:6px">' + teEscapeHtml(savedMemo) + '</div></div>';
   }
+  // 법적 의무 체크리스트 (GraphRAG compliance-path API)
+  html += '<div id="te-compliance-' + task.id + '" class="card" style="margin-top:12px;display:none">';
+  html += '<div class="card-title">&#9878;&#65039; 법적 의무 이행 현황</div>';
+  html += '<div id="te-compliance-body-' + task.id + '" style="font-size:.85rem">로딩 중...</div></div>';
+
   el.innerHTML = html;
+
+  // 비동기 법적 의무 로드
+  (function(tid) {
+    fetch(_API_BASE + '/api/policy-graph/compliance-path/' + tid).then(function(r){return r.json()}).then(function(d) {
+      var wrap = document.getElementById('te-compliance-' + tid);
+      var body = document.getElementById('te-compliance-body-' + tid);
+      if (!wrap || !body) return;
+      var paths = d.compliance_paths || [];
+      if (paths.length === 0) return;
+      wrap.style.display = 'block';
+      var h = '<div style="display:flex;flex-direction:column;gap:8px">';
+      paths.forEach(function(p) {
+        var a = p.article || {};
+        var obl = a.obligation_type || '';
+        var oblColor = obl === '강제' ? '#c62828' : obl === '노력의무' ? '#f57c00' : '#1565C0';
+        h += '<div style="padding:10px;border:1px solid var(--border);border-radius:8px;border-left:4px solid ' + oblColor + '">';
+        h += '<div style="display:flex;justify-content:space-between;align-items:center">';
+        h += '<span style="font-weight:600">제' + (a.number || '') + '조 ' + (a.title || '') + '</span>';
+        h += '<span style="font-size:.75rem;padding:2px 8px;border-radius:10px;background:' + oblColor + '15;color:' + oblColor + '">' + obl + '</span>';
+        h += '</div>';
+        if (p.guidelines && p.guidelines.length > 0) {
+          p.guidelines.forEach(function(gl) {
+            h += '<div style="margin-top:6px;padding:4px 8px;background:rgba(245,124,0,.06);border-radius:4px;font-size:.8rem">';
+            h += '<span style="color:#f57c00">&#128203;</span> ' + (gl.title || '').substring(0, 50);
+            h += '</div>';
+          });
+        }
+        if (p.decrees && p.decrees.length > 0) {
+          p.decrees.forEach(function(dc) {
+            h += '<div style="margin-top:4px;padding:4px 8px;background:rgba(123,31,162,.06);border-radius:4px;font-size:.8rem">';
+            h += '<span style="color:#7b1fa2">&#128220;</span> 시행령: ' + (dc.title || '').substring(0, 40);
+            h += '</div>';
+          });
+        }
+        h += '</div>';
+      });
+      h += '</div>';
+      body.innerHTML = h;
+    }).catch(function() {});
+  })(task.id);
+
   // D3: Calendar heatmap (appended after innerHTML)
   teRenderCalendarHeatmap(task, el);
   // O3: Similar tasks recommendation
@@ -18513,7 +18577,22 @@ function teRenderAIInterview(task) {
   var coopData = TASK_EVAL_DATA[task.id + '_cooperation'];
 
   if (!successData && !riskData && !coopData) {
-    el.innerHTML = '<div style="text-align:center;padding:30px"><p style="color:var(--warning)">\u26A0\uFE0F 이 과제의 AI 인터뷰 데이터가 아직 생성되지 않았습니다.</p></div>';
+    // 모델 선택 + 실시간 분석 시작 UI
+    var llmHtml = '<div style="text-align:center;padding:30px">';
+    llmHtml += '<p style="color:var(--warning);margin-bottom:16px">\u26A0\uFE0F 이 과제의 AI 인터뷰 데이터가 아직 생성되지 않았습니다.</p>';
+    llmHtml += '<div style="display:inline-flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:center;margin-bottom:12px">';
+    llmHtml += '<select id="teInterviewProvider" style="padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:.82rem" onchange="teLoadInterviewModels()">';
+    llmHtml += '<option value="">프로바이더 선택</option></select>';
+    llmHtml += '<select id="teInterviewModel" style="padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:.82rem">';
+    llmHtml += '<option value="">모델 선택</option></select>';
+    llmHtml += '</div><br>';
+    llmHtml += '<button onclick="teStartBatchInterview(' + task.id + ')" style="padding:10px 24px;background:var(--primary);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:.9rem;font-weight:600">';
+    llmHtml += '\u{1F9E0} AI 인터뷰 실시간 분석 시작</button>';
+    llmHtml += '<p style="font-size:.78rem;color:var(--text-muted);margin-top:8px">10개 페르소나 \u00D7 3유형 = 30개 분석 (약 3~5분 소요)</p>';
+    llmHtml += '</div>';
+    el.innerHTML = llmHtml;
+    // 프로바이더 목록 로드
+    teLoadInterviewProviders();
     return;
   }
 
@@ -18554,6 +18633,110 @@ function teRenderAIInterview(task) {
   });
 
   el.innerHTML = html;
+}
+
+// === 14.3.2: 에이전트 인터뷰 모델 선택 + 실시간 분석 ===
+var _teProviders = null;
+
+function teLoadInterviewProviders() {
+  fetch(_API_BASE + '/api/llm/providers', {headers: _getApiKeyHeaders()}).then(function(r) { return r.json(); }).then(function(d) {
+    _teProviders = d;
+    var sel = document.getElementById('teInterviewProvider');
+    if (!sel) return;
+    sel.innerHTML = '<option value="">프로바이더 선택</option>';
+    (d.providers || []).forEach(function(p) {
+      var opt = document.createElement('option');
+      opt.value = p.name;
+      opt.textContent = p.name.toUpperCase() + (p.is_default ? ' (기본)' : '');
+      if (p.is_default) opt.selected = true;
+      sel.appendChild(opt);
+    });
+    teLoadInterviewModels();
+  }).catch(function() {});
+}
+
+function teLoadInterviewModels() {
+  var prov = (document.getElementById('teInterviewProvider') || {}).value;
+  var sel = document.getElementById('teInterviewModel');
+  if (!sel || !_teProviders) return;
+  sel.innerHTML = '<option value="">모델 선택</option>';
+  var p = (_teProviders.providers || []).find(function(x) { return x.name === prov; });
+  if (!p) return;
+  (p.models || []).forEach(function(m) {
+    var opt = document.createElement('option');
+    opt.value = m;
+    opt.textContent = m;
+    if (m === p.default_model) opt.selected = true;
+    sel.appendChild(opt);
+  });
+}
+
+function teStartBatchInterview(taskId) {
+  var provider = (document.getElementById('teInterviewProvider') || {}).value || undefined;
+  var model = (document.getElementById('teInterviewModel') || {}).value || undefined;
+  var el = document.getElementById('te-sec-ai-interview');
+  if (!el) return;
+
+  var types = ['success', 'risk', 'cooperation'];
+  var typeLabels = { success: '\uC131\uACF5/\uC2E4\uD328', risk: '\uC704\uD5D8\u00B7\uACE0\uB824', cooperation: '\uD0C0\uACFC\uC81C \uD611\uB825' };
+  var total = types.length;
+  var completed = 0;
+
+  el.innerHTML = '<div style="padding:20px"><div style="margin-bottom:12px;font-weight:600">\u{1F9E0} AI \uBC30\uCE58 \uBD84\uC11D \uC9C4\uD589 \uC911...</div>' +
+    '<div id="teBatchProgress" style="margin-bottom:16px"></div>' +
+    '<div id="teBatchResults"></div></div>';
+
+  function updateProgress() {
+    var pEl = document.getElementById('teBatchProgress');
+    if (pEl) {
+      var pct = Math.round(completed / total * 100);
+      pEl.innerHTML = '<div style="background:#eee;border-radius:8px;height:8px;overflow:hidden"><div style="width:' + pct + '%;height:100%;background:var(--primary);transition:width .3s"></div></div>' +
+        '<div style="font-size:.8rem;color:var(--text-muted);margin-top:4px">' + completed + '/' + total + ' \uC720\uD615 \uC644\uB8CC (' + pct + '%)</div>';
+    }
+  }
+  updateProgress();
+
+  function runNext(idx) {
+    if (idx >= types.length) {
+      // 완료 — 페이지 새로고침하여 결과 표시
+      var pEl = document.getElementById('teBatchProgress');
+      if (pEl) pEl.innerHTML += '<div style="margin-top:8px;color:var(--success);font-weight:600">\u2705 \uC804\uCCB4 \uBD84\uC11D \uC644\uB8CC! \uD398\uC774\uC9C0\uB97C \uC0C8\uB85C\uACE0\uCE68\uD558\uBA74 \uACB0\uACFC\uB97C \uBCFC \uC218 \uC788\uC2B5\uB2C8\uB2E4.</div>';
+      return;
+    }
+    var atype = types[idx];
+    var rEl = document.getElementById('teBatchResults');
+    if (rEl) rEl.innerHTML += '<div style="font-size:.82rem;color:var(--text-muted)" id="teBatch_' + atype + '">\u23F3 ' + typeLabels[atype] + ' \uBD84\uC11D \uC911...</div>';
+
+    fetch(_API_BASE + '/api/task-eval/batch', {
+      method: 'POST',
+      headers: Object.assign({ 'Content-Type': 'application/json' }, _getApiKeyHeaders()),
+      body: JSON.stringify({ task_id: taskId, analysis_type: atype, provider: provider, model: model })
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      completed++;
+      updateProgress();
+      var statusEl = document.getElementById('teBatch_' + atype);
+      if (statusEl) {
+        if (d.success) {
+          statusEl.innerHTML = '\u2705 ' + typeLabels[atype] + ' \u2014 ' + (d.data ? d.data.persona_count : '?') + '\uAC1C \uD398\uB974\uC18C\uB098 \uC644\uB8CC';
+          statusEl.style.color = 'var(--success)';
+        } else {
+          statusEl.innerHTML = '\u274C ' + typeLabels[atype] + ' \u2014 ' + (d.error || '\uC2E4\uD328');
+          statusEl.style.color = 'var(--danger)';
+        }
+      }
+      runNext(idx + 1);
+    })
+    .catch(function(err) {
+      completed++;
+      updateProgress();
+      var statusEl = document.getElementById('teBatch_' + atype);
+      if (statusEl) { statusEl.innerHTML = '\u274C ' + typeLabels[atype] + ' \u2014 ' + err.message; statusEl.style.color = 'var(--danger)'; }
+      runNext(idx + 1);
+    });
+  }
+  runNext(0);
 }
 
 function teEscapeHtml(str) {
@@ -18827,6 +19010,202 @@ function teRenderCalendarHeatmap(task, containerEl) {
   html += '</div>';
 
   containerEl.insertAdjacentHTML('beforeend', html);
+}
+
+/* ================================================================
+   입법 동향 (TE accordion section — Phase 16.4.5)
+   ================================================================ */
+function teRenderLegislation(task) {
+  var el = document.getElementById('te-sec-legislation');
+  if (!el) return;
+  var title = task.title || '';
+
+  el.innerHTML = '<div style="text-align:center;padding:30px">' +
+    '<div style="font-size:2rem;margin-bottom:8px">\u{1F3DB}\uFE0F</div>' +
+    '<p style="color:var(--text-muted);font-size:.85rem">국회 관련 법률안을 검색합니다...</p>' +
+    '<div class="spinner" style="width:20px;height:20px;border-width:2px;margin:8px auto"></div></div>';
+
+  // 과제 키워드로 법률안 검색
+  var keywords = (title.match(/[가-힣]{2,}/g) || []).slice(0, 3);
+  var searchKw = keywords.length > 0 ? keywords[0] : '인공지능';
+
+  fetch(_API_BASE + '/api/assembly/bills?keyword=' + encodeURIComponent(searchKw))
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      if (d.error && d.bills.length === 0) {
+        el.innerHTML = '<div style="padding:16px;text-align:center;color:var(--text-muted)">' +
+          '<p>\u{1F3DB}\uFE0F ASSEMBLY_API_KEY를 설정하면 관련 법률안을 확인할 수 있습니다.</p>' +
+          '<p style="font-size:.8rem;margin-top:6px"><a href="https://open.assembly.go.kr" target="_blank" style="color:var(--primary)">open.assembly.go.kr</a></p></div>';
+        return;
+      }
+      if (d.bills.length === 0) {
+        el.innerHTML = '<div style="padding:16px;text-align:center;color:var(--text-muted)">\uAD00\uB828 \uBC95\uB960\uC548 \uC5C6\uC74C (\uAC80\uC0C9: "' + searchKw + '")</div>';
+        return;
+      }
+      var html = '<div style="margin-bottom:10px;font-size:.82rem;color:var(--text-muted)">\uAC80\uC0C9: "' + searchKw + '" \u2014 ' + d.total + '\uAC74</div>';
+      d.bills.forEach(function(b) {
+        var sc = b.proc_result ? (b.proc_result.indexOf('\uAC00\uACB0') >= 0 ? '#28a745' : b.proc_result.indexOf('\uD3D0\uAE30') >= 0 ? '#dc3545' : '#fd7e14') : '#6c757d';
+        html += '<div style="padding:8px 12px;border-bottom:1px solid var(--border)">' +
+          '<div style="display:flex;justify-content:space-between;align-items:center">' +
+          '<span style="font-weight:600;font-size:.88rem">' + (b.name || '') + '</span>' +
+          '<span style="padding:1px 6px;border-radius:8px;font-size:.7rem;background:' + sc + ';color:#fff">' + (b.proc_result || '\uC2EC\uC0AC\uC911') + '</span></div>' +
+          '<div style="font-size:.78rem;color:var(--gray);margin-top:2px">' + (b.proposer || '') + ' | ' + (b.propose_date || '') + '</div></div>';
+      });
+      html += '<div style="margin-top:10px;text-align:center"><a href="aiact.html?view=legislation" target="_blank" style="color:var(--primary);font-size:.82rem">\uC785\uBC95 \uB3D9\uD5A5 \uD0ED\uC5D0\uC11C \uC0C1\uC138 \uBCF4\uAE30 \u2192</a></div>';
+      el.innerHTML = html;
+    })
+    .catch(function(err) {
+      el.innerHTML = '<div style="padding:12px;text-align:center;color:var(--text-muted)">\uC785\uBC95 \uB3D9\uD5A5 \uB85C\uB4DC \uC2E4\uD328: ' + err.message + '</div>';
+    });
+}
+
+/* ================================================================
+   법적 쟁점 분석 (TE accordion section — Phase 15.4)
+   ================================================================ */
+var _teLegalCache = {};  // task_id → { response, generated_at }
+
+function teRenderLegal(task) {
+  var el = document.getElementById('te-sec-legal');
+  if (!el) return;
+  var tid = task.id;
+
+  // 캐시에 있으면 바로 렌더링
+  if (_teLegalCache[tid]) {
+    _teLegalRenderResult(el, task, _teLegalCache[tid]);
+    return;
+  }
+
+  // 저장된 결과 확인 (서버에서)
+  el.innerHTML = '<div style="text-align:center;padding:40px">' +
+    '<div style="font-size:2.5rem;margin-bottom:12px">\u2696\uFE0F</div>' +
+    '<h4 style="margin-bottom:8px">과제 #' + tid + ' 법적 쟁점 분석</h4>' +
+    '<p style="color:var(--text-muted);margin-bottom:16px;font-size:.88rem">' +
+    'AI기본법\u00B7시행령\u00B7가이드라인 5종을 기반으로<br>이 과제 추진 시의 법적 쟁점과 고려사항을 분석합니다.</p>' +
+    '<button onclick="teRunLegalAnalysis(' + tid + ')" ' +
+    'style="padding:10px 28px;background:var(--primary);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:.92rem;font-weight:600">' +
+    '\u2696\uFE0F AI 법적 쟁점 분석 시작</button>' +
+    '<p style="color:var(--text-muted);font-size:.78rem;margin-top:10px">' +
+    '\u23F1 예상 소요: 10~20초 (LLM 분석)</p></div>';
+
+  // 기존 저장 결과 확인
+  fetch(_API_BASE + '/api/task-eval/results?task_id=' + tid + '&analysis_type=legal')
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      if (d.success && d.data && d.data.response) {
+        _teLegalCache[tid] = d.data;
+        _teLegalRenderResult(el, task, d.data);
+      }
+    }).catch(function() {});
+}
+
+function teRunLegalAnalysis(taskId) {
+  var el = document.getElementById('te-sec-legal');
+  if (!el) return;
+  var task = DATA.tasks.find(function(t) { return t.id === taskId; });
+  if (!task) return;
+
+  // 프로바이더/모델 선택 (aiact.html과 동일한 UI가 있으면 사용, 없으면 기본값)
+  var provider = null, model = null;
+  var provSel = document.getElementById('teLegalProvider');
+  var modSel = document.getElementById('teLegalModel');
+  if (provSel) provider = provSel.value;
+  if (modSel) model = modSel.value;
+
+  el.innerHTML = '<div style="text-align:center;padding:40px">' +
+    '<div class="spinner" style="width:32px;height:32px;border-width:3px;margin:0 auto 12px"></div>' +
+    '<p style="font-weight:600">\u2696\uFE0F 법적 쟁점 분석 중...</p>' +
+    '<p style="color:var(--text-muted);font-size:.85rem" id="teLegalProgress">GraphRAG 탐색 + LLM 분석 진행 중</p></div>';
+
+  var startTime = Date.now();
+  var progressEl;
+  var progressTimer = setInterval(function() {
+    progressEl = document.getElementById('teLegalProgress');
+    if (!progressEl) { clearInterval(progressTimer); return; }
+    var elapsed = Math.round((Date.now() - startTime) / 1000);
+    progressEl.textContent = elapsed + '\uCD08 \uACBD\uACFC... (GraphRAG + LLM \uBD84\uC11D \uC9C4\uD589 \uC911)';
+  }, 1000);
+
+  fetch(_API_BASE + '/api/task-eval', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      task_id: taskId,
+      analysis_type: 'legal',
+      provider: provider,
+      model: model,
+    })
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(d) {
+    clearInterval(progressTimer);
+    if (d.success && d.data) {
+      _teLegalCache[taskId] = d.data;
+      _teLegalRenderResult(el, task, d.data);
+    } else {
+      el.innerHTML = '<div style="text-align:center;padding:30px;color:var(--danger)">' +
+        '<p>\u274C ' + (d.error || '\uBD84\uC11D \uC2E4\uD328') + '</p>' +
+        '<button onclick="teRunLegalAnalysis(' + taskId + ')" style="margin-top:12px;padding:8px 20px;border:1px solid var(--danger);background:transparent;color:var(--danger);border-radius:6px;cursor:pointer">\uB2E4\uC2DC \uC2DC\uB3C4</button></div>';
+    }
+  })
+  .catch(function(err) {
+    clearInterval(progressTimer);
+    el.innerHTML = '<div style="text-align:center;padding:30px;color:var(--danger)"><p>\u274C \uB124\uD2B8\uC6CC\uD06C \uC624\uB958: ' + err.message + '</p></div>';
+  });
+}
+
+function _teLegalRenderResult(el, task, data) {
+  var response = data.response || '';
+  var generatedAt = (data.generated_at || '').replace('T', ' ').substring(0, 19);
+
+  // 마크다운 → HTML 변환 (간이)
+  var html = response
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/### (\d+)\. (.+)/g, '<h4 style="color:var(--primary);margin:20px 0 8px;font-size:.95rem">$1. $2</h4>')
+    .replace(/### (.+)/g, '<h4 style="color:var(--primary);margin:20px 0 8px;font-size:.95rem">$1</h4>')
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\[강제\]/g, '<span style="background:#dc3545;color:#fff;padding:1px 6px;border-radius:3px;font-size:.75rem;font-weight:600">\uAC15\uC81C</span>')
+    .replace(/\[노력\]/g, '<span style="background:#fd7e14;color:#fff;padding:1px 6px;border-radius:3px;font-size:.75rem;font-weight:600">\uB178\uB825</span>')
+    .replace(/\[조건부\]/g, '<span style="background:#6f42c1;color:#fff;padding:1px 6px;border-radius:3px;font-size:.75rem;font-weight:600">\uC870\uAC74\uBD80</span>')
+    .replace(/- \[x\] (.+)/g, '<div style="margin:4px 0;padding:4px 8px;background:rgba(40,167,69,.08);border-radius:4px">\u2705 $1</div>')
+    .replace(/- \[ \] (.+)/g, '<div style="margin:4px 0;padding:4px 8px;background:rgba(255,193,7,.08);border-radius:4px">\u2B1C $1</div>')
+    .replace(/^- (.+)/gm, '<div style="margin:3px 0;padding-left:16px">\u2022 $1</div>')
+    .replace(/(제\d+조)/g, '<span style="color:var(--primary);font-weight:600;text-decoration:underline;cursor:help" title="AI\uAE30\uBCF8\uBC95 $1">$1</span>')
+    .replace(/\n\n/g, '<br><br>')
+    .replace(/\n/g, '<br>');
+
+  var out = '<div style="margin-bottom:12px;padding:10px 16px;background:rgba(102,16,242,.06);border-radius:8px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">';
+  out += '<div><span style="color:#6610f2;font-weight:600">\u2696\uFE0F AI \uBC95\uC801 \uC7C1\uC810 \uBD84\uC11D \uACB0\uACFC</span>';
+  if (generatedAt) out += '<span style="font-size:.78rem;color:var(--text-muted);margin-left:12px">\uBD84\uC11D\uC77C: ' + generatedAt + '</span>';
+  out += '</div>';
+  out += '<div style="display:flex;gap:6px">';
+  out += '<button onclick="teRunLegalAnalysis(' + task.id + ')" style="padding:4px 12px;border:1px solid #6610f2;background:transparent;color:#6610f2;border-radius:4px;cursor:pointer;font-size:.78rem">\uD83D\uDD04 \uC7AC\uBD84\uC11D</button>';
+  out += '<button onclick="_teLegalExport(' + task.id + ')" style="padding:4px 12px;border:1px solid var(--border);background:transparent;border-radius:4px;cursor:pointer;font-size:.78rem">\uD83D\uDCE5 \uB0B4\uBCF4\uB0B4\uAE30</button>';
+  out += '</div></div>';
+  out += '<div style="line-height:1.7;font-size:.9rem">' + html + '</div>';
+
+  // aiact.html 법령 검색 링크
+  out += '<div style="margin-top:16px;padding:12px;background:rgba(0,123,255,.05);border-radius:8px;font-size:.85rem">';
+  out += '<strong>\uD83D\uDD17 \uAD00\uB828 \uBC95\uB839 \uC0C1\uC138 \uAC80\uC0C9:</strong> ';
+  out += '<a href="aiact.html?view=lawsearch" target="_blank" style="color:var(--primary)">\uBC95\uB839 \uAC80\uC0C9 \u2192</a> | ';
+  out += '<a href="aiact.html?view=lawsearch&ai=1" target="_blank" style="color:var(--primary)">AI \uBC95\uB839 \uBD84\uC11D \u2192</a>';
+  out += '</div>';
+
+  el.innerHTML = out;
+}
+
+function _teLegalExport(taskId) {
+  var data = _teLegalCache[taskId];
+  if (!data) return;
+  var task = DATA.tasks.find(function(t) { return t.id === taskId; });
+  var md = '# \u2696\uFE0F \uBC95\uC801 \uC7C1\uC810 \uBD84\uC11D: \uACFC\uC81C #' + taskId + ' ' + (task ? task.title : '') + '\n\n';
+  md += '\uBD84\uC11D\uC77C: ' + (data.generated_at || '') + '\n\n---\n\n';
+  md += data.response || '';
+  var blob = new Blob([md], { type: 'text/markdown;charset=utf-8' });
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'legal-analysis-task-' + taskId + '.md';
+  a.click();
+  URL.revokeObjectURL(a.href);
 }
 
 /* ================================================================
