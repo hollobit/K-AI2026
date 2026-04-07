@@ -5615,7 +5615,16 @@ function _showBillDetail(billData) {
           var el = document.getElementById('billContentArea');
           if (!el) return;
           if (bc.error) {
-            el.innerHTML = '<div style="padding:8px 12px;background:#fff8e1;border-radius:6px;font-size:.82rem;color:#795548">&#128161; 상세 콘텐츠를 자동 추출할 수 없습니다.</div>';
+            el.innerHTML = '<div style="padding:8px 12px;background:#fff8e1;border-radius:6px;font-size:.82rem;color:#795548">&#128161; 상세 콘텐츠를 자동 추출할 수 없습니다. <a href="' + _esc(d.detail_link || '') + '" target="_blank" style="color:var(--primary)">국회 의안정보시스템에서 확인</a></div>';
+            return;
+          }
+          // 폴백 모드: proposal_reason/main_content 필드 처리
+          if (bc.fallback && (bc.proposal_reason || bc.main_content || bc.summary_content)) {
+            var fh = '';
+            if (bc.proposal_reason) fh += '<details open style="margin-bottom:10px"><summary style="cursor:pointer;font-weight:600;font-size:.88rem;color:#333">&#128203; 제안이유</summary><div style="padding:10px 12px;font-size:.85rem;line-height:1.7;background:#f8f9fa;border-radius:6px;margin-top:4px">' + _esc(bc.proposal_reason) + '</div></details>';
+            if (bc.main_content) fh += '<details open style="margin-bottom:10px"><summary style="cursor:pointer;font-weight:600;font-size:.88rem;color:#333">&#128221; 주요내용</summary><div style="padding:10px 12px;font-size:.85rem;line-height:1.7;background:#f8f9fa;border-radius:6px;margin-top:4px">' + _esc(bc.main_content) + '</div></details>';
+            if (bc.summary_content) fh += '<div style="padding:8px 12px;background:#fff8e1;border-radius:6px;font-size:.82rem;color:#795548">' + _esc(bc.summary_content) + '</div>';
+            el.innerHTML = fh;
             return;
           }
           var ch = '';
