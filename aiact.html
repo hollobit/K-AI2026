@@ -2543,10 +2543,32 @@ window.addEventListener('DOMContentLoaded', function() {
     });
   });
 
-  // URL 파라미터로 탭 직접 열기: ?view=compliance
+  // URL 파라미터로 탭 직접 열기: ?view=compliance&ai_query=질문
   var params = new URLSearchParams(window.location.search);
   var viewParam = params.get('view');
+  var aiQuery = params.get('ai_query');
   if (viewParam) switchView(viewParam, true);
+  // AI 분석 모드: &ai=1 으로 모드 활성화, &ai_query=질문 으로 자동 실행
+  var aiMode = params.get('ai');
+  if (aiMode || aiQuery) {
+    if (viewParam === 'lawsearch') {
+      if (!_aiLawMode) toggleAiLawMode();
+      if (aiQuery) {
+        setTimeout(function() {
+          document.getElementById('aiLawQuery').value = aiQuery;
+          runAiLawSearch();
+        }, 500);
+      }
+    } else if (viewParam === 'legislation') {
+      if (!_legAiMode) toggleLegAiMode();
+      if (aiQuery) {
+        setTimeout(function() {
+          document.getElementById('legAiQuery').value = aiQuery;
+          runLegAiSearch(false);
+        }, 500);
+      }
+    }
+  }
   _renderLawSearchHistory();
   renderBookmarkPanel();
 });
