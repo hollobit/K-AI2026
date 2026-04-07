@@ -526,9 +526,9 @@ tbody td { padding: 11px 14px; font-size: 0.85rem; border-bottom: 1px solid var(
   <div class="nav-tab" onclick="switchView('consider')">&#9888;&#65039; 주요 고려사항</div>
   <div class="nav-tab" onclick="switchView('compliance')">&#9878;&#65039; 컴플라이언스</div>
   <div class="nav-tab" onclick="switchView('lawsearch')">&#128269; 법령 검색</div>
-  <div class="nav-tab" onclick="switchView('bookmarks')">&#128278; 북마크 <span id="navBookmarkCount" style="font-size:.75rem;background:var(--accent);color:white;border-radius:8px;padding:1px 6px;margin-left:2px;display:none">0</span></div>
   <div class="nav-tab" onclick="switchView('lawgraph')">&#128376;&#65039; 법령-정책 관계도</div>
   <div class="nav-tab" onclick="switchView('legislation')">&#127963;&#65039; 입법 동향</div>
+  <div class="nav-tab" onclick="switchView('bookmarks')">&#128278; 북마크 <span id="navBookmarkCount" style="font-size:.75rem;background:var(--accent);color:white;border-radius:8px;padding:1px 6px;margin-left:2px;display:none">0</span></div>
 </nav>
 
 <!-- ===== 탭 1: 법령 체계 ===== -->
@@ -1503,19 +1503,6 @@ tbody td { padding: 11px 14px; font-size: 0.85rem; border-bottom: 1px solid var(
   </div>
 </div>
 
-<!-- ===== 탭 9: 북마크 ===== -->
-<div class="view" id="view-bookmarks">
-  <div class="section-title" style="margin-bottom:20px">&#128278; 북마크 관리</div>
-  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px">
-    <button onclick="exportBookmarks('json')" style="padding:8px 14px;border:1px solid var(--border);border-radius:6px;background:white;font-size:.83rem;cursor:pointer">&#128196; JSON 내보내기</button>
-    <button onclick="exportBookmarks('markdown')" style="padding:8px 14px;border:1px solid var(--border);border-radius:6px;background:white;font-size:.83rem;cursor:pointer">&#128221; Markdown 내보내기</button>
-    <label style="padding:8px 14px;border:1px solid var(--border);border-radius:6px;background:white;font-size:.83rem;cursor:pointer">&#128229; 가져오기<input type="file" accept=".json" onchange="importBookmarks(event)" style="display:none"></label>
-    <button onclick="printBookmarks()" style="padding:8px 14px;background:var(--primary);color:white;border:none;border-radius:6px;font-size:.83rem;cursor:pointer">&#128424; 인쇄</button>
-    <button onclick="clearBookmarks()" style="padding:8px 14px;border:1px solid var(--accent);border-radius:6px;background:white;color:var(--accent);font-size:.83rem;cursor:pointer">&#128465; 전체 삭제</button>
-  </div>
-  <div id="bookmarkFullList"></div>
-</div>
-
 <!-- ===== 탭 10: 법령-정책 관계도 ===== -->
 <div class="view" id="view-lawgraph">
   <div class="section-title" style="margin-bottom:12px">&#128376;&#65039; 법령-정책 관계도 <span style="font-size:0.8rem;color:var(--gray);font-weight:400">GraphRAG 통합 시각화</span></div>
@@ -1556,13 +1543,6 @@ tbody td { padding: 11px 14px; font-size: 0.85rem; border-bottom: 1px solid var(
 <!-- ===== 입법 동향 (Phase 16) ===== -->
 <div class="view" id="view-legislation">
   <div class="section-title" style="margin-bottom:12px">&#127963;&#65039; 입법 동향 <span style="font-size:0.8rem;color:var(--gray);font-weight:400">국회 API 통합 — 법률안·입법예고·법률쟁점</span> <span id="mcpStatusBadge" style="font-size:.72rem;padding:2px 8px;border-radius:10px;margin-left:8px;cursor:pointer" onclick="_checkMcpStatus()" title="MCP 연결 상태 확인">&#9898; MCP</span></div>
-
-  <!-- 검색 -->
-  <div style="background:white;border-radius:var(--radius);box-shadow:var(--shadow);padding:14px 18px;margin-bottom:16px;display:flex;gap:10px;flex-wrap:wrap;align-items:center">
-    <input type="text" id="legKeyword" value="인공지능" placeholder="검색 키워드" style="flex:1;min-width:200px;padding:8px 14px;border:1px solid var(--border);border-radius:6px;font-size:.88rem">
-    <button onclick="loadLegislation()" style="padding:8px 20px;background:var(--primary);color:white;border:none;border-radius:6px;cursor:pointer;font-size:.88rem">&#128270; 검색</button>
-    <button onclick="enrichBillsToGraph()" style="padding:8px 16px;background:#6610f2;color:white;border:none;border-radius:6px;cursor:pointer;font-size:.82rem" title="법률안을 GraphRAG에 추가">&#128376;&#65039; GraphRAG 수집</button>
-  </div>
 
   <!-- AI 입법 종합 분석 -->
   <div style="background:linear-gradient(135deg,#1a237e 0%,#4a148c 100%);border-radius:var(--radius);box-shadow:var(--shadow);padding:20px;margin-bottom:20px;color:white">
@@ -1644,6 +1624,33 @@ tbody td { padding: 11px 14px; font-size: 0.85rem; border-bottom: 1px solid var(
     </div>
   </div>
 
+  <!-- 키워드 검색 -->
+  <div style="background:white;border-radius:var(--radius);box-shadow:var(--shadow);padding:14px 18px;margin-bottom:16px;display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+    <input type="text" id="legKeyword" value="인공지능" placeholder="검색 키워드" style="flex:1;min-width:200px;padding:8px 14px;border:1px solid var(--border);border-radius:6px;font-size:.88rem" onkeydown="if(event.key==='Enter')_searchLegislation()">
+    <button onclick="_searchLegislation()" style="padding:8px 20px;background:var(--primary);color:white;border:none;border-radius:6px;cursor:pointer;font-size:.88rem">&#128270; 검색</button>
+    <button onclick="enrichBillsToGraph()" style="padding:8px 16px;background:#6610f2;color:white;border:none;border-radius:6px;cursor:pointer;font-size:.82rem" title="법률안을 GraphRAG에 추가">&#128376;&#65039; GraphRAG 수집</button>
+  </div>
+
+  <!-- 안내 (초기 상태) -->
+  <div id="legSearchGuide" style="background:white;border-radius:var(--radius);box-shadow:var(--shadow);padding:40px 24px;text-align:center">
+    <div style="font-size:2.5rem;margin-bottom:12px">&#127963;&#65039;</div>
+    <h3 style="color:var(--primary);margin-bottom:8px">열린국회정보 포탈 검색</h3>
+    <p style="color:var(--gray);font-size:0.9rem;line-height:1.8;max-width:560px;margin:0 auto">
+      법률안, 회의록, 국회 일정, 의원 활동, 국민청원 등을 통합 검색합니다.<br>
+      키워드를 입력하고 검색 버튼을 클릭하세요. AI 입법 종합 분석도 활용해 보세요.<br>
+      <span style="font-size:0.82rem;color:var(--info)">데이터 출처: 열린국회정보 Open API (open.assembly.go.kr) + assembly-api-mcp</span>
+    </p>
+    <div style="margin-top:16px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
+      <button onclick="document.getElementById('legKeyword').value='인공지능';_searchLegislation()" style="padding:6px 14px;border:1px solid var(--primary);border-radius:16px;background:white;color:var(--primary);font-size:.82rem;cursor:pointer">인공지능</button>
+      <button onclick="document.getElementById('legKeyword').value='데이터';_searchLegislation()" style="padding:6px 14px;border:1px solid var(--primary);border-radius:16px;background:white;color:var(--primary);font-size:.82rem;cursor:pointer">데이터</button>
+      <button onclick="document.getElementById('legKeyword').value='개인정보';_searchLegislation()" style="padding:6px 14px;border:1px solid var(--primary);border-radius:16px;background:white;color:var(--primary);font-size:.82rem;cursor:pointer">개인정보</button>
+      <button onclick="document.getElementById('legKeyword').value='플랫폼';_searchLegislation()" style="padding:6px 14px;border:1px solid var(--primary);border-radius:16px;background:white;color:var(--primary);font-size:.82rem;cursor:pointer">플랫폼</button>
+      <button onclick="document.getElementById('legKeyword').value='반도체';_searchLegislation()" style="padding:6px 14px;border:1px solid var(--primary);border-radius:16px;background:white;color:var(--primary);font-size:.82rem;cursor:pointer">반도체</button>
+    </div>
+  </div>
+
+  <!-- 검색 결과 영역 (검색 실행 전에는 숨김) -->
+  <div id="legResultsArea" style="display:none">
   <!-- 3개 패널 -->
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
     <!-- 법률안 -->
@@ -1773,6 +1780,20 @@ tbody td { padding: 11px 14px; font-size: 0.85rem; border-bottom: 1px solid var(
       <div style="text-align:center;padding:20px;color:var(--text-muted)">로딩 대기 중</div>
     </div>
   </div>
+  </div><!-- /legResultsArea -->
+</div>
+
+<!-- ===== 북마크 ===== -->
+<div class="view" id="view-bookmarks">
+  <div class="section-title" style="margin-bottom:20px">&#128278; 북마크 관리</div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px">
+    <button onclick="exportBookmarks('json')" style="padding:8px 14px;border:1px solid var(--border);border-radius:6px;background:white;font-size:.83rem;cursor:pointer">&#128196; JSON 내보내기</button>
+    <button onclick="exportBookmarks('markdown')" style="padding:8px 14px;border:1px solid var(--border);border-radius:6px;background:white;font-size:.83rem;cursor:pointer">&#128221; Markdown 내보내기</button>
+    <label style="padding:8px 14px;border:1px solid var(--border);border-radius:6px;background:white;font-size:.83rem;cursor:pointer">&#128229; 가져오기<input type="file" accept=".json" onchange="importBookmarks(event)" style="display:none"></label>
+    <button onclick="printBookmarks()" style="padding:8px 14px;background:var(--primary);color:white;border:none;border-radius:6px;font-size:.83rem;cursor:pointer">&#128424; 인쇄</button>
+    <button onclick="clearBookmarks()" style="padding:8px 14px;border:1px solid var(--accent);border-radius:6px;background:white;color:var(--accent);font-size:.83rem;cursor:pointer">&#128465; 전체 삭제</button>
+  </div>
+  <div id="bookmarkFullList"></div>
 </div>
 
 <!-- ===== 모달 ===== -->
@@ -2048,7 +2069,7 @@ function switchView(name, skipHistory) {
   var el = document.getElementById('view-' + name);
   if (el) el.classList.add('active');
   var tabs = document.querySelectorAll('.nav-tab');
-  var map = { law: 0, guideline: 1, mapping: 2, checklist: 3, timeline: 4, consider: 5, compliance: 6, lawsearch: 7, bookmarks: 8, lawgraph: 9, legislation: 10 };
+  var map = { law: 0, guideline: 1, mapping: 2, checklist: 3, timeline: 4, consider: 5, compliance: 6, lawsearch: 7, lawgraph: 8, legislation: 9, bookmarks: 10 };
   if (map[name] !== undefined && tabs[map[name]]) tabs[map[name]].classList.add('active');
   if (name === 'compliance' && !window._complianceRendered) renderCompliance();
   if (name === 'lawsearch' && !window._lawProxyChecked) { window._lawProxyChecked = true; checkLawProxy(); }
@@ -4833,7 +4854,21 @@ var LG_SIZES = {
 
 function loadLegislation() {
   window._legLoaded = true;
-  var kw = (document.getElementById('legKeyword') || {}).value || '인공지능';
+  // 초기 로드: 검색 UI + AI 분석 위젯만 표시, 자동 검색 안 함 (서버 부하 방지)
+  _updateLegWidgetVisibility();
+  _checkMcpStatus();
+  // LLM 프로바이더 로드 (AI 입법 분석용)
+  if (typeof _legLlmLoaded === 'undefined') {
+    _legLlmLoaded = true;
+    _loadLegAiProviders();
+  }
+}
+
+function _searchLegislation(keyword) {
+  var kw = keyword || (document.getElementById('legKeyword') || {}).value || '인공지능';
+  // 안내 위젯 숨기기
+  var guide = document.getElementById('legSearchGuide');
+  if (guide) guide.style.display = 'none';
   // 키워드 표시 업데이트
   var kwLabel = '"' + kw + '"';
   var bkw = document.getElementById('legBillKw'); if (bkw) bkw.textContent = kwLabel;
@@ -4845,8 +4880,10 @@ function loadLegislation() {
   var akw = document.getElementById('legActivityKw'); if (akw) akw.textContent = kwLabel;
   var rkw = document.getElementById('legResearchKw'); if (rkw) rkw.textContent = kwLabel;
   window._legCurrentKw = kw;
-  // 키 유무에 따라 위젯 가시성 제어
   _updateLegWidgetVisibility();
+  // 검색 결과 영역 표시
+  var resultsArea = document.getElementById('legResultsArea');
+  if (resultsArea) resultsArea.style.display = '';
   // 모든 섹션 키워드 연동 로드
   _loadBills(kw);
   if (_isServiceKeyAvailable('lawmaking')) _loadNotices(kw);
@@ -4860,7 +4897,6 @@ function loadLegislation() {
   _loadPetitions(kw);
   _loadActivity(kw);
   _loadResearch(kw);
-  _checkMcpStatus();
 }
 
 function _loadBills(keyword) {
