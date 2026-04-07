@@ -5066,7 +5066,7 @@ function _showBillDocViewer(docUrl, docTitle) {
     .then(function(blob) {
       var blobUrl = URL.createObjectURL(blob);
       document.getElementById('billDocPdfContainer').innerHTML =
-        '<iframe src="' + blobUrl + '" style="width:100%;height:600px;border:none"></iframe>';
+        '<iframe src="' + blobUrl + '#pagemode=none&view=FitH" style="width:100%;height:600px;border:none"></iframe>';
     })
     .catch(function(err) {
       document.getElementById('billDocPdfContainer').innerHTML =
@@ -5176,7 +5176,7 @@ function _showRecordViewer(recordUrl, meetingTitle) {
     .then(function(blob) {
       var blobUrl = URL.createObjectURL(blob);
       document.getElementById('recordPdfContainer').innerHTML =
-        '<iframe src="' + blobUrl + '" style="width:100%;height:600px;border:none"></iframe>';
+        '<iframe src="' + blobUrl + '#pagemode=none&view=FitH" style="width:100%;height:600px;border:none"></iframe>';
     })
     .catch(function(err) {
       var googleUrl = 'https://docs.google.com/gview?url=' + encodeURIComponent(recordUrl) + '&embedded=true';
