@@ -1515,8 +1515,14 @@ tbody td { padding: 11px 14px; font-size: 0.85rem; border-bottom: 1px solid var(
     <label style="display:flex;align-items:center;gap:4px;font-size:.78rem;cursor:pointer"><input type="checkbox" checked onchange="filterGraphNodes()" class="lg-filter" data-type="EnforcementDecree"> <span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#7b1fa2"></span> 시행령</label>
     <label style="display:flex;align-items:center;gap:4px;font-size:.78rem;cursor:pointer"><input type="checkbox" checked onchange="filterGraphNodes()" class="lg-filter" data-type="Law"> <span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#c62828"></span> 법률</label>
     <label style="display:flex;align-items:center;gap:4px;font-size:.78rem;cursor:pointer"><input type="checkbox" onchange="filterGraphNodes()" class="lg-filter" data-type="Ministry"> <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#00838f"></span> 부처</label>
+    <label style="display:flex;align-items:center;gap:4px;font-size:.78rem;cursor:pointer"><input type="checkbox" checked onchange="filterGraphNodes()" class="lg-filter" data-type="Bill"> <span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#e65100"></span> 법안</label>
+    <label style="display:flex;align-items:center;gap:4px;font-size:.78rem;cursor:pointer"><input type="checkbox" checked onchange="filterGraphNodes()" class="lg-filter" data-type="Legislator"> <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#0277bd"></span> 의원</label>
+    <label style="display:flex;align-items:center;gap:4px;font-size:.78rem;cursor:pointer"><input type="checkbox" checked onchange="filterGraphNodes()" class="lg-filter" data-type="Committee"> <span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#558b2f;transform:rotate(45deg)"></span> 위원회</label>
+    <label style="display:flex;align-items:center;gap:4px;font-size:.78rem;cursor:pointer"><input type="checkbox" checked onchange="filterGraphNodes()" class="lg-filter" data-type="Meeting"> <span style="display:inline-block;width:10px;height:10px;border-radius:0;background:#ad1457;clip-path:polygon(50% 0%,0% 100%,100% 100%)"></span> 회의</label>
+    <label style="display:flex;align-items:center;gap:4px;font-size:.78rem;cursor:pointer"><input type="checkbox" onchange="filterGraphNodes()" class="lg-filter" data-type="GlobalCase"> <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#00695c"></span> 글로벌</label>
     <div style="flex:1"></div>
     <input type="text" id="lgSearch" placeholder="노드 검색..." style="padding:6px 12px;border:1px solid var(--border);border-radius:6px;font-size:.82rem;width:140px" oninput="searchGraphNode(this.value)">
+    <span id="lgSearchCount" style="font-size:.75rem;color:var(--gray);min-width:40px"></span>
     <div style="display:flex;gap:0;border:1px solid #7b1fa2;border-radius:6px;overflow:hidden">
       <input type="text" id="lgEnrichKeyword" placeholder="키워드 (예: 개인정보)" style="padding:6px 12px;border:none;font-size:.82rem;width:140px;outline:none" onkeydown="if(event.key==='Enter')enrichByKeyword()">
       <button onclick="enrichByKeyword()" id="lgEnrichBtn" style="padding:6px 14px;background:#7b1fa2;color:white;border:none;font-size:.82rem;cursor:pointer;white-space:nowrap" title="키워드 관련 법률·조문·판례를 자동 수집하여 관계도에 추가">&#9889; 수집</button>
@@ -2671,13 +2677,20 @@ function _updateLegWidgetVisibility() {
 
 document.addEventListener('DOMContentLoaded', function() { _updateApiKeyIndicator(); _updateLegWidgetVisibility(); });
 
-function _fetchLawApi(endpoint, params) {
+function _fetchLawApi(endpoint, params, _retryCount) {
   var p = Object.assign({}, params, { endpoint: endpoint });
   var qs = Object.keys(p).map(function(k) {
     return encodeURIComponent(k) + '=' + encodeURIComponent(p[k]);
   }).join('&');
+  var retry = _retryCount || 0;
   return fetch(_API_BASE + '/api/law-proxy' + '?' + qs).then(function(r) {
-    if (!r.ok) throw new Error('API 응답 오류: ' + r.status);
+    if (!r.ok) {
+      if (r.status === 502 && retry < 2) {
+        return new Promise(function(resolve) { setTimeout(resolve, 1000); })
+          .then(function() { return _fetchLawApi(endpoint, params, retry + 1); });
+      }
+      throw new Error('API 응답 오류: ' + r.status);
+    }
     return r.text().then(function(text) {
       if (!text || !text.trim()) return { empty: true, totalCnt: '0' };
       try { return JSON.parse(text); }
@@ -4838,16 +4851,24 @@ var _lgData = null;
 var LG_COLORS = {
   Law: '#c62828', LawArticle: '#1565C0', EnforcementDecree: '#7b1fa2',
   Guideline: '#f57c00', Task: '#2e7d32', Ministry: '#00838f',
-  Recommendation: '#78909c', Precedent: '#6a1b9a', AdminInterpretation: '#4527a0'
+  Recommendation: '#78909c', Precedent: '#6a1b9a', AdminInterpretation: '#4527a0',
+  Bill: '#e65100', Legislator: '#0277bd', Committee: '#558b2f',
+  Meeting: '#ad1457', GlobalCase: '#00695c', PolicyAxis: '#283593',
+  StrategicArea: '#4e342e', Quarter: '#546e7a', Reference: '#37474f'
 };
 var LG_SHAPES = {
   Law: 'rect', LawArticle: 'rect', EnforcementDecree: 'rect',
   Guideline: 'diamond', Task: 'circle', Ministry: 'circle',
-  Precedent: 'triangle', AdminInterpretation: 'triangle'
+  Precedent: 'triangle', AdminInterpretation: 'triangle',
+  Bill: 'rect', Legislator: 'circle', Committee: 'diamond',
+  Meeting: 'triangle', GlobalCase: 'circle', PolicyAxis: 'diamond',
+  StrategicArea: 'diamond', Quarter: 'circle', Reference: 'circle'
 };
 var LG_SIZES = {
   Law: 14, LawArticle: 10, EnforcementDecree: 8, Guideline: 10,
-  Task: 7, Ministry: 8, Precedent: 7, AdminInterpretation: 6
+  Task: 7, Ministry: 8, Precedent: 7, AdminInterpretation: 6,
+  Bill: 10, Legislator: 7, Committee: 9, Meeting: 7,
+  GlobalCase: 6, PolicyAxis: 12, StrategicArea: 10, Quarter: 5, Reference: 5
 };
 
 // ===== Phase 16: 입법 동향 =====
@@ -4993,9 +5014,11 @@ function enrichBillsToGraph() {
   var kw = (document.getElementById('legKeyword') || {}).value || '인공지능';
   var btn = event.target;
   btn.disabled = true; btn.textContent = '수집 중...';
+  // 키워드를 법안명 + 발의자명으로 동시 검색
+  var body = {keyword: kw, proposer: kw};
   fetch(_API_BASE + '/api/policy-graph/enrich-bills', {
-    method: 'POST', headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({keyword: kw})
+    method: 'POST', headers: Object.assign({'Content-Type': 'application/json'}, _getApiKeyHeaders()),
+    body: JSON.stringify(body)
   })
   .then(function(r) { return r.json(); })
   .then(function(d) {
@@ -7074,8 +7097,8 @@ function renderForceGraph(graphData) {
   var height = container.clientHeight || 600;
 
   // 법령 관련 노드 필터링
-  var lawRelTypes = new Set(['Law','LawArticle','EnforcementDecree','Guideline','Task','Ministry','Precedent','AdminInterpretation']);
-  var lawEdgeTypes = new Set(['HAS_ARTICLE','HAS_DECREE','DELEGATED_TO','GUIDED_BY','REGULATES','IMPLEMENTS','CROSS_REF','CITED_IN','INTERPRETED_BY','ADMINISTERS','APPLIES_TO','RESPONSIBLE_FOR','COMPARABLE_REGULATION']);
+  var lawRelTypes = new Set(['Law','LawArticle','EnforcementDecree','Guideline','Task','Ministry','Precedent','AdminInterpretation','Bill','Legislator','Committee','Meeting','GlobalCase','PolicyAxis','StrategicArea','Quarter','Reference','Recommendation']);
+  var lawEdgeTypes = new Set(['HAS_ARTICLE','HAS_DECREE','DELEGATED_TO','GUIDED_BY','REGULATES','IMPLEMENTS','CROSS_REF','CITED_IN','INTERPRETED_BY','ADMINISTERS','APPLIES_TO','RESPONSIBLE_FOR','COMPARABLE_REGULATION','PROPOSED_BY','AFFECTS','AMENDS','BELONGS_TO','CONTAINS','COOPERATES_WITH','COMPARABLE_TO','DISCUSSED_IN','DISCUSSES','HAS_DEADLINE','OVERSEES','PART_OF','REFERENCES','RELATED_TO','REVIEWED_BY']);
 
   // 체크박스 필터 상태 반영
   var activeTypes = new Set();
@@ -7083,7 +7106,7 @@ function renderForceGraph(graphData) {
     if (cb.checked) activeTypes.add(cb.dataset.type);
   });
   // 체크박스에 없는 타입(Precedent 등)은 항상 표시
-  var alwaysShow = new Set(['Precedent','AdminInterpretation']);
+  var alwaysShow = new Set(['Precedent','AdminInterpretation','PolicyAxis','StrategicArea','Quarter','Reference']);
 
   var nodeMap = {};
   var nodes = [];
@@ -7092,7 +7115,9 @@ function renderForceGraph(graphData) {
     // 체크박스 필터 적용
     if (!alwaysShow.has(n.type) && activeTypes.size > 0 && !activeTypes.has(n.type)) return;
     // 과제/부처는 법령 연결이 있는 것만
-    if ((n.type === 'Task' || n.type === 'Ministry') && !hasLawConnection(n.id, graphData.edges)) return;
+    // 이름 없는 노드(Recommendation 등) 제외
+    if (!n.name && !n.title) return;
+    if ((n.type === 'Task' || n.type === 'Ministry' || n.type === 'Legislator' || n.type === 'Quarter') && !hasLawConnection(n.id, graphData.edges)) return;
     // Precedent/AdminInterpretation은 연결 없어도 표시 (동적 수집)
     nodeMap[n.id] = nodes.length;
     nodes.push({id: n.id, type: n.type, name: n.name || n.title || n.id, data: n});
@@ -7248,14 +7273,38 @@ function filterGraphNodes() {
 }
 
 function searchGraphNode(query) {
+  var countEl = document.getElementById('lgSearchCount');
   if (!query) {
     d3.selectAll('.lg-node').attr('opacity', 1);
+    if (countEl) countEl.textContent = '';
     return;
   }
   var q = query.toLowerCase();
+  // 먼저 전체 데이터에서 매칭되는 노드 타입 확인 → 필터 자동 활성화
+  if (_lgData) {
+    var matchedTypes = new Set();
+    (_lgData.nodes || []).forEach(function(n) {
+      if ((n.name || n.title || n.id || '').toLowerCase().includes(q)) {
+        matchedTypes.add(n.type);
+      }
+    });
+    // 매칭된 타입이 현재 꺼져있으면 켜고 그래프 재렌더링
+    var needRefresh = false;
+    document.querySelectorAll('.lg-filter').forEach(function(cb) {
+      if (matchedTypes.has(cb.dataset.type) && !cb.checked) {
+        cb.checked = true;
+        needRefresh = true;
+      }
+    });
+    if (needRefresh) filterGraphNodes();
+  }
+  var matched = 0;
   d3.selectAll('.lg-node').attr('opacity', function(d) {
-    return (d.name || '').toLowerCase().includes(q) ? 1 : 0.1;
+    var hit = (d.name || '').toLowerCase().includes(q);
+    if (hit) matched++;
+    return hit ? 1 : 0.1;
   });
+  if (countEl) countEl.textContent = matched + '건';
 }
 
 function enrichByKeyword() {
