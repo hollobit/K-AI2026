@@ -5634,8 +5634,23 @@ function _showBillDetail(billData) {
     });
     html += '</table>';
 
-    // 공동발의자
-    if (d.coactors) {
+    // 공동발의자 (v0.4: 구조화 목록 또는 텍스트)
+    if (d.proposers && Array.isArray(d.proposers) && d.proposers.length > 0) {
+      html += '<details style="margin-bottom:14px"><summary style="cursor:pointer;font-weight:600;font-size:.88rem;color:#333">&#128101; 공동발의자 (' + d.proposers.length + '인)</summary>';
+      html += '<div style="display:flex;flex-wrap:wrap;gap:5px;padding:8px 12px;margin-top:4px;background:#f8f9fa;border-radius:6px">';
+      d.proposers.forEach(function(p) {
+        var pName = p['이름'] || p.HG_NM || '';
+        var pParty = p['정당'] || p.POLY_NM || '';
+        var pDistrict = p['선거구'] || p.ORIG_NM || '';
+        var partyColor = pParty.indexOf('더불어') >= 0 ? '#1565c0' : pParty.indexOf('국민의힘') >= 0 ? '#c62828' : pParty.indexOf('조국') >= 0 ? '#00695c' : pParty.indexOf('개혁') >= 0 ? '#e65100' : '#757575';
+        html += '<a href="#" onclick="_showMemberDetail(\'' + _esc(pName).replace(/'/g,"\\'") + '\');return false" ' +
+          'style="display:inline-flex;align-items:center;gap:3px;padding:3px 9px;border-radius:14px;border:1px solid #e0e0e0;font-size:.78rem;text-decoration:none;color:#333;background:#fff" ' +
+          'title="' + _esc(pParty + (pDistrict ? ' / ' + pDistrict : '')) + '">' +
+          '<span style="width:5px;height:5px;border-radius:50%;background:' + partyColor + '"></span>' +
+          _esc(pName) + '</a>';
+      });
+      html += '</div></details>';
+    } else if (d.coactors) {
       html += '<details style="margin-bottom:14px"><summary style="cursor:pointer;font-weight:600;font-size:.88rem;color:#333">&#128101; 공동발의자</summary>';
       html += '<div style="padding:8px 12px;font-size:.82rem;line-height:1.7;color:#555;margin-top:4px;background:#f8f9fa;border-radius:6px">' + _esc(d.coactors) + '</div></details>';
     }
@@ -6049,7 +6064,16 @@ function _showMemberDetailResult(d) {
   var voteData = d.votes || {};
   var votes = voteData.items || [];
   if (votes.length > 0) {
-    html += '<details open style="margin-bottom:14px"><summary style="cursor:pointer;font-weight:600;font-size:.88rem;color:#e65100">&#128499;&#65039; 본회의 표결 참여 (' + votes.length + '건)</summary>';
+    // 표결 통계 요약
+    var vYes = 0, vNo = 0, vAbs = 0;
+    votes.forEach(function(v) { var r = v.result || ''; if (r === '찬성') vYes++; else if (r === '반대') vNo++; else vAbs++; });
+    var vTotal = votes.length;
+    html += '<details open style="margin-bottom:14px"><summary style="cursor:pointer;font-weight:600;font-size:.88rem;color:#e65100">&#128499;&#65039; 본회의 표결 참여 (' + vTotal + '건)</summary>';
+    html += '<div style="display:flex;gap:10px;padding:8px 12px;background:#fff8e1;border-radius:8px;margin-bottom:8px;font-size:.82rem">';
+    html += '<span>&#9989; 찬성 <b style="color:#28a745">' + vYes + '</b>건 (' + (vTotal ? Math.round(vYes/vTotal*100) : 0) + '%)</span>';
+    html += '<span>&#10060; 반대 <b style="color:#dc3545">' + vNo + '</b>건 (' + (vTotal ? Math.round(vNo/vTotal*100) : 0) + '%)</span>';
+    html += '<span>&#9898; 기권 <b style="color:#6c757d">' + vAbs + '</b>건 (' + (vTotal ? Math.round(vAbs/vTotal*100) : 0) + '%)</span>';
+    html += '</div>';
     votes.forEach(function(v) {
       var vname = v.billName || v.name || '';
       var vresult = v.result || '';
@@ -6173,6 +6197,28 @@ function _showCommitteeDetail(committeeName) {
       html += '<div style="margin-top:8px"><a href="https://ampos.nanet.go.kr/activityCommitteeDetail.do?commit_no=M22' + _esc(cmtCode.slice(-3)) + '" target="_blank" style="padding:5px 14px;background:#1565c0;color:white;border-radius:6px;text-decoration:none;font-size:.8rem;display:inline-block">&#127963;&#65039; 국회 위원회 상세 페이지 &#8599;</a></div>';
     }
     html += '</div>';
+
+    // 위원 명단 (v0.4 include_members)
+    var members = results.chair ? (results.chair['위원목록'] || results.chair.members || []) : [];
+    if (members.length > 0) {
+      html += '<h4 style="font-size:.92rem;color:#6a1b9a;margin:14px 0 8px">&#128101; 소속 위원 (' + members.length + '명)</h4>';
+      html += '<div style="display:flex;flex-wrap:wrap;gap:6px">';
+      members.forEach(function(m) {
+        var mName = m['이름'] || m.HG_NM || m.name || '';
+        var mParty = m['정당'] || m.POLY_NM || m.party || '';
+        var mRole = m['직위'] || m.role || '';
+        var roleBadge = '';
+        if (mRole && mRole.indexOf('위원장') >= 0) roleBadge = '<span style="padding:1px 5px;background:#6a1b9a;color:white;border-radius:6px;font-size:.65rem;margin-left:2px">위원장</span>';
+        else if (mRole && mRole.indexOf('간사') >= 0) roleBadge = '<span style="padding:1px 5px;background:#1565c0;color:white;border-radius:6px;font-size:.65rem;margin-left:2px">간사</span>';
+        var partyColor = mParty.indexOf('더불어') >= 0 ? '#1565c0' : mParty.indexOf('국민의힘') >= 0 ? '#c62828' : mParty.indexOf('조국') >= 0 ? '#00695c' : mParty.indexOf('개혁') >= 0 ? '#e65100' : '#757575';
+        html += '<a href="#" onclick="_showMemberDetail(\'' + _esc(mName).replace(/'/g,"\\'") + '\');return false" ' +
+          'style="display:inline-flex;align-items:center;gap:3px;padding:4px 10px;border-radius:16px;border:1px solid #e0e0e0;font-size:.8rem;text-decoration:none;color:#333;background:#fafafa" ' +
+          'title="' + _esc(mParty) + '">' +
+          '<span style="width:6px;height:6px;border-radius:50%;background:' + partyColor + ';flex-shrink:0"></span>' +
+          _esc(mName) + roleBadge + '</a>';
+      });
+      html += '</div>';
+    }
 
     // 최근 회의
     if (results.meetings.length > 0) {
