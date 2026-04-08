@@ -1725,9 +1725,15 @@ tbody td { padding: 11px 14px; font-size: 0.85rem; border-bottom: 1px solid var(
         <option value="">전체</option>
         <option value="본회의">본회의</option>
         <option value="위원회">위원회</option>
+        <option value="소위원회">소위원회</option>
         <option value="국정감사">국정감사</option>
         <option value="인사청문회">인사청문회</option>
+        <option value="인사청문">인사청문</option>
         <option value="공청회">공청회</option>
+        <option value="예결위">예결위</option>
+        <option value="특별위">특별위</option>
+        <option value="국정조사">국정조사</option>
+        <option value="토론회">토론회</option>
       </select>
       <button onclick="_loadMeetings(document.getElementById('legMeetingKeyword').value)" style="padding:6px 14px;background:#17a2b8;color:white;border:none;border-radius:6px;cursor:pointer;font-size:.82rem">&#128270; 검색</button>
     </div>
@@ -1786,6 +1792,61 @@ tbody td { padding: 11px 14px; font-size: 0.85rem; border-bottom: 1px solid var(
       <div style="text-align:center;padding:20px;color:var(--text-muted)">로딩 대기 중</div>
     </div>
   </div>
+  <!-- ===== 신규 위젯 7종 (v0.4) ===== -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px">
+
+  <!-- 1. 정당별 의석수 -->
+  <div style="background:var(--card-bg);border-radius:10px;padding:14px;border:1px solid var(--border)">
+    <h4 style="margin:0 0 10px;font-size:.95rem;color:var(--dark)">&#127963;&#65039; 정당별 의석수 <span style="font-size:.72rem;padding:2px 6px;background:#6610f2;color:white;border-radius:8px;margin-left:4px">MCP</span></h4>
+    <div id="legPartyStats" style="min-height:60px"><div style="text-align:center;padding:12px;color:var(--text-muted);font-size:.82rem">로딩 대기 중</div></div>
+  </div>
+
+  <!-- 7. 본회의 표결 현황 -->
+  <div style="background:var(--card-bg);border-radius:10px;padding:14px;border:1px solid var(--border)">
+    <h4 style="margin:0 0 10px;font-size:.95rem;color:var(--dark)">&#128499;&#65039; 본회의 표결 현황 <span style="font-size:.72rem;padding:2px 6px;background:#6610f2;color:white;border-radius:8px;margin-left:4px">MCP</span> <span id="legPlenaryVoteCount" style="font-size:.78rem;color:var(--gray)"></span></h4>
+    <div id="legPlenaryVoteList" style="max-height:300px;overflow-y:auto"><div style="text-align:center;padding:12px;color:var(--text-muted);font-size:.82rem">로딩 대기 중</div></div>
+  </div>
+
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px">
+
+  <!-- 2. 국회 보도자료 -->
+  <div style="background:var(--card-bg);border-radius:10px;padding:14px;border:1px solid var(--border)">
+    <h4 style="margin:0 0 10px;font-size:.95rem;color:var(--dark)">&#128240; 국회 보도자료 <span style="font-size:.72rem;padding:2px 6px;background:#6610f2;color:white;border-radius:8px;margin-left:4px">MCP</span> <span id="legPressCount" style="font-size:.78rem;color:var(--gray)"></span></h4>
+    <div id="legPressList" style="max-height:300px;overflow-y:auto"><div style="text-align:center;padding:12px;color:var(--text-muted);font-size:.82rem">로딩 대기 중</div></div>
+  </div>
+
+  <!-- 3. 위원회 대안/수정 법안 -->
+  <div style="background:var(--card-bg);border-radius:10px;padding:14px;border:1px solid var(--border)">
+    <h4 style="margin:0 0 10px;font-size:.95rem;color:var(--dark)">&#128221; 위원회 대안 법안 <span style="font-size:.72rem;padding:2px 6px;background:#6610f2;color:white;border-radius:8px;margin-left:4px">MCP</span> <span id="legAltBillCount" style="font-size:.78rem;color:var(--gray)"></span></h4>
+    <div id="legAltBillList" style="max-height:300px;overflow-y:auto"><div style="text-align:center;padding:12px;color:var(--text-muted);font-size:.82rem">로딩 대기 중</div></div>
+  </div>
+
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-top:12px">
+
+  <!-- 4. 인사청문회 -->
+  <div style="background:var(--card-bg);border-radius:10px;padding:14px;border:1px solid var(--border)">
+    <h4 style="margin:0 0 10px;font-size:.95rem;color:var(--dark)">&#128101; 인사청문회 <span style="font-size:.72rem;padding:2px 6px;background:#6610f2;color:white;border-radius:8px;margin-left:4px">MCP</span> <span id="legHearingCount" style="font-size:.78rem;color:var(--gray)"></span></h4>
+    <div id="legHearingList" style="max-height:250px;overflow-y:auto"><div style="text-align:center;padding:12px;color:var(--text-muted);font-size:.82rem">로딩 대기 중</div></div>
+  </div>
+
+  <!-- 5. 국정감사 -->
+  <div style="background:var(--card-bg);border-radius:10px;padding:14px;border:1px solid var(--border)">
+    <h4 style="margin:0 0 10px;font-size:.95rem;color:var(--dark)">&#128270; 국정감사 <span style="font-size:.72rem;padding:2px 6px;background:#6610f2;color:white;border-radius:8px;margin-left:4px">MCP</span> <span id="legAuditCount" style="font-size:.78rem;color:var(--gray)"></span></h4>
+    <div id="legAuditList" style="max-height:250px;overflow-y:auto"><div style="text-align:center;padding:12px;color:var(--text-muted);font-size:.82rem">로딩 대기 중</div></div>
+  </div>
+
+  <!-- 6. 토론회/공청회 -->
+  <div style="background:var(--card-bg);border-radius:10px;padding:14px;border:1px solid var(--border)">
+    <h4 style="margin:0 0 10px;font-size:.95rem;color:var(--dark)">&#127908; 토론회/공청회 <span style="font-size:.72rem;padding:2px 6px;background:#6610f2;color:white;border-radius:8px;margin-left:4px">MCP</span> <span id="legForumCount" style="font-size:.78rem;color:var(--gray)"></span></h4>
+    <div id="legForumList" style="max-height:250px;overflow-y:auto"><div style="text-align:center;padding:12px;color:var(--text-muted);font-size:.82rem">로딩 대기 중</div></div>
+  </div>
+
+  </div>
+
   </div><!-- /legResultsArea -->
 </div>
 
@@ -4943,6 +5004,14 @@ function _searchLegislation(keyword) {
   _loadPetitions(kw);
   _loadActivity(kw);
   _loadResearch(kw);
+  // v0.4 신규 위젯
+  _loadPartyStats();
+  _loadPlenaryVotes();
+  _loadPress();
+  _loadAltBills();
+  _loadHearings();
+  _loadAudit();
+  _loadForums(kw);
 }
 
 function _loadBills(keyword) {
@@ -5655,6 +5724,40 @@ function _showBillDetail(billData) {
       html += '<div style="padding:8px 12px;font-size:.82rem;line-height:1.7;color:#555;margin-top:4px;background:#f8f9fa;border-radius:6px">' + _esc(d.coactors) + '</div></details>';
     }
 
+    // 심사경과 타임라인 (v0.4 lifecycle)
+    if (d.lifecycle && typeof d.lifecycle === 'object') {
+      var lc = d.lifecycle;
+      html += '<details open style="margin-bottom:14px"><summary style="cursor:pointer;font-weight:600;font-size:.88rem;color:#333">&#128203; 심사경과</summary>';
+      html += '<div style="padding:10px 12px;margin-top:4px;background:#f8f9fa;border-radius:6px;font-size:.82rem">';
+      var steps = [
+        ['제안', lc['제안일'] || d.propose_date, null],
+        ['소관위 회부', lc['소관위_회부일'], lc['소관위원회']],
+        ['소관위 상정', lc['소관위_상정일'], null],
+        ['소관위 의결', lc['소관위_처리일'], lc['소관위_처리결과']],
+        ['법사위 회부', lc['법사위_회부일'], null],
+        ['법사위 의결', lc['법사위_처리일'], lc['법사위_처리결과']],
+        ['본회의 상정', lc['본회의_상정일'], null],
+        ['본회의 의결', lc['본회의_의결일'], lc['본회의_결과']],
+        ['정부 이송', lc['정부이송일'], null],
+        ['공포', lc['공포일'], lc['공포번호'] ? '제' + lc['공포번호'] + '호' : null],
+      ];
+      steps.forEach(function(s, idx) {
+        var label = s[0], date = s[1], extra = s[2];
+        var done = !!date;
+        var color = done ? '#28a745' : '#e0e0e0';
+        html += '<div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:2px">';
+        html += '<div style="display:flex;flex-direction:column;align-items:center;width:16px">';
+        html += '<div style="width:10px;height:10px;border-radius:50%;background:' + color + ';flex-shrink:0;margin-top:3px"></div>';
+        if (idx < steps.length - 1) html += '<div style="width:2px;height:16px;background:#e0e0e0"></div>';
+        html += '</div>';
+        html += '<div><span style="font-weight:' + (done ? '600' : '400') + ';color:' + (done ? '#333' : '#aaa') + '">' + label + '</span>';
+        if (date) html += ' <span style="color:var(--gray);font-size:.75rem">' + _esc(date) + '</span>';
+        if (extra) html += ' <span style="padding:1px 5px;border-radius:6px;font-size:.7rem;background:#e3f2fd;color:#1565c0">' + _esc(extra) + '</span>';
+        html += '</div></div>';
+      });
+      html += '</div></details>';
+    }
+
     // 제안이유
     if (d.propose_reason) {
       html += '<details open style="margin-bottom:14px"><summary style="cursor:pointer;font-weight:600;font-size:.88rem;color:#333">&#128214; 제안이유</summary>';
@@ -5671,6 +5774,30 @@ function _showBillDetail(billData) {
     if (d.proc_memo) {
       html += '<details style="margin-bottom:14px"><summary style="cursor:pointer;font-weight:600;font-size:.88rem;color:#333">&#128197; 심사경과</summary>';
       html += '<div style="padding:10px 12px;font-size:.84rem;line-height:1.75;color:#555;margin-top:4px;background:#f8f9fa;border-radius:6px;max-height:200px;overflow-y:auto">' + _esc(d.proc_memo).replace(/\n/g,'<br>') + '</div></details>';
+    }
+
+    // 위원회 심사 회의 (v0.4)
+    var cmtMtgs = d.committee_meetings || [];
+    var lawMtgs = d.law_committee_meetings || [];
+    if (cmtMtgs.length > 0 || lawMtgs.length > 0) {
+      html += '<details style="margin-bottom:14px"><summary style="cursor:pointer;font-weight:600;font-size:.88rem;color:#6a1b9a">&#127963;&#65039; 위원회 심사 회의 (' + (cmtMtgs.length + lawMtgs.length) + '건)</summary>';
+      function _mtgRow(m) {
+        var name = m.CONF_NM || m.TITLE || m.회의명 || '';
+        var date = m.CONF_DATE || m.MEETING_DATE || m.회의일 || '';
+        var comm = m.COMMITTEE_NM || m.CMIT_NM || m.위원회 || '';
+        return '<div style="padding:4px 0;border-bottom:1px solid #f0f0f0;font-size:.82rem">' +
+          '<b>' + _esc(name.substring(0,50)) + '</b>' +
+          '<div style="font-size:.72rem;color:var(--gray)">' + _esc(date) + (comm ? ' | ' + _esc(comm) : '') + '</div></div>';
+      }
+      if (cmtMtgs.length > 0) {
+        html += '<div style="font-size:.78rem;color:#6a1b9a;font-weight:600;margin:6px 0 4px">소관위원회</div>';
+        cmtMtgs.forEach(function(m) { html += _mtgRow(m); });
+      }
+      if (lawMtgs.length > 0) {
+        html += '<div style="font-size:.78rem;color:#1565c0;font-weight:600;margin:6px 0 4px">법제사법위원회</div>';
+        lawMtgs.forEach(function(m) { html += _mtgRow(m); });
+      }
+      html += '</details>';
     }
 
     // 표결 결과
@@ -6024,6 +6151,66 @@ function _showMemberDetailResult(d) {
     html += '<div style="padding:10px 12px;font-size:.82rem;line-height:1.7;color:#555;margin-top:4px;background:#f8f9fa;border-radius:6px;white-space:pre-wrap">' + _esc(m.career) + '</div></details>';
   }
 
+  // 의정활동 이력 (v0.4 career_detail)
+  var careerDetail = d.career_detail || [];
+  if (careerDetail.length > 0) {
+    html += '<details style="margin-bottom:14px"><summary style="cursor:pointer;font-weight:600;font-size:.88rem;color:#333">&#128197; 의정활동 이력 (' + careerDetail.length + '건)</summary>';
+    html += '<div style="padding:10px 12px;margin-top:4px;background:#f8f9fa;border-radius:6px">';
+    careerDetail.forEach(function(c) {
+      var period = c.FRTO_DATE || '';
+      var desc = c.PROFILE_SJ || '';
+      var unit = c.UNIT_NM || '';
+      html += '<div style="padding:5px 0;border-bottom:1px solid #eee;font-size:.82rem">' +
+        '<div style="font-weight:600">' + _esc(desc) + '</div>' +
+        '<div style="font-size:.72rem;color:var(--gray)">' + _esc(period) + (unit ? ' | ' + _esc(unit) : '') + '</div></div>';
+    });
+    html += '</div></details>';
+  }
+
+  // 의원별 표결 상세 (v0.4 vote_detail)
+  var voteDetail = d.vote_detail || [];
+  if (voteDetail.length > 0) {
+    html += '<details style="margin-bottom:14px"><summary style="cursor:pointer;font-weight:600;font-size:.88rem;color:#1565c0">&#128499;&#65039; 의원별 표결 상세 (' + voteDetail.length + '건)</summary>';
+    voteDetail.forEach(function(v) {
+      var vname = v.BILL_NAME || v.BILL_NM || '';
+      var vresult = v.RESULT_VOTE_MOD || v.RESULT || '';
+      var vdate = v.VOTE_DATE || '';
+      var rc = vresult === '찬성' ? '#28a745' : vresult === '반대' ? '#dc3545' : '#6c757d';
+      html += '<div style="padding:4px 0;border-bottom:1px solid #f0f0f0;font-size:.82rem;display:flex;justify-content:space-between">' +
+        '<span style="flex:1">' + _esc(vname.substring(0,40)) + '</span>' +
+        (vresult ? '<span style="padding:1px 6px;border-radius:8px;font-size:.7rem;background:' + rc + ';color:#fff">' + _esc(vresult) + '</span>' : '') + '</div>';
+    });
+    html += '</details>';
+  }
+
+  // 위원회 활동 (v0.4 committee_activity)
+  var cmtActivity = d.committee_activity || [];
+  if (cmtActivity.length > 0) {
+    html += '<details style="margin-bottom:14px"><summary style="cursor:pointer;font-weight:600;font-size:.88rem;color:#6a1b9a">&#127963;&#65039; 위원회 활동 (' + cmtActivity.length + '건)</summary>';
+    cmtActivity.forEach(function(a) {
+      var title = a.BILL_NAME || a.TITLE || a.COMMITTEE_NAME || '';
+      var date = a.PROC_DATE || a.REG_DATE || '';
+      html += '<div style="padding:4px 0;border-bottom:1px solid #f0f0f0;font-size:.82rem">' +
+        '<b>' + _esc(title.substring(0,50)) + '</b>' +
+        (date ? '<div style="font-size:.72rem;color:var(--gray)">' + _esc(date) + '</div>' : '') + '</div>';
+    });
+    html += '</details>';
+  }
+
+  // 발언/연설 (v0.4 speeches)
+  var speeches = d.speeches || [];
+  if (speeches.length > 0) {
+    html += '<details style="margin-bottom:14px"><summary style="cursor:pointer;font-weight:600;font-size:.88rem;color:#e65100">&#127908; 의원 발언 (' + speeches.length + '건)</summary>';
+    speeches.forEach(function(s) {
+      var title = s.TITLE || s.SPEECH_TITLE || s.BILL_NAME || '';
+      var date = s.SPEECH_DATE || s.REG_DATE || '';
+      html += '<div style="padding:4px 0;border-bottom:1px solid #f0f0f0;font-size:.82rem">' +
+        '<b>' + _esc(title.substring(0,50)) + '</b>' +
+        (date ? '<div style="font-size:.72rem;color:var(--gray)">' + _esc(date) + '</div>' : '') + '</div>';
+    });
+    html += '</details>';
+  }
+
   // 법안 카드 렌더 헬퍼
   function _billItem(b) {
     var bname = b.billName || b.name || '';
@@ -6197,11 +6384,11 @@ function _showCommitteeDetail(committeeName) {
   modal.classList.add('open');
 
   // 위원회 관련 일정 + 회의록 + 소관 법안 + 위원장 병렬 조회
-  var results = {schedule: [], meetings: [], bills: [], chair: null};
+  var results = {schedule: [], meetings: [], bills: [], pendingBills: [], chair: null};
   var done = 0;
   function render() {
     done++;
-    if (done < 4) return;
+    if (done < 5) return;
     var html = '';
 
     html += '<div style="padding:14px;background:linear-gradient(135deg,#f3e5f5,#ede7f6);border-radius:8px;margin-bottom:14px">';
@@ -6298,6 +6485,19 @@ function _showCommitteeDetail(committeeName) {
       });
     }
 
+    // 계류법안 (v0.4)
+    if (results.pendingBills.length > 0) {
+      html += '<h4 style="font-size:.92rem;color:#e65100;margin:14px 0 8px">&#9203; 계류 법안 (' + results.pendingBills.length + '건)</h4>';
+      results.pendingBills.slice(0, 15).forEach(function(b) {
+        var bname = b['의안명'] || b.name || b.billName || '';
+        var bproposer = b['제안자'] || b.proposer || '';
+        var bdate = b['제안일'] || b.proposeDate || '';
+        html += '<div style="padding:5px 0;border-bottom:1px solid #f0f0f0;font-size:.84rem">' +
+          '<b>' + _esc(bname) + '</b>' +
+          '<div style="font-size:.75rem;color:var(--gray)">' + _esc(bproposer) + ' | ' + _esc(bdate) + '</div></div>';
+      });
+    }
+
     // 일정
     if (results.schedule.length > 0) {
       html += '<h4 style="font-size:.92rem;color:#e65100;margin:14px 0 8px">&#128197; 예정 일정 (' + results.schedule.length + '건)</h4>';
@@ -6348,6 +6548,13 @@ function _showCommitteeDetail(committeeName) {
       if (cmts.length > 0) {
         results.chair = cmts[0];
       }
+      render();
+    }).catch(function(){ render(); });
+
+  // 5) 위원회 계류법안 (v0.4)
+  fetch(_API_BASE + '/api/assembly/pending-bills?committee=' + encodeURIComponent(committeeName))
+    .then(function(r){return r.json()}).then(function(d) {
+      results.pendingBills = d.bills || d.items || [];
       render();
     }).catch(function(){ render(); });
 }
@@ -6916,6 +7123,180 @@ function _loadResearch(keyword) {
       }).join('');
     })
     .catch(function(err) { el.innerHTML = '<div style="padding:8px;color:var(--accent);font-size:.82rem">' + _esc(err.message) + '</div>'; });
+}
+
+// ===== v0.4 신규 위젯 7종 =====
+
+function _loadPartyStats() {
+  var el = document.getElementById('legPartyStats');
+  if (!el) return;
+  el.innerHTML = '<div style="text-align:center;padding:8px"><div class="spinner" style="width:14px;height:14px;border-width:2px;margin:0 auto"></div></div>';
+  fetch(_API_BASE + '/api/assembly/party-stats')
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      if (d.error || !d.items || d.items.length === 0) { el.innerHTML = '<div style="padding:8px;text-align:center;color:var(--text-muted);font-size:.82rem">정당 현황 조회 불가</div>'; return; }
+      var html = '<div style="display:flex;flex-wrap:wrap;gap:6px">';
+      d.items.forEach(function(p) {
+        var name = p.POLY_NM || p.정당 || '';
+        var seats = p.MEMBER_CNT || p.의석수 || p.T_MEMBER_CNT || 0;
+        var color = name.indexOf('더불어') >= 0 ? '#1565c0' : name.indexOf('국민의힘') >= 0 ? '#c62828' : name.indexOf('조국') >= 0 ? '#00695c' : name.indexOf('개혁') >= 0 ? '#e65100' : '#757575';
+        if (seats > 0) html += '<div style="display:flex;align-items:center;gap:5px;padding:4px 10px;background:#f8f9fa;border-radius:8px;font-size:.82rem"><span style="width:8px;height:8px;border-radius:50%;background:' + color + '"></span><b>' + _esc(name) + '</b> <span style="color:var(--gray)">' + seats + '석</span></div>';
+      });
+      html += '</div>';
+      el.innerHTML = html;
+    })
+    .catch(function() { el.innerHTML = '<div style="padding:8px;text-align:center;color:var(--text-muted);font-size:.82rem">조회 실패</div>'; });
+}
+
+function _loadPlenaryVotes() {
+  var el = document.getElementById('legPlenaryVoteList');
+  var cnt = document.getElementById('legPlenaryVoteCount');
+  if (!el) return;
+  el.innerHTML = '<div style="text-align:center;padding:12px"><div class="spinner" style="width:14px;height:14px;border-width:2px;margin:0 auto"></div></div>';
+  fetch(_API_BASE + '/api/assembly/plenary-votes')
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      if (d.error) { el.innerHTML = '<div style="padding:8px;text-align:center;color:var(--text-muted);font-size:.82rem">조회 불가</div>'; return; }
+      var items = d.items || [];
+      if (cnt) cnt.textContent = items.length + '건';
+      if (items.length === 0) { el.innerHTML = '<div style="padding:8px;text-align:center;color:var(--text-muted)">표결 내역 없음</div>'; return; }
+      el.innerHTML = items.slice(0, 15).map(function(v) {
+        var name = v['의안명'] || v.billName || '';
+        var result = v['결과'] || v.result || '';
+        var date = v['표결일'] || v.date || '';
+        var yes = v['찬성'] || 0, no = v['반대'] || 0, abs = v['기권'] || 0;
+        var rc = result.indexOf('가결') >= 0 ? '#28a745' : result.indexOf('부결') >= 0 || result.indexOf('폐기') >= 0 ? '#dc3545' : '#6c757d';
+        return '<div style="padding:6px 0;border-bottom:1px solid var(--border);font-size:.82rem">' +
+          '<div style="display:flex;justify-content:space-between;align-items:center">' +
+          '<span style="flex:1;font-weight:600">' + _esc(name.substring(0,40)) + '</span>' +
+          (result ? '<span style="padding:1px 6px;border-radius:8px;font-size:.7rem;background:' + rc + ';color:#fff">' + _esc(result) + '</span>' : '') + '</div>' +
+          '<div style="font-size:.72rem;color:var(--gray)">' + _esc(date) + (yes || no ? ' | 찬성 ' + yes + ' 반대 ' + no + ' 기권 ' + abs : '') + '</div></div>';
+      }).join('');
+    })
+    .catch(function() { el.innerHTML = '<div style="padding:8px;color:var(--accent);font-size:.82rem">조회 실패</div>'; });
+}
+
+function _loadPress() {
+  var el = document.getElementById('legPressList');
+  var cnt = document.getElementById('legPressCount');
+  if (!el) return;
+  el.innerHTML = '<div style="text-align:center;padding:12px"><div class="spinner" style="width:14px;height:14px;border-width:2px;margin:0 auto"></div></div>';
+  fetch(_API_BASE + '/api/assembly/press')
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      var items = d.items || [];
+      if (cnt) cnt.textContent = items.length + '건';
+      if (items.length === 0) { el.innerHTML = '<div style="padding:8px;text-align:center;color:var(--text-muted)">보도자료 없음</div>'; return; }
+      el.innerHTML = items.slice(0, 15).map(function(p) {
+        var title = p['제목'] || p.title || '';
+        var date = p['등록일'] || p.date || '';
+        var link = p['링크'] || p.link || '';
+        return '<div style="padding:6px 0;border-bottom:1px solid var(--border);font-size:.82rem">' +
+          '<div style="font-weight:600">' + (link ? '<a href="' + _esc(link) + '" target="_blank" style="color:var(--dark);text-decoration:none">' + _esc(title) + ' &#8599;</a>' : _esc(title)) + '</div>' +
+          '<div style="font-size:.72rem;color:var(--gray)">' + _esc(date) + '</div></div>';
+      }).join('');
+    })
+    .catch(function() { el.innerHTML = '<div style="padding:8px;color:var(--accent);font-size:.82rem">조회 실패</div>'; });
+}
+
+function _loadAltBills() {
+  var el = document.getElementById('legAltBillList');
+  var cnt = document.getElementById('legAltBillCount');
+  if (!el) return;
+  el.innerHTML = '<div style="text-align:center;padding:12px"><div class="spinner" style="width:14px;height:14px;border-width:2px;margin:0 auto"></div></div>';
+  fetch(_API_BASE + '/api/assembly/alternative-bills')
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      var bills = d.bills || d.items || [];
+      if (cnt) cnt.textContent = (d.total || bills.length) + '건';
+      if (bills.length === 0) { el.innerHTML = '<div style="padding:8px;text-align:center;color:var(--text-muted)">위원회 대안 법안 없음</div>'; return; }
+      el.innerHTML = bills.slice(0, 15).map(function(b) {
+        var name = b['의안명'] || b.name || b.billName || '';
+        var proposer = b['제안자'] || b.proposer || '';
+        var date = b['제안일'] || b.proposeDate || '';
+        var status = b['처리상태'] || b.status || '';
+        var sc = status.indexOf('가결') >= 0 ? '#28a745' : status.indexOf('폐기') >= 0 ? '#dc3545' : '#6c757d';
+        return '<div style="padding:6px 0;border-bottom:1px solid var(--border);font-size:.82rem">' +
+          '<div style="display:flex;justify-content:space-between"><b style="flex:1">' + _esc(name.substring(0,35)) + '</b>' +
+          (status ? '<span style="padding:1px 6px;border-radius:8px;font-size:.7rem;background:' + sc + ';color:#fff">' + _esc(status) + '</span>' : '') + '</div>' +
+          '<div style="font-size:.72rem;color:var(--gray)">' + _esc(proposer) + ' | ' + _esc(date) + '</div></div>';
+      }).join('');
+    })
+    .catch(function() { el.innerHTML = '<div style="padding:8px;color:var(--accent);font-size:.82rem">조회 실패</div>'; });
+}
+
+function _loadHearings() {
+  var el = document.getElementById('legHearingList');
+  var cnt = document.getElementById('legHearingCount');
+  if (!el) return;
+  el.innerHTML = '<div style="text-align:center;padding:8px"><div class="spinner" style="width:14px;height:14px;border-width:2px;margin:0 auto"></div></div>';
+  fetch(_API_BASE + '/api/assembly/hearings')
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      var items = d.items || [];
+      if (cnt) cnt.textContent = items.length + '건';
+      if (items.length === 0) { el.innerHTML = '<div style="padding:8px;text-align:center;color:var(--text-muted);font-size:.82rem">인사청문회 없음</div>'; return; }
+      el.innerHTML = items.slice(0, 10).map(function(m) {
+        var name = m['회의명'] || m.title || '';
+        var date = m['회의일'] || m.date || '';
+        var agenda = m['안건'] || m.agenda || '';
+        return '<div style="padding:5px 0;border-bottom:1px solid var(--border);font-size:.82rem">' +
+          '<b>' + _esc(name.substring(0,40)) + '</b>' +
+          '<div style="font-size:.72rem;color:var(--gray)">' + _esc(date) + '</div>' +
+          (agenda ? '<div style="font-size:.75rem;margin-top:2px;color:#555">' + _esc(agenda.substring(0,80)) + '</div>' : '') + '</div>';
+      }).join('');
+    })
+    .catch(function() { el.innerHTML = '<div style="padding:8px;color:var(--accent);font-size:.82rem">조회 실패</div>'; });
+}
+
+function _loadAudit() {
+  var el = document.getElementById('legAuditList');
+  var cnt = document.getElementById('legAuditCount');
+  if (!el) return;
+  el.innerHTML = '<div style="text-align:center;padding:8px"><div class="spinner" style="width:14px;height:14px;border-width:2px;margin:0 auto"></div></div>';
+  fetch(_API_BASE + '/api/assembly/audit')
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      var items = d.items || [];
+      if (cnt) cnt.textContent = items.length + '건';
+      if (items.length === 0) { el.innerHTML = '<div style="padding:8px;text-align:center;color:var(--text-muted);font-size:.82rem">국정감사 없음</div>'; return; }
+      el.innerHTML = items.slice(0, 10).map(function(m) {
+        var name = m['회의명'] || m.title || '';
+        var date = m['회의일'] || m.date || '';
+        return '<div style="padding:5px 0;border-bottom:1px solid var(--border);font-size:.82rem">' +
+          '<b>' + _esc(name.substring(0,40)) + '</b>' +
+          '<div style="font-size:.72rem;color:var(--gray)">' + _esc(date) + '</div></div>';
+      }).join('');
+    })
+    .catch(function() { el.innerHTML = '<div style="padding:8px;color:var(--accent);font-size:.82rem">조회 실패</div>'; });
+}
+
+function _loadForums(keyword) {
+  var el = document.getElementById('legForumList');
+  var cnt = document.getElementById('legForumCount');
+  if (!el) return;
+  el.innerHTML = '<div style="text-align:center;padding:8px"><div class="spinner" style="width:14px;height:14px;border-width:2px;margin:0 auto"></div></div>';
+  var url = _API_BASE + '/api/assembly/forums';
+  if (keyword) url += '?keyword=' + encodeURIComponent(keyword);
+  fetch(url)
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      var items = d.items || [];
+      if (cnt) cnt.textContent = items.length + '건';
+      if (items.length === 0) { el.innerHTML = '<div style="padding:8px;text-align:center;color:var(--text-muted);font-size:.82rem">토론회/공청회 없음</div>'; return; }
+      el.innerHTML = items.slice(0, 10).map(function(m) {
+        var name = m['회의명'] || m.title || '';
+        var date = m['회의일'] || m.date || '';
+        var agenda = m['안건'] || m.agenda || '';
+        var recUrl = m['회의록URL'] || '';
+        return '<div style="padding:5px 0;border-bottom:1px solid var(--border);font-size:.82rem">' +
+          '<b>' + _esc(name.substring(0,40)) + '</b>' +
+          '<div style="font-size:.72rem;color:var(--gray)">' + _esc(date) + '</div>' +
+          (agenda ? '<div style="font-size:.75rem;margin-top:2px;color:#555">' + _esc(agenda.substring(0,80)) + '</div>' : '') +
+          (recUrl ? '<a href="#" onclick="_showRecordViewer(\'' + _esc(recUrl).replace(/\'/g,"\\'") + '\',\'' + _esc(name).replace(/\'/g,"\\'").substring(0,30) + '\');return false" style="font-size:.72rem;color:#7b1fa2">&#128196; 회의록</a>' : '') + '</div>';
+      }).join('');
+    })
+    .catch(function() { el.innerHTML = '<div style="padding:8px;color:var(--accent);font-size:.82rem">조회 실패</div>'; });
 }
 
 // ===== Phase 17: MCP 신규 기능 =====
