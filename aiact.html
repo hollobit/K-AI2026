@@ -6059,25 +6059,41 @@ function _showMemberDetailResult(d) {
     html += '<details style="margin-bottom:10px"><summary style="cursor:pointer;font-weight:600;font-size:.88rem;color:#6a1b9a">&#128221; 공동발의 (' + coTotal + '건)</summary>';
     coBills.forEach(function(b) { html += _billItem(b); });
     html += '</details>';
+  } else {
+    // 공동발의 목록을 API에서 직접 가져올 수 없으므로 국회 발의법률안 시스템 링크 제공
+    var monaCode = (m.photo || '').split('/').pop().replace('.jpg','');
+    if (monaCode) {
+      html += '<details style="margin-bottom:10px"><summary style="cursor:pointer;font-weight:600;font-size:.88rem;color:#6a1b9a">&#128221; 공동발의</summary>';
+      html += '<div style="padding:10px 12px;font-size:.82rem;background:#f8f9fa;border-radius:6px">';
+      html += '<a href="https://likms.assembly.go.kr/bill/coactorListPopup.do?monaCD=' + _esc(monaCode) + '" target="_blank" style="color:#6a1b9a">&#127963; 국회 의안정보시스템에서 공동발의 법안 확인 &#8599;</a>';
+      html += '</div></details>';
+    }
   }
 
   var voteData = d.votes || {};
   var votes = voteData.items || [];
   if (votes.length > 0) {
-    // 표결 통계 요약
-    var vYes = 0, vNo = 0, vAbs = 0;
-    votes.forEach(function(v) { var r = v.result || ''; if (r === '찬성') vYes++; else if (r === '반대') vNo++; else vAbs++; });
-    var vTotal = votes.length;
-    html += '<details open style="margin-bottom:14px"><summary style="cursor:pointer;font-weight:600;font-size:.88rem;color:#e65100">&#128499;&#65039; 본회의 표결 참여 (' + vTotal + '건)</summary>';
-    html += '<div style="display:flex;gap:10px;padding:8px 12px;background:#fff8e1;border-radius:8px;margin-bottom:8px;font-size:.82rem">';
-    html += '<span>&#9989; 찬성 <b style="color:#28a745">' + vYes + '</b>건 (' + (vTotal ? Math.round(vYes/vTotal*100) : 0) + '%)</span>';
-    html += '<span>&#10060; 반대 <b style="color:#dc3545">' + vNo + '</b>건 (' + (vTotal ? Math.round(vNo/vTotal*100) : 0) + '%)</span>';
-    html += '<span>&#9898; 기권 <b style="color:#6c757d">' + vAbs + '</b>건 (' + (vTotal ? Math.round(vAbs/vTotal*100) : 0) + '%)</span>';
-    html += '</div>';
+    // 처리결과 통계 요약
+    var vPass = 0, vReject = 0, vOther = 0;
+    votes.forEach(function(v) {
+      var r = v.result || '';
+      if (r.indexOf('가결') >= 0) vPass++;
+      else if (r.indexOf('폐기') >= 0 || r.indexOf('부결') >= 0) vReject++;
+      else if (r) vOther++;
+    });
+    var vTotal = voteData.total || votes.length;
+    html += '<details open style="margin-bottom:14px"><summary style="cursor:pointer;font-weight:600;font-size:.88rem;color:#e65100">&#128499;&#65039; 본회의 처리 의안 (최근 ' + votes.length + '건 / 총 ' + vTotal + '건)</summary>';
+    if (vPass || vReject || vOther) {
+      html += '<div style="display:flex;gap:10px;padding:8px 12px;background:#fff8e1;border-radius:8px;margin-bottom:8px;font-size:.82rem">';
+      html += '<span>&#9989; 가결 <b style="color:#28a745">' + vPass + '</b>건</span>';
+      html += '<span>&#10060; 폐기/부결 <b style="color:#dc3545">' + vReject + '</b>건</span>';
+      if (vOther) html += '<span>&#9898; 기타 <b style="color:#6c757d">' + vOther + '</b>건</span>';
+      html += '</div>';
+    }
     votes.forEach(function(v) {
       var vname = v.billName || v.name || '';
       var vresult = v.result || '';
-      var resultColor = vresult === '찬성' ? '#28a745' : vresult === '반대' ? '#dc3545' : '#6c757d';
+      var resultColor = vresult.indexOf('가결') >= 0 ? '#28a745' : vresult.indexOf('폐기') >= 0 || vresult.indexOf('부결') >= 0 ? '#dc3545' : vresult.indexOf('철회') >= 0 ? '#fd7e14' : '#6c757d';
       html += '<div style="padding:4px 0;border-bottom:1px solid #f0f0f0;font-size:.82rem;display:flex;justify-content:space-between;align-items:center">' +
         '<span style="flex:1">' + _esc(vname) + '</span>' +
         (vresult ? '<span style="padding:1px 6px;border-radius:8px;font-size:.7rem;background:' + resultColor + ';color:#fff">' + _esc(vresult) + '</span>' : '') +
@@ -6131,6 +6147,34 @@ function _showMemberDetailResult(d) {
       html += '<div style="padding:6px 0;border-bottom:1px solid #f0f0f0;font-size:.84rem">' +
         '<div style="font-weight:600">' + (rLink ? '<a href="' + _esc(rLink) + '" target="_blank" style="color:#1565c0;text-decoration:none">' + _esc(rTitle) + ' &#8599;</a>' : _esc(rTitle)) + '</div>' +
         '<div style="font-size:.75rem;color:var(--gray);margin-top:2px">' + _esc(rAuthor) + (rDate ? ' | ' + _esc(rDate) : '') + '</div></div>';
+    });
+    html += '</details>';
+  }
+
+  // 관련 일정 (의원명 + 소속위원회 + 본회의)
+  var scheds = (d.schedules || {}).items || [];
+  if (scheds.length > 0) {
+    html += '<details style="margin-bottom:14px"><summary style="cursor:pointer;font-weight:600;font-size:.88rem;color:#e65100">&#128197; 관련 일정 (' + (d.schedules.total || scheds.length) + '건)</summary>';
+    scheds.forEach(function(s) {
+      var sContent = s['내용'] || s.content || '';
+      var sDate = s['일자'] || s.date || '';
+      var sTime = s['시간'] || s.time || '';
+      var sKind = s['일정종류'] || s.kind || '';
+      var sComm = s['위원회'] || s.committee || '';
+      var sPlace = s['장소'] || s.place || '';
+      var tag = s._tag || '';
+      var tagBadge = '';
+      if (tag === 'member') tagBadge = '<span style="padding:1px 6px;border-radius:8px;font-size:.65rem;background:#1565c0;color:#fff;margin-right:4px">의원</span>';
+      else if (tag === 'committee') tagBadge = '<span style="padding:1px 6px;border-radius:8px;font-size:.65rem;background:#6a1b9a;color:#fff;margin-right:4px">위원회</span>';
+      else if (tag === 'plenary') tagBadge = '<span style="padding:1px 6px;border-radius:8px;font-size:.65rem;background:#e65100;color:#fff;margin-right:4px">본회의</span>';
+      html += '<div style="padding:6px 0;border-bottom:1px solid #f0f0f0;font-size:.84rem">' +
+        '<div>' + tagBadge + '<b>' + _esc(sContent) + '</b></div>' +
+        '<div style="font-size:.75rem;color:var(--gray);margin-top:2px">' +
+        _esc(sDate) + (sTime ? ' ' + _esc(sTime) : '') +
+        (sKind ? ' | ' + _esc(sKind) : '') +
+        (sComm ? ' | <a href="#" onclick="_showCommitteeDetail(\'' + _esc(sComm).replace(/'/g,"\\'") + '\');return false" style="color:#6a1b9a;text-decoration:none">' + _esc(sComm) + '</a>' : '') +
+        (sPlace ? ' | ' + _esc(sPlace) : '') +
+        '</div></div>';
     });
     html += '</details>';
   }
