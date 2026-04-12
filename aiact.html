@@ -3,6 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
   <title>인공지능기본법 × AI 행동계획 연계 분석</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <style>
@@ -1555,7 +1558,7 @@ tbody td { padding: 11px 14px; font-size: 0.85rem; border-bottom: 1px solid var(
     <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
       <div>
         <div style="font-size:1.1rem;font-weight:700">&#129302; AI 입법 종합 분석</div>
-        <div style="font-size:0.82rem;opacity:0.9;margin-top:4px">자연어로 입법 동향을 질문하면国会 API + 국민참여입법센터 API + NABO API + GraphRAG로 종합 분석합니다</div>
+        <div style="font-size:0.82rem;opacity:0.9;margin-top:4px">자연어로 입법 동향을 질문하면국회 API + 국민참여입법센터 API + NABO API + GraphRAG로 종합 분석합니다</div>
       </div>
       <button id="legAiToggle" onclick="toggleLegAiMode()" style="padding:8px 20px;background:rgba(255,255,255,0.2);color:white;border:2px solid rgba(255,255,255,0.5);border-radius:20px;font-size:0.88rem;font-weight:600;cursor:pointer;transition:all 0.3s;backdrop-filter:blur(4px)" onmouseover="this.style.background='rgba(255,255,255,0.35)'" onmouseout="this.style.background=_legAiMode?'rgba(255,255,255,0.35)':'rgba(255,255,255,0.2)'">AI 분석 모드 켜기</button>
     </div>
@@ -1586,7 +1589,7 @@ tbody td { padding: 11px 14px; font-size: 0.85rem; border-bottom: 1px solid var(
       <div id="legAiSources" style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
         <span style="font-size:0.75rem;opacity:0.7;white-space:nowrap">데이터 소스:</span>
         <label style="display:flex;align-items:center;gap:3px;font-size:0.78rem;color:rgba(255,255,255,0.85);cursor:pointer">
-          <input type="checkbox" id="srcAssembly" checked onchange="onLegAiSourceToggle()" style="accent-color:#4a148c">国会
+          <input type="checkbox" id="srcAssembly" checked onchange="onLegAiSourceToggle()" style="accent-color:#4a148c">국회
         </label>
         <label style="display:flex;align-items:center;gap:3px;font-size:0.78rem;color:rgba(255,255,255,0.85);cursor:pointer">
           <input type="checkbox" id="srcLawmaking" checked onchange="onLegAiSourceToggle()" style="accent-color:#4a148c">국민참여입법센터
@@ -6868,7 +6871,7 @@ function runLegAiSearch(noCache) {
     // 소스별 데이터 건수 배지
     var srcBadges = [];
     var srcData = data.sources || {};
-    var srcLabels = {assembly: '国会', lawmaking: '입법센터', nabo: 'NABO', graphrag: 'GraphRAG'};
+    var srcLabels = {assembly: '국회', lawmaking: '입법센터', nabo: 'NABO', graphrag: 'GraphRAG'};
     Object.keys(srcLabels).forEach(function(src) {
       var cnt = srcData[src] || {};
       var total = Object.values(cnt).reduce(function(s, v) { return s + (typeof v === 'number' ? v : 0); }, 0);
@@ -6910,7 +6913,7 @@ function runLegAiSearch(noCache) {
         if (cnt[k] > 0) parts.push(k + ': ' + cnt[k]);
       });
       if (parts.length) {
-        var labels = {assembly: '国会', lawmaking: '입법센터', nabo: 'NABO', graphrag: 'GraphRAG'};
+        var labels = {assembly: '국회', lawmaking: '입법센터', nabo: 'NABO', graphrag: 'GraphRAG'};
         var colors = {assembly: '#1565c0', lawmaking: '#00695c', nabo: '#e65100', graphrag: '#6a1b9a'};
         html += '<span style="display:inline-block;background:' + (colors[src] || '#555') + '22;color:' + (colors[src] || '#555') + ';border:1px solid ' + (colors[src] || '#555') + '55;padding:3px 10px;border-radius:12px;font-size:0.75rem;margin:2px">' + (labels[src] || src) + ': ' + parts.join(', ') + '</span>';
       }
@@ -6920,7 +6923,7 @@ function runLegAiSearch(noCache) {
   }
 
   function _renderLegAiLifecycle(data) {
-    // 입법 라이프사이클 타임라인: 입법 전(lawmaking) → 중(国会) → 후(NABO)
+    // 입법 라이프사이클 타임라인: 입법 전(lawmaking) → 중(국회) → 후(NABO)
     var lc = data.lifecycle;
     var enabled = data.enabled_sources || [];
     if (!lc || !Object.keys(lc).length) return;
@@ -7062,7 +7065,7 @@ function runLegAiSearch(noCache) {
         var parts = Object.keys(cnt).filter(function(k) { return cnt[k] > 0; }).map(function(k) { return k + ':' + cnt[k]; });
         if (parts.length) {
           var colors = {assembly: '#1565c0', lawmaking: '#00695c', nabo: '#e65100', graphrag: '#6a1b9a'};
-          var labels = {assembly: '国会', lawmaking: '입법센터', nabo: 'NABO', graphrag: 'GraphRAG'};
+          var labels = {assembly: '국회', lawmaking: '입법센터', nabo: 'NABO', graphrag: 'GraphRAG'};
           srcBadges.push('<span style="display:inline-block;background:' + (colors[src]||'#555') + '22;color:' + (colors[src]||'#555') + ';border:1px solid ' + (colors[src]||'#555') + '55;padding:2px 8px;border-radius:10px;font-size:.72rem;margin:2px">' + (labels[src]||src) + ': ' + parts.join(',') + '</span>');
         }
       });
