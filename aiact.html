@@ -1555,7 +1555,7 @@ tbody td { padding: 11px 14px; font-size: 0.85rem; border-bottom: 1px solid var(
     <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
       <div>
         <div style="font-size:1.1rem;font-weight:700">&#129302; AI 입법 종합 분석</div>
-        <div style="font-size:0.82rem;opacity:0.9;margin-top:4px">자연어로 입법 동향을 질문하면 국회 API + GraphRAG로 종합 분석합니다</div>
+        <div style="font-size:0.82rem;opacity:0.9;margin-top:4px">자연어로 입법 동향을 질문하면国会 API + 국민참여입법센터 API + NABO API + GraphRAG로 종합 분석합니다</div>
       </div>
       <button id="legAiToggle" onclick="toggleLegAiMode()" style="padding:8px 20px;background:rgba(255,255,255,0.2);color:white;border:2px solid rgba(255,255,255,0.5);border-radius:20px;font-size:0.88rem;font-weight:600;cursor:pointer;transition:all 0.3s;backdrop-filter:blur(4px)" onmouseover="this.style.background='rgba(255,255,255,0.35)'" onmouseout="this.style.background=_legAiMode?'rgba(255,255,255,0.35)':'rgba(255,255,255,0.2)'">AI 분석 모드 켜기</button>
     </div>
@@ -1581,6 +1581,24 @@ tbody td { padding: 11px 14px; font-size: 0.85rem; border-bottom: 1px solid var(
         <button onclick="runLegAiSearch(false)" style="padding:10px 28px;background:white;color:#1a237e;border:none;border-radius:6px;font-size:0.9rem;font-weight:700;cursor:pointer;transition:transform 0.2s" onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform='scale(1)'">&#128300; AI 분석 시작</button>
         <button onclick="runLegAiSearch(true)" style="padding:10px 20px;background:rgba(255,255,255,0.15);color:white;border:1px solid rgba(255,255,255,0.4);border-radius:6px;font-size:0.82rem;cursor:pointer" title="캐시 무시하고 새로 분석">&#128260; 새로 분석</button>
         <span id="legAiTokens" style="font-size:0.78rem;opacity:0.8"></span>
+      </div>
+      <!-- 4소스 선택 체크박스 -->
+      <div id="legAiSources" style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+        <span style="font-size:0.75rem;opacity:0.7;white-space:nowrap">데이터 소스:</span>
+        <label style="display:flex;align-items:center;gap:3px;font-size:0.78rem;color:rgba(255,255,255,0.85);cursor:pointer">
+          <input type="checkbox" id="srcAssembly" checked onchange="onLegAiSourceToggle()" style="accent-color:#4a148c">国会
+        </label>
+        <label style="display:flex;align-items:center;gap:3px;font-size:0.78rem;color:rgba(255,255,255,0.85);cursor:pointer">
+          <input type="checkbox" id="srcLawmaking" checked onchange="onLegAiSourceToggle()" style="accent-color:#4a148c">국민참여입법센터
+        </label>
+        <label style="display:flex;align-items:center;gap:3px;font-size:0.78rem;color:rgba(255,255,255,0.85);cursor:pointer">
+          <input type="checkbox" id="srcNabo" checked onchange="onLegAiSourceToggle()" style="accent-color:#4a148c">NABO
+        </label>
+        <label style="display:flex;align-items:center;gap:3px;font-size:0.78rem;color:rgba(255,255,255,0.85);cursor:pointer">
+          <input type="checkbox" id="srcGraphrag" checked onchange="onLegAiSourceToggle()" style="accent-color:#4a148c">GraphRAG
+        </label>
+        <button onclick="legAiSelectAllSources()" style="padding:2px 8px;background:rgba(255,255,255,0.1);color:rgba(255,255,255,0.7);border:1px solid rgba(255,255,255,0.3);border-radius:4px;font-size:0.7rem;cursor:pointer">전체</button>
+        <span id="legAiSourceCount" style="font-size:0.72rem;opacity:0.6"></span>
       </div>
       <div style="margin-top:12px;display:flex;gap:6px;flex-wrap:wrap">
         <span style="font-size:0.78rem;opacity:0.7">예시:</span>
@@ -6280,9 +6298,12 @@ function _showMemberDetailResult(d) {
     votes.forEach(function(v) {
       var vname = v.billName || v.name || '';
       var vresult = v.result || '';
+      var yes = v.yesCount || 0, no = v.noCount || 0, abs = v.abstainCount || 0;
       var resultColor = vresult.indexOf('가결') >= 0 ? '#28a745' : vresult.indexOf('폐기') >= 0 || vresult.indexOf('부결') >= 0 ? '#dc3545' : vresult.indexOf('철회') >= 0 ? '#fd7e14' : '#6c757d';
+      var voteCounts = (yes || no || abs) ? '<span style="font-size:.7rem;color:var(--gray);margin-right:6px">찬' + yes + ' 반' + no + ' 기' + abs + '</span>' : '';
       html += '<div style="padding:4px 0;border-bottom:1px solid #f0f0f0;font-size:.82rem;display:flex;justify-content:space-between;align-items:center">' +
         '<span style="flex:1">' + _esc(vname) + '</span>' +
+        voteCounts +
         (vresult ? '<span style="padding:1px 6px;border-radius:8px;font-size:.7rem;background:' + resultColor + ';color:#fff">' + _esc(vresult) + '</span>' : '') +
         '</div>';
     });
@@ -6717,6 +6738,27 @@ function setLegAiExample(text) {
   document.getElementById('legAiQuery').value = text;
 }
 
+function onLegAiSourceToggle() {
+  var checked = ['srcAssembly', 'srcLawmaking', 'srcNabo', 'srcGraphrag']
+    .filter(function(id) { return document.getElementById(id).checked; });
+  document.getElementById('legAiSourceCount').textContent =
+    checked.length + '/4 선택';
+}
+
+function legAiSelectAllSources() {
+  ['srcAssembly', 'srcLawmaking', 'srcNabo', 'srcGraphrag'].forEach(function(id) {
+    document.getElementById(id).checked = true;
+  });
+  onLegAiSourceToggle();
+}
+
+function _getLegAiSources() {
+  return ['assembly', 'lawmaking', 'nabo', 'graphrag'].filter(function(src) {
+    var id = 'src' + src.charAt(0).toUpperCase() + src.slice(1).replace('rag', 'Rag');
+    return document.getElementById(id).checked;
+  });
+}
+
 function runLegAiSearch(noCache) {
   var query = (document.getElementById('legAiQuery').value || '').trim();
   if (!query) { alert('질문을 입력하세요.'); return; }
@@ -6749,13 +6791,37 @@ function runLegAiSearch(noCache) {
 
   var accumulated = '';
 
-  fetch(_API_BASE + '/api/legislation-ai/stream', {
+  // 소스 선택 + 새 AI 분석 모드 확인
+  var sources = _getLegAiSources();
+  if (sources.length === 0) {
+    alert('최소 하나의 데이터 소스를 선택해주세요.');
+    return;
+  }
+  var useNewEndpoint = true; // 항상 4소스 통합 엔드포인트 사용
+  var endpoint = '/api/legislation/ai-analysis';
+  var isNonStream = true;
+
+  fetch(_API_BASE + endpoint, {
     method: 'POST',
     headers: Object.assign({'Content-Type': 'application/json'}, _getApiKeyHeaders()),
-    body: JSON.stringify({query: query, provider: provider, model: model, max_tokens: maxTokens, no_cache: !!noCache}),
+    body: JSON.stringify({query: query, provider: provider, model: model, max_tokens: maxTokens, no_cache: !!noCache, sources: sources}),
     signal: _legAiAbort.signal
   }).then(function(resp) {
     if (!resp.ok) return resp.json().then(function(d) { throw new Error(d.error || 'HTTP ' + resp.status); });
+
+    if (isNonStream) {
+      // Non-streaming JSON 응답 (/api/legislation/ai-analysis)
+      resp.json().then(function(data) {
+        _handleNewAiResult(data);
+        _legAiFinish();
+        _saveLegAiHistory(query);
+      }).catch(function(err) {
+        _legAiError('결과 파싱 실패: ' + err.message);
+      });
+      return;
+    }
+
+    // SSE 스트리밍 (/api/legislation-ai/stream)
     var reader = resp.body.getReader();
     var decoder = new TextDecoder();
     var buffer = '';
@@ -6786,6 +6852,341 @@ function runLegAiSearch(noCache) {
   }).catch(function(err) {
     if (err.name !== 'AbortError') _legAiError(err.message);
   });
+
+  // 4소스 통합 결과 렌더링 (Non-streaming JSON)
+  function _handleNewAiResult(data) {
+    var content = document.getElementById('legAiContent');
+    var focus = document.getElementById('legAiFocus');
+    var meta = document.getElementById('legAiMeta');
+    var progress = document.getElementById('legAiProgress');
+    var analysis = document.getElementById('legAiAnalysis');
+
+    // 분석 결과
+    content.innerHTML = _legAiRenderMarkdown(data.analysis || '분석 결과가 없습니다.');
+    focus.textContent = (data.analysis_focus || data.query || '') + (data.cached ? ' (캐시)' : '');
+
+    // 소스별 데이터 건수 배지
+    var srcBadges = [];
+    var srcData = data.sources || {};
+    var srcLabels = {assembly: '国会', lawmaking: '입법센터', nabo: 'NABO', graphrag: 'GraphRAG'};
+    Object.keys(srcLabels).forEach(function(src) {
+      var cnt = srcData[src] || {};
+      var total = Object.values(cnt).reduce(function(s, v) { return s + (typeof v === 'number' ? v : 0); }, 0);
+      if (total > 0) srcBadges.push(srcLabels[src] + ': ' + total + '건');
+    });
+
+    // 메타
+    meta.innerHTML = [
+      srcBadges.length ? '<span style="background:#e8eaf6;color:#1a237e;padding:2px 8px;border-radius:10px;font-size:0.72rem">' + srcBadges.join(' | ') + '</span>' : '',
+      data.provider ? '모델: ' + data.provider + '/' + (data.model || '') : '',
+      data.usage ? '토큰: ' + data.usage : ''
+    ].filter(Boolean).map(function(s){return '<span>' + s + '</span>';}).join('');
+
+    // 소스별 섹션 구분 + Lifecycle 타임라인 (결과 영역 표시 후)
+    progress.style.display = 'none';
+    analysis.style.display = 'block';
+    _renderSourceSections(data);
+    _renderLegAiLifecycle(data);
+
+    _legAiLastResult = data;
+  }
+
+  function _renderSourceSections(data) {
+    // 소스별 상세 정보가 있으면 expanded panel 추가
+    var container = document.getElementById('legAiAnalysis');
+    var existing = document.getElementById('legAiSrcSections');
+    if (existing) existing.remove();
+
+    var srcData = data.sources || {};
+    var enabled = data.enabled_sources || [];
+    if (!enabled.length || !Object.keys(srcData).length) return;
+
+    var html = '<div id="legAiSrcSections" style="padding:0 20px 16px;clear:both">';
+    html += '<div style="font-size:0.78rem;color:var(--gray);margin-bottom:8px">소스별 데이터:</div>';
+    enabled.forEach(function(src) {
+      var cnt = srcData[src] || {};
+      var parts = [];
+      Object.keys(cnt).forEach(function(k) {
+        if (cnt[k] > 0) parts.push(k + ': ' + cnt[k]);
+      });
+      if (parts.length) {
+        var labels = {assembly: '国会', lawmaking: '입법센터', nabo: 'NABO', graphrag: 'GraphRAG'};
+        var colors = {assembly: '#1565c0', lawmaking: '#00695c', nabo: '#e65100', graphrag: '#6a1b9a'};
+        html += '<span style="display:inline-block;background:' + (colors[src] || '#555') + '22;color:' + (colors[src] || '#555') + ';border:1px solid ' + (colors[src] || '#555') + '55;padding:3px 10px;border-radius:12px;font-size:0.75rem;margin:2px">' + (labels[src] || src) + ': ' + parts.join(', ') + '</span>';
+      }
+    });
+    html += '</div>';
+    container.insertAdjacentHTML('beforeend', html);
+  }
+
+  function _renderLegAiLifecycle(data) {
+    // 입법 라이프사이클 타임라인: 입법 전(lawmaking) → 중(国会) → 후(NABO)
+    var lc = data.lifecycle;
+    var enabled = data.enabled_sources || [];
+    if (!lc || !Object.keys(lc).length) return;
+
+    var container = document.getElementById('legAiAnalysis');
+    var existing = document.getElementById('legAiLifecycle');
+    if (existing) existing.remove();
+
+    // Determine which phases have data
+    var hasPre = (lc.lawmaking || []).length > 0;
+    var hasMid = (lc.assembly || lc.schedule || lc.meetings || []).length > 0;
+    var hasPost = (lc.nabo || []).length > 0;
+
+    if (!hasPre && !hasMid && !hasPost) return;
+
+    var stages = [
+      {key: 'pre', label: '입법 전', icon: '&#128221;', sublabel: '국민참여입법센터', color: '#00695c', items: lc.lawmaking || [], srcLabel: 'lawmaking'},
+      {key: 'mid', label: '입법 중', icon: '&#128101;', sublabel: '국회 심사·표결', color: '#1565c0', items: (lc.assembly || lc.schedule || lc.meetings || []), srcLabel: 'assembly'},
+      {key: 'post', label: '입법 후', icon: '&#127970;', sublabel: 'NABO 예산분석', color: '#e65100', items: lc.nabo || [], srcLabel: 'nabo'},
+    ];
+
+    var html = '<div id="legAiLifecycle" style="padding:16px 20px;background:#f8f9fa;border-top:1px solid var(--border);clear:both">';
+    html += '<div style="font-size:0.82rem;font-weight:700;color:var(--text);margin-bottom:12px">&#9207; 관련 입법 라이프사이클</div>';
+    html += '<div style="display:flex;gap:0;align-items:flex-start">';
+
+    stages.forEach(function(stage, idx) {
+      var items = stage.items;
+      var hasItems = items.length > 0;
+      var opacity = hasItems ? '1' : '0.35';
+      html += '<div style="flex:1;position:relative;text-align:center">';
+
+      // Icon bubble
+      html += '<div style="width:36px;height:36px;background:' + stage.color + ';color:white;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:1.1rem;opacity:' + opacity + ';margin:0 auto 6px">' + stage.icon + '</div>';
+      html += '<div style="font-size:0.78rem;font-weight:700;color:' + stage.color + ';opacity:' + opacity + ';margin-bottom:2px">' + stage.label + '</div>';
+      html += '<div style="font-size:0.68rem;color:var(--gray);opacity:' + opacity + ';margin-bottom:8px">' + stage.sublabel + '</div>';
+
+      // Items list
+      if (hasItems) {
+        html += '<div style="text-align:left">';
+        var dispItems = items.slice(0, 3);
+        dispItems.forEach(function(item) {
+          var name = item.bill_name || item.name || item.title || item.report_nm || String(item);
+          var date = item.date || item.propose_date || item.issue_de || '';
+          var id = item.bill_id || item.id || '';
+          if (name && name !== '이름없음') {
+            var clickable = id ? ' style="cursor:pointer;text-decoration:underline" onclick="_openBillFromLifecycle(\'' + id + '\')"' : '';
+            html += '<div style="font-size:0.72rem;color:var(--text);margin-bottom:4px;line-height:1.4"' + clickable + '>';
+            html += '<span style="color:' + stage.color + '">&#8226;</span> ';
+            if (date) html += '<span style="color:var(--gray)">' + date + ' </span>';
+            html += name.substring(0, 40) + (name.length > 40 ? '...' : '');
+            html += '</div>';
+          }
+        });
+        if (items.length > 3) {
+          html += '<div style="font-size:0.68rem;color:var(--gray)">+ ' + (items.length - 3) + '건 more...</div>';
+        }
+        html += '</div>';
+      } else {
+        html += '<div style="font-size:0.68rem;color:var(--gray)">데이터 없음</div>';
+      }
+
+      // Arrow between stages
+      if (idx < stages.length - 1) {
+        html += '<div style="position:absolute;right:0;top:16px;color:' + (hasItems ? stage.color : '#ccc') + ';font-size:0.9rem">&#8594;</div>';
+      }
+
+      html += '</div>';
+    });
+
+    html += '</div></div>';
+    container.insertAdjacentHTML('beforeend', html);
+  }
+
+  function _openBillFromLifecycle(billId) {
+    // Navigate to bill tab and trigger detail view
+    var tabs = document.querySelectorAll('.tab-btn');
+    if (tabs.length > 0) {
+      for (var i = 0; i < tabs.length; i++) {
+        if (tabs[i].textContent.includes('법안') || tabs[i].dataset.tab === 'legislation') {
+          tabs[i].click();
+          break;
+        }
+      }
+    }
+    // Trigger bill search with the bill_id
+    var searchInput = document.getElementById('legSearchInput') || document.getElementById('legSearchKeyword');
+    if (searchInput) {
+      searchInput.value = billId;
+      if (typeof runLegSearch === 'function') runLegSearch();
+    }
+  }
+
+  //议员별 AI 분석 모달 —议员 클릭 시 lifecycle + NABO 데이터 연동
+  function _openMemberAiModal(name) {
+    var modal = document.getElementById('modalOverlay');
+    var title = document.getElementById('modalTitle');
+    var body = document.getElementById('modalBody');
+    var badges = document.getElementById('modalBadges');
+    if (!modal || !title || !body) return;
+
+    title.textContent = name + ' 의원 AI 분석';
+    badges.innerHTML = '<span style="padding:3px 10px;background:#1565c0;color:white;border-radius:12px;font-size:.78rem">&#128100; AI 분석</span>';
+    body.innerHTML = '<div style="text-align:center;padding:30px"><div class="spinner" style="width:24px;height:24px;border-width:2px;margin:0 auto 8px"></div>' + name + ' 의원의立法 lifecycle + NABO 분석 조희 중...</div>';
+    modal.classList.add('open');
+
+    var q = name + ' 의원 발의 법안';
+    Promise.all([
+      fetch(_API_BASE + '/api/legislation/ai-analysis', {
+        method: 'POST',
+        headers: Object.assign({'Content-Type': 'application/json'}, _getApiKeyHeaders()),
+        body: JSON.stringify({query: q, sources: ['assembly', 'lawmaking', 'nabo'], no_cache: true})
+      }).then(function(r) { return r.json(); }),
+      fetch(_API_BASE + '/api/assembly/analyze?name=' + encodeURIComponent(name)).then(function(r) { return r.json(); })
+    ]).then(function(results) {
+      var aiResult = results[0];
+      var memberDetail = results[1];
+      if (aiResult.error && memberDetail.error) {
+        body.innerHTML = '<div style="padding:20px;text-align:center;color:var(--accent)">조회 실패: ' + aiResult.error + '</div>';
+        return;
+      }
+
+      var html = '<div style="padding:14px;background:linear-gradient(135deg,#e8eaf6,#f3e5f5);border-radius:8px;margin-bottom:14px">';
+      var m = memberDetail.member || {};
+      html += '<div style="font-weight:700;font-size:1rem;margin-bottom:6px">&#128100; ' + name + ' 의원</div>';
+      if (m.party || m.district) html += '<div style="font-size:.84rem;color:#555">' + (m.party || '') + (m.district ? ' | ' + m.district : '') + '</div>';
+      html += '</div>';
+
+      // AI 분석 결과
+      if (aiResult.analysis) {
+        html += '<details open style="margin-bottom:14px"><summary style="cursor:pointer;font-weight:600;font-size:.88rem;color:#1a237e">&#129302; AI立法동향 분석</summary>';
+        html += '<div style="padding:10px 12px;font-size:.84rem;line-height:1.7;margin-top:6px;background:#f8f9fa;border-radius:6px">' + _legAiRenderMarkdown(aiResult.analysis) + '</div></details>';
+      }
+
+      // 소스별 데이터
+      var srcBadges = [];
+      var srcData = aiResult.sources || {};
+      Object.keys(srcData).forEach(function(src) {
+        var cnt = srcData[src];
+        var parts = Object.keys(cnt).filter(function(k) { return cnt[k] > 0; }).map(function(k) { return k + ':' + cnt[k]; });
+        if (parts.length) {
+          var colors = {assembly: '#1565c0', lawmaking: '#00695c', nabo: '#e65100', graphrag: '#6a1b9a'};
+          var labels = {assembly: '国会', lawmaking: '입법센터', nabo: 'NABO', graphrag: 'GraphRAG'};
+          srcBadges.push('<span style="display:inline-block;background:' + (colors[src]||'#555') + '22;color:' + (colors[src]||'#555') + ';border:1px solid ' + (colors[src]||'#555') + '55;padding:2px 8px;border-radius:10px;font-size:.72rem;margin:2px">' + (labels[src]||src) + ': ' + parts.join(',') + '</span>');
+        }
+      });
+      if (srcBadges.length) {
+        html += '<div style="margin-bottom:14px;font-size:.78rem">' + srcBadges.join(' ') + '</div>';
+      }
+
+      // 법안 발의 activity
+      var repBills = (memberDetail.bills || {}).items || [];
+      if (repBills.length > 0) {
+        html += '<details open style="margin-bottom:14px"><summary style="cursor:pointer;font-weight:600;font-size:.88rem;color:#1565c0">&#128220; 대표발의 법안 (' + repBills.length + '건)</summary>';
+        repBills.slice(0, 10).forEach(function(b) {
+          var bname = b.name || b.billName || '';
+          var bno = b.bill_no || b.billNo || '';
+          var bdate = b.propose_date || b.proposeDate || '';
+          var bresult = b.proc_result || '';
+          var rc = bresult.indexOf('가결') >= 0 ? '#28a745' : bresult.indexOf('폐기') >= 0 || bresult.indexOf('부결') >= 0 ? '#dc3545' : '#6c757d';
+          html += '<div style="padding:4px 0;border-bottom:1px solid #f0f0f0;font-size:.82rem">';
+          html += '<div style="display:flex;justify-content:space-between"><b style="flex:1">' + _esc(bname) + '</b>';
+          if (bresult) html += '<span style="padding:1px 6px;border-radius:8px;font-size:.7rem;background:' + rc + ';color:#fff">' + _esc(bresult) + '</span>';
+          html += '</div>';
+          html += '<div style="font-size:.72rem;color:var(--gray)">' + (bno ? '의안 ' + _esc(bno) + ' | ' : '') + _esc(bdate) + '</div></div>';
+        });
+        html += '</details>';
+      }
+
+      // 의정활동 이력
+      var careerDetail = memberDetail.career_detail || [];
+      if (careerDetail.length > 0) {
+        html += '<details style="margin-bottom:14px"><summary style="cursor:pointer;font-weight:600;font-size:.88rem">&#128197; 의정활동 이력 (' + careerDetail.length + '건)</summary>';
+        careerDetail.slice(0, 10).forEach(function(c) {
+          html += '<div style="padding:4px 0;border-bottom:1px solid #f0f0f0;font-size:.82rem">' + _esc(c.PROFILE_SJ || '') + '<div style="font-size:.72rem;color:var(--gray)">' + _esc(c.FRTO_DATE || '') + '</div></div>';
+        });
+        html += '</details>';
+      }
+
+      body.innerHTML = html;
+    }).catch(function(err) {
+      body.innerHTML = '<div style="padding:20px;text-align:center;color:var(--accent)">조회 실패: ' + _esc(err.message) + '</div>';
+    });
+  }
+
+  // 법안별 AI 분석 모달 — bill_id로 lifecycle + NABO 분석
+  function _openBillAiModal(billId, billName) {
+    var modal = document.getElementById('modalOverlay');
+    var title = document.getElementById('modalTitle');
+    var body = document.getElementById('modalBody');
+    var badges = document.getElementById('modalBadges');
+    if (!modal || !title || !body) return;
+
+    title.textContent = billName || billId + ' AI 분석';
+    badges.innerHTML = '<span style="padding:3px 10px;background:#7b1fa2;color:white;border-radius:12px;font-size:.78rem">&#128220; AI 분석</span>';
+    body.innerHTML = '<div style="text-align:center;padding:30px"><div class="spinner" style="width:24px;height:24px;border-width:2px;margin:0 auto 8px"></div>법률안 lifecycle + NABO 분석 조회 중...</div>';
+    modal.classList.add('open');
+
+    Promise.all([
+      fetch(_API_BASE + '/api/legislation/lifecycle/' + encodeURIComponent(billId) + '?check_nabo=true').then(function(r) { return r.json(); }),
+      fetch(_API_BASE + '/api/legislation/ai-analysis', {
+        method: 'POST',
+        headers: Object.assign({'Content-Type': 'application/json'}, _getApiKeyHeaders()),
+        body: JSON.stringify({query: billName || billId, sources: ['assembly', 'lawmaking', 'nabo', 'graphrag'], no_cache: true})
+      }).then(function(r) { return r.json(); })
+    ]).then(function(results) {
+      var lifecycle = results[0];
+      var aiResult = results[1];
+      if (lifecycle.error && aiResult.error) {
+        body.innerHTML = '<div style="padding:20px;text-align:center;color:var(--accent)">조회 실패</div>';
+        return;
+      }
+
+      var html = '';
+      var lc = lifecycle;
+
+      // Lifecycle 타임라인 표시
+      var stages = [
+        {label: '입법 전', icon: '&#128221;', color: '#00695c', items: lc.lawmaking || []},
+        {label: '입법 중', icon: '&#128101;', color: '#1565c0', items: ((lc.lifecycle||{}).stages||{}).committee || (lc.meetings||[])},
+        {label: '입법 후', icon: '&#127970;', color: '#e65100', items: (lc.nabo||{}).budget_analysis || []},
+      ];
+      html += '<div style="display:flex;gap:0;margin-bottom:16px">';
+      stages.forEach(function(stage, idx) {
+        var items = Array.isArray(stage.items) ? stage.items : [];
+        html += '<div style="flex:1;text-align:center;position:relative">';
+        html += '<div style="width:32px;height:32px;background:' + stage.color + ';color:white;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:1rem;margin:0 auto 4px">' + stage.icon + '</div>';
+        html += '<div style="font-size:.75rem;font-weight:700;color:' + stage.color + ';margin-bottom:4px">' + stage.label + '</div>';
+        if (items.length > 0) {
+          html += '<div style="font-size:.72rem;color:var(--gray)">' + items.length + '건</div>';
+        } else {
+          html += '<div style="font-size:.72rem;color:#ccc">데이터 없음</div>';
+        }
+        if (idx < stages.length - 1) {
+          html += '<div style="position:absolute;right:0;top:14px;color:' + (items.length ? stage.color : '#ccc') + ';font-size:.8rem">&#8594;</div>';
+        }
+        html += '</div>';
+      });
+      html += '</div>';
+
+      // AI 분석 결과
+      if (aiResult.analysis) {
+        html += '<details open style="margin-bottom:14px"><summary style="cursor:pointer;font-weight:600;font-size:.88rem;color:#1a237e">&#129302; AI立法동향 분석</summary>';
+        html += '<div style="padding:10px 12px;font-size:.84rem;line-height:1.7;margin-top:6px;background:#f8f9fa;border-radius:6px">' + _legAiRenderMarkdown(aiResult.analysis) + '</div></details>';
+      }
+
+      // lifecycle raw stages
+      var lcStages = (lc.lifecycle || {}).stages || {};
+      Object.keys(lcStages).forEach(function(stageName) {
+        var stageData = lcStages[stageName];
+        if (!stageData || (Array.isArray(stageData) && !stageData.length)) return;
+        html += '<details style="margin-bottom:10px"><summary style="cursor:pointer;font-weight:600;font-size:.86rem;color:#333">' + stageName + '</summary>';
+        if (Array.isArray(stageData)) {
+          stageData.forEach(function(item) {
+            html += '<div style="padding:4px 8px;border-bottom:1px solid #f0f0f0;font-size:.82rem">' + _esc(String(item)) + '</div>';
+          });
+        } else {
+          html += '<div style="padding:4px 8px;font-size:.82rem">' + _esc(String(stageData)) + '</div>';
+        }
+        html += '</details>';
+      });
+
+      body.innerHTML = html;
+    }).catch(function(err) {
+      body.innerHTML = '<div style="padding:20px;text-align:center;color:var(--accent)">조회 실패: ' + _esc(err.message) + '</div>';
+    });
+  }
 
   function _handleLegAiEvent(type, data) {
     if (type === 'step') {
