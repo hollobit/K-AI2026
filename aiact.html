@@ -6754,7 +6754,7 @@ function legAiSelectAllSources() {
 
 function _getLegAiSources() {
   return ['assembly', 'lawmaking', 'nabo', 'graphrag'].filter(function(src) {
-    var id = 'src' + src.charAt(0).toUpperCase() + src.slice(1).replace('rag', 'Rag');
+    var id = 'src' + src.charAt(0).toUpperCase() + src.slice(1);
     return document.getElementById(id).checked;
   });
 }
