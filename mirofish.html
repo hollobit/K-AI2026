@@ -519,6 +519,12 @@ a:hover { text-decoration: underline; }
             <option value="">-- 과제를 선택하세요 --</option>
           </select>
         </div>
+        <div style="min-width:180px">
+          <label style="font-size:.8rem;color:var(--text-muted);display:block;margin-bottom:4px">분과 필터</label>
+          <select id="teGroupFilter" style="width:100%;padding:10px 12px;border:2px solid var(--border);border-radius:8px;font-size:.85rem;background:var(--card-bg);color:var(--text);font-family:var(--font)">
+            <option value="">전체</option>
+          </select>
+        </div>
         <div style="min-width:160px">
           <label style="font-size:.8rem;color:var(--text-muted);display:block;margin-bottom:4px">정책축 필터</label>
           <select id="teAxisFilter" style="width:100%;padding:10px 12px;border:2px solid var(--border);border-radius:8px;font-size:.85rem;background:var(--card-bg);color:var(--text);font-family:var(--font)">
@@ -17280,32 +17286,77 @@ function toggleChapter(header) {
 // -- Task Eval cache for LLM responses --
 const TE_CACHE = {};
 
+// -- Group (분과) mapping: loaded once from data/group_mapping.json --
+let GROUP_MAPPING = null;
+let GROUP_MAPPING_PROMISE = null;
+function teLoadGroupMapping() {
+  if (GROUP_MAPPING) return Promise.resolve(GROUP_MAPPING);
+  if (GROUP_MAPPING_PROMISE) return GROUP_MAPPING_PROMISE;
+  GROUP_MAPPING_PROMISE = fetch('data/group_mapping.json')
+    .then(r => r.ok ? r.json() : null)
+    .then(m => {
+      GROUP_MAPPING = m || { groups: [], task_to_groups: {}, task_primary_group: {} };
+      if (m && Array.isArray(DATA.tasks)) {
+        DATA.tasks.forEach(t => {
+          const key = String(t.id);
+          t.groups = m.task_to_groups[key] || [];
+          t.primary_group = m.task_primary_group[key] || '';
+        });
+      }
+      return GROUP_MAPPING;
+    })
+    .catch(() => { GROUP_MAPPING = { groups: [], task_to_groups: {}, task_primary_group: {} }; return GROUP_MAPPING; });
+  return GROUP_MAPPING_PROMISE;
+}
+
+// Safe select population via DOM API (avoids innerHTML XSS risk)
+function teFillSelect(selectEl, firstLabel, items, itemToValue, itemToLabel) {
+  while (selectEl.firstChild) selectEl.removeChild(selectEl.firstChild);
+  const opt0 = document.createElement('option');
+  opt0.value = '';
+  opt0.textContent = firstLabel;
+  selectEl.appendChild(opt0);
+  items.forEach(it => {
+    const o = document.createElement('option');
+    o.value = itemToValue(it);
+    o.textContent = itemToLabel(it);
+    selectEl.appendChild(o);
+  });
+}
+
 function renderTaskEval() {
+  teLoadGroupMapping().then(_renderTaskEvalInner);
+}
+
+function _renderTaskEvalInner() {
   const sel = document.getElementById('teTaskSelect');
+  const groupFilter = document.getElementById('teGroupFilter');
   const axisFilter = document.getElementById('teAxisFilter');
   const areaFilter = document.getElementById('teAreaFilter');
   const keyword = document.getElementById('teKeywordSearch');
 
-  // Populate task dropdown if empty
   if (sel.options.length <= 1) {
-    // Populate axis filter
+    const groups = (GROUP_MAPPING && GROUP_MAPPING.groups) || [];
+    teFillSelect(groupFilter, '전체', groups, g => g, g => g);
     const axes = [...new Set(DATA.tasks.map(t => t.policy_axis_name))].sort();
-    axisFilter.innerHTML = '<option value="">전체</option>' + axes.map(a => '<option value="' + a + '">' + a + '</option>').join('');
-    // Populate area filter
+    teFillSelect(axisFilter, '전체', axes, a => a, a => a);
     const areas = [...new Set(DATA.tasks.map(t => t.strategic_area_name))].sort();
-    areaFilter.innerHTML = '<option value="">전체</option>' + areas.map(a => '<option value="' + a + '">' + a + '</option>').join('');
-    // Populate tasks
+    teFillSelect(areaFilter, '전체', areas, a => a, a => a);
     tePopulateTaskList();
-    // Event listeners
     sel.addEventListener('change', () => { STATE.teSelectedTaskId = parseInt(sel.value) || 0; teUpdateUrl(); teRenderAll(); });
+    groupFilter.addEventListener('change', () => { tePopulateTaskList(); teUpdateUrl(); });
     axisFilter.addEventListener('change', tePopulateTaskList);
     areaFilter.addEventListener('change', tePopulateTaskList);
     keyword.addEventListener('input', tePopulateTaskList);
   }
 
-  // Check URL parameter
+  const urlParams = new URLSearchParams(window.location.search);
+  const groupParam = urlParams.get('group');
+  if (groupParam && ((GROUP_MAPPING && GROUP_MAPPING.groups) || []).includes(groupParam)) {
+    groupFilter.value = groupParam;
+    tePopulateTaskList();
+  }
   if (!STATE.teSelectedTaskId) {
-    const urlParams = new URLSearchParams(window.location.search);
     const taskParam = parseInt(urlParams.get('task'));
     if (taskParam && DATA.tasks.find(t => t.id === taskParam)) {
       STATE.teSelectedTaskId = taskParam;
@@ -17318,16 +17369,24 @@ function renderTaskEval() {
 
 function tePopulateTaskList() {
   const sel = document.getElementById('teTaskSelect');
+  const groupEl = document.getElementById('teGroupFilter');
+  const groupVal = groupEl ? groupEl.value : '';
   const axisVal = document.getElementById('teAxisFilter').value;
   const areaVal = document.getElementById('teAreaFilter').value;
   const kwVal = (document.getElementById('teKeywordSearch').value || '').toLowerCase();
   let filtered = DATA.tasks;
+  if (groupVal) filtered = filtered.filter(t => Array.isArray(t.groups) && t.groups.includes(groupVal));
   if (axisVal) filtered = filtered.filter(t => t.policy_axis_name === axisVal);
   if (areaVal) filtered = filtered.filter(t => t.strategic_area_name === areaVal);
   if (kwVal) filtered = filtered.filter(t => t.title.toLowerCase().includes(kwVal) || (t.background || '').toLowerCase().includes(kwVal));
   const prev = sel.value;
-  sel.innerHTML = '<option value="">-- 과제를 선택하세요 (' + filtered.length + '개) --</option>' +
-    filtered.map(t => '<option value="' + t.id + '">[' + t.id + '] ' + t.title + '</option>').join('');
+  teFillSelect(
+    sel,
+    '-- 과제를 선택하세요 (' + filtered.length + '개) --',
+    filtered,
+    t => t.id,
+    t => '[' + t.id + '] ' + t.title
+  );
   if (prev && filtered.find(t => t.id === parseInt(prev))) sel.value = prev;
 }
 
@@ -17411,6 +17470,12 @@ function teUpdateUrl() {
     url.hash = 'taskeval';
   } else {
     url.searchParams.delete('task');
+  }
+  var gf = document.getElementById('teGroupFilter');
+  if (gf && gf.value) {
+    url.searchParams.set('group', gf.value);
+  } else {
+    url.searchParams.delete('group');
   }
   if (STATE.teExpanded === true) {
     url.searchParams.set('expand', '1');
@@ -17516,6 +17581,10 @@ function teRenderOverview(task) {
   html += '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">';
   html += '<span style="display:inline-block;padding:4px 10px;border-radius:12px;background:rgba(21,101,192,.12);color:#1565C0;font-size:.8rem;font-weight:600">정책축: ' + (task.policy_axis_name || 'N/A') + '</span>';
   html += '<span style="display:inline-block;padding:4px 10px;border-radius:12px;background:rgba(106,27,154,.12);color:#6A1B9A;font-size:.8rem;font-weight:600">전략분야: ' + (task.strategic_area_name || 'N/A') + '</span>';
+  var taskGroups = Array.isArray(task.groups) ? task.groups : [];
+  taskGroups.forEach(function(g) {
+    html += '<span style="display:inline-block;padding:4px 10px;border-radius:12px;background:rgba(0,137,123,.14);color:#00695C;font-size:.8rem;font-weight:600">분과: ' + teEscapeHtml(g) + '</span>';
+  });
   html += '</div>';
   // Background
   var bg = task.background || '';

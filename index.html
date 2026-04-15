@@ -1478,6 +1478,9 @@ mark.hl { background: #fff176; padding: 0 1px; border-radius: 2px; font-style: n
       <select id="filterArea" onchange="applyFilters()" aria-label="전략분야 필터">
         <option value="">전체 전략분야</option>
       </select>
+      <select id="filterGroup" onchange="applyFilters()" aria-label="분과 필터">
+        <option value="">전체 분과</option>
+      </select>
       <select id="filterMinistry" onchange="applyFilters()" aria-label="부처 필터">
         <option value="">전체 부처</option>
       </select>
@@ -1551,6 +1554,9 @@ mark.hl { background: #fff176; padding: 0 1px; border-radius: 2px; font-style: n
       </select>
       <select id="tlFilterArea" onchange="renderTimeline()" aria-label="전략분야 필터">
         <option value="">전체 전략분야</option>
+      </select>
+      <select id="tlFilterGroup" onchange="renderTimeline()" aria-label="분과 필터">
+        <option value="">전체 분과</option>
       </select>
       <select id="tlFilterMinistry" onchange="renderTimeline()" aria-label="부처 필터">
         <option value="">전체 부처</option>
@@ -2466,18 +2472,61 @@ document.addEventListener('click', function(e) {
 // ============================================================
 const debouncedApplyFilters = debounce(applyFilters, 300);
 
+// ============================================================
+// 분과(Group) mapping — lazy-loaded once, shared across tabs
+// ============================================================
+var GROUP_MAPPING = null;
+var GROUP_MAPPING_PROMISE = null;
+function loadGroupMapping() {
+  if (GROUP_MAPPING) return Promise.resolve(GROUP_MAPPING);
+  if (GROUP_MAPPING_PROMISE) return GROUP_MAPPING_PROMISE;
+  GROUP_MAPPING_PROMISE = fetch('data/group_mapping.json')
+    .then(function(r) { return r.ok ? r.json() : null; })
+    .then(function(m) {
+      GROUP_MAPPING = m || { groups: [], task_to_groups: {}, task_primary_group: {} };
+      if (m && DATA && DATA.tasks && Array.isArray(DATA.tasks.tasks)) {
+        DATA.tasks.tasks.forEach(function(t) {
+          var key = String(t.id);
+          t.groups = m.task_to_groups[key] || [];
+          t.primary_group = m.task_primary_group[key] || '';
+        });
+      }
+      return GROUP_MAPPING;
+    })
+    .catch(function() { GROUP_MAPPING = { groups: [], task_to_groups: {}, task_primary_group: {} }; return GROUP_MAPPING; });
+  return GROUP_MAPPING_PROMISE;
+}
+function taskInGroup(task, groupName) {
+  if (!groupName) return true;
+  return Array.isArray(task.groups) && task.groups.indexOf(groupName) !== -1;
+}
+function populateGroupSelect(sel, allLabel) {
+  if (!sel || !GROUP_MAPPING) return;
+  // Clear existing group options (keep first "전체" option)
+  while (sel.options.length > 1) sel.remove(1);
+  (GROUP_MAPPING.groups || []).forEach(function(g) {
+    var o = document.createElement('option');
+    o.value = g;
+    o.textContent = g;
+    sel.appendChild(o);
+  });
+}
+
 function applyFilters() {
   const axisVal = document.getElementById('filterAxis').value;
   const areaVal = document.getElementById('filterArea').value;
+  const groupEl = document.getElementById('filterGroup');
+  const groupVal = groupEl ? groupEl.value : '';
   const ministryVal = document.getElementById('filterMinistry').value;
   const deadlineVal = document.getElementById('filterDeadline').value;
   const keyword = document.getElementById('filterKeyword').value.trim().toLowerCase();
 
-  STATE.filters = { axis: axisVal, area: areaVal, ministry: ministryVal, keyword: keyword, deadline: deadlineVal };
+  STATE.filters = { axis: axisVal, area: areaVal, group: groupVal, ministry: ministryVal, keyword: keyword, deadline: deadlineVal };
 
   const filtered = DATA.tasks.tasks.filter(t => {
     if (axisVal && String(t.policy_axis_id) !== axisVal) return false;
     if (areaVal && String(t.strategic_area_id) !== areaVal) return false;
+    if (groupVal && !taskInGroup(t, groupVal)) return false;
     if (ministryVal) {
       const hasMinistry = t.recommendations.some(r => r.ministry === ministryVal || (extractMinistries(r.content) || '').indexOf(ministryVal) !== -1 || extractCoopMinistries(r.content).indexOf(ministryVal) !== -1);
       if (!hasMinistry) return false;
@@ -2532,6 +2581,9 @@ function renderActiveFilters() {
     const name = task ? task.strategic_area_name : '분야 ' + f.area;
     html += '<span class="filter-tag">' + escapeHtml(name) + '<span class="remove-tag" onclick="removeFilter(\'area\')">x</span></span>';
   }
+  if (f.group) {
+    html += '<span class="filter-tag">분과: ' + escapeHtml(f.group) + '<span class="remove-tag" onclick="removeFilter(\'group\')">x</span></span>';
+  }
   if (f.ministry) {
     html += '<span class="filter-tag">' + escapeHtml(f.ministry) + '<span class="remove-tag" onclick="removeFilter(\'ministry\')">x</span></span>';
   }
@@ -2546,7 +2598,7 @@ function renderActiveFilters() {
 }
 
 function removeFilter(type) {
-  const map = { axis: 'filterAxis', area: 'filterArea', ministry: 'filterMinistry', deadline: 'filterDeadline', keyword: 'filterKeyword' };
+  const map = { axis: 'filterAxis', area: 'filterArea', group: 'filterGroup', ministry: 'filterMinistry', deadline: 'filterDeadline', keyword: 'filterKeyword' };
   const el = document.getElementById(map[type]);
   if (el) el.value = '';
   applyFilters();
@@ -2555,10 +2607,11 @@ function removeFilter(type) {
 function resetFilters() {
   document.getElementById('filterAxis').value = '';
   document.getElementById('filterArea').value = '';
+  var fg = document.getElementById('filterGroup'); if (fg) fg.value = '';
   document.getElementById('filterMinistry').value = '';
   document.getElementById('filterDeadline').value = '';
   document.getElementById('filterKeyword').value = '';
-  STATE.filters = { axis: '', area: '', ministry: '', keyword: '', deadline: '' };
+  STATE.filters = { axis: '', area: '', group: '', ministry: '', keyword: '', deadline: '' };
   STATE.searchQuery = '';
   document.getElementById('searchResultCount').style.display = 'none';
   renderTaskGrid(DATA.tasks.tasks);
@@ -3037,6 +3090,10 @@ function renderTaskGrid(tasks) {
     html += '<div class="task-meta">' + recCount + '개 정책권고 | 담당: ' + ministriesAll.slice(0, 4).join(', ') + (ministriesAll.length > 4 ? ' 외 ' + (ministriesAll.length - 4) + '개' : '') + '</div>';
     html += '<div class="badges">';
     html += '<span class="badge badge-axis' + t.policy_axis_id + '">' + escapeHtml(t.policy_axis_name) + '</span>';
+    var tgroups = Array.isArray(t.groups) ? t.groups : [];
+    tgroups.forEach(function(g) {
+      html += '<span class="badge" style="background:rgba(0,137,123,.14);color:#00695C">분과: ' + escapeHtml(g) + '</span>';
+    });
     html += '<span class="badge badge-count">' + recCount + '건</span>';
     if (dlStatus === 'overdue') html += '<span class="badge badge-overdue">기한초과</span>';
     else if (dlStatus === 'critical') html += '<span class="badge badge-overdue">기한 임박</span>';
@@ -3250,8 +3307,33 @@ function renderTasks() {
     ministrySelect.innerHTML += '<option value="' + m + '">' + escapeHtml(m) + '</option>';
   });
 
+  _loadAndPopulateGroupFilters();
+
   STATE.filteredTasks = DATA.tasks.tasks;
   renderTaskGrid(DATA.tasks.tasks);
+}
+
+function _loadAndPopulateGroupFilters() {
+  loadGroupMapping().then(function() {
+    var fg = document.getElementById('filterGroup');
+    var tg = document.getElementById('tlFilterGroup');
+    populateGroupSelect(fg);
+    populateGroupSelect(tg);
+    // 진단 로그: 분과 옵션이 채워지지 않았다면 콘솔에 경고
+    if (fg && fg.options.length <= 1) {
+      console.warn('[filterGroup] populate failed. GROUP_MAPPING.groups=',
+        GROUP_MAPPING && GROUP_MAPPING.groups);
+    }
+    try {
+      var url = new URL(window.location);
+      var g = url.searchParams.get('group');
+      if (g && GROUP_MAPPING.groups.indexOf(g) !== -1) {
+        if (fg) { fg.value = g; applyFilters(); }
+      }
+    } catch (e) { /* ignore */ }
+  }).catch(function(err) {
+    console.error('[loadGroupMapping] failed:', err);
+  });
 }
 
 // ============================================================
@@ -3739,7 +3821,7 @@ function _initTimelineFilters() {
 }
 
 function resetTimelineFilters() {
-  ['tlFilterAxis', 'tlFilterArea', 'tlFilterMinistry'].forEach(id => {
+  ['tlFilterAxis', 'tlFilterArea', 'tlFilterGroup', 'tlFilterMinistry'].forEach(id => {
     const el = document.getElementById(id); if (el) el.value = '';
   });
   const kw = document.getElementById('tlFilterKeyword'); if (kw) kw.value = '';
@@ -3775,6 +3857,7 @@ function renderTimeline() {
 
   const axisVal    = document.getElementById('tlFilterAxis')?.value    || '';
   const areaVal    = document.getElementById('tlFilterArea')?.value    || '';
+  const groupVal   = document.getElementById('tlFilterGroup')?.value   || '';
   const ministryVal= document.getElementById('tlFilterMinistry')?.value|| '';
   const kwVal      = (document.getElementById('tlFilterKeyword')?.value|| '').trim().toLowerCase();
   const kwList     = kwVal ? parseKeywords(kwVal) : [];
@@ -3785,6 +3868,7 @@ function renderTimeline() {
   DATA.tasks.tasks.forEach(t => {
     if (axisVal && String(t.policy_axis_id) !== axisVal) return;
     if (areaVal && String(t.strategic_area_id) !== areaVal) return;
+    if (groupVal && !taskInGroup(t, groupVal)) return;
 
     t.recommendations.forEach(r => {
       if (ministryVal && r.ministry !== ministryVal && (extractMinistries(r.content) || '').indexOf(ministryVal) === -1 && extractCoopMinistries(r.content).indexOf(ministryVal) === -1) return;
@@ -6388,6 +6472,8 @@ function init() {
 
 document.addEventListener('DOMContentLoaded', function() {
   init();
+  // 분과 필터 채우기 — renderTasks에서도 호출되지만, 어떤 이유로 실패해도 보장되도록 직접 호출
+  if (typeof _loadAndPopulateGroupFilters === 'function') _loadAndPopulateGroupFilters();
 
   // Helper: find task by id (number) or by circled-number string (①②…)
   function findTaskByParam(param) {

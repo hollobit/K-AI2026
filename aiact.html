@@ -1065,6 +1065,16 @@ tbody td { padding: 11px 14px; font-size: 0.85rem; border-bottom: 1px solid var(
 
   <div class="section-title">&#128197; 법령·가이드라인·과제 추진 타임라인</div>
 
+  <!-- 분과 필터 -->
+  <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:14px;padding:10px 14px;border:1px solid var(--border);border-radius:8px;background:var(--light)">
+    <label for="tlGroupFilter" style="font-size:.85rem;font-weight:600;color:var(--dark)">&#128102;&#8205;&#128106; 분과 필터:</label>
+    <select id="tlGroupFilter" onchange="applyTimelineGroupFilter()" style="padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:.85rem;background:white;color:var(--dark);min-width:200px">
+      <option value="">전체</option>
+    </select>
+    <span id="tlGroupCount" style="font-size:.78rem;color:var(--gray);margin-left:auto"></span>
+    <span style="font-size:.78rem;color:var(--gray)">&#9432; 법령 시행 컬럼은 항상 표시됩니다.</span>
+  </div>
+
   <div class="timeline-scroll">
     <div class="timeline-grid">
 
@@ -2150,6 +2160,110 @@ var PRIORITY_COLORS = {
   '주의': '<span class="badge badge-warning">주의</span>'
 };
 
+// ===== 타임라인 분과 필터 =====
+var TL_GROUP_MAPPING = null;
+var TL_GROUP_LOADED = false;
+function loadTimelineGroupFilter() {
+  if (TL_GROUP_LOADED) return;
+  TL_GROUP_LOADED = true;
+  fetch('data/group_mapping.json')
+    .then(function(r) { return r.ok ? r.json() : null; })
+    .then(function(m) {
+      if (!m) return;
+      TL_GROUP_MAPPING = m;
+      var sel = document.getElementById('tlGroupFilter');
+      if (!sel) return;
+      (m.groups || []).forEach(function(g) {
+        var o = document.createElement('option');
+        o.value = g;
+        o.textContent = g;
+        sel.appendChild(o);
+      });
+      // data-group 속성 주입 (과제 N → task_primary_group)
+      var items = document.querySelectorAll('#view-timeline .timeline-item');
+      items.forEach(function(it) {
+        if (it.classList.contains('law-item')) {
+          it.setAttribute('data-group', '법령');
+          return;
+        }
+        var dateEl = it.querySelector('.ti-date');
+        var text = dateEl ? dateEl.textContent : '';
+        var match = text.match(/과제\s*(\d+)/);
+        if (match) {
+          var tn = match[1];
+          var g = m.task_primary_group[tn] || '';
+          it.setAttribute('data-group', g);
+        } else {
+          it.setAttribute('data-group', '기타');
+        }
+      });
+      applyTimelineGroupFilter();
+      // 클릭 → mirofish 과제 상세 (이벤트 위임)
+      var grid = document.querySelector('#view-timeline .timeline-grid');
+      if (grid && !grid._groupClickBound) {
+        grid._groupClickBound = true;
+        grid.addEventListener('click', function(e) {
+          var item = e.target.closest('.timeline-item');
+          if (!item || item.classList.contains('law-item')) return;
+          var dateEl = item.querySelector('.ti-date');
+          var text = dateEl ? dateEl.textContent : '';
+          var match = text.match(/과제\s*(\d+)/);
+          if (!match) return;
+          var tn = match[1];
+          var g = item.getAttribute('data-group') || '';
+          var params = new URLSearchParams({ task: tn });
+          if (g && g !== '법령' && g !== '기타') params.set('group', g);
+          window.open('mirofish.html?' + params.toString() + '#taskeval', '_blank');
+        });
+        // 커서 힌트
+        document.querySelectorAll('#view-timeline .timeline-item').forEach(function(i) {
+          if (!i.classList.contains('law-item')) {
+            i.classList.add('clickable');
+            i.title = '클릭: 과제별 전략 상세 보기';
+          }
+        });
+      }
+    })
+    .catch(function() { /* silent */ });
+}
+
+function applyTimelineGroupFilter() {
+  var sel = document.getElementById('tlGroupFilter');
+  var val = sel ? sel.value : '';
+  var items = document.querySelectorAll('#view-timeline .timeline-item');
+  var visibleTasks = 0;
+  items.forEach(function(it) {
+    var g = it.getAttribute('data-group') || '';
+    // 법령 컬럼은 항상 표시, 나머지는 필터 적용
+    var keep = !val || g === val || g === '법령';
+    it.style.display = keep ? '' : 'none';
+    if (keep && g !== '법령') visibleTasks++;
+  });
+  // 분기 컬럼 placeholder: 컬럼 헤더 이후 모든 item이 숨김이면 안내 표시
+  document.querySelectorAll('#view-timeline .timeline-col').forEach(function(col) {
+    var header = col.querySelector('.timeline-col-header');
+    var isLawCol = header && header.classList.contains('tc-law');
+    if (isLawCol) return;
+    var ph = col.querySelector('.timeline-col-empty');
+    var anyVisible = Array.prototype.some.call(col.querySelectorAll('.timeline-item'), function(i) { return i.style.display !== 'none'; });
+    if (!anyVisible && val) {
+      if (!ph) {
+        var d = document.createElement('div');
+        d.className = 'timeline-col-empty';
+        d.style.cssText = 'padding:12px;font-size:.78rem;color:var(--gray);font-style:italic;text-align:center';
+        d.textContent = '해당 분과 과제 없음';
+        col.appendChild(d);
+      }
+    } else if (ph) {
+      ph.remove();
+    }
+  });
+  var countEl = document.getElementById('tlGroupCount');
+  if (countEl) {
+    countEl.textContent = val ? ('과제 ' + visibleTasks + '건 표시 중') : '';
+  }
+}
+
 // ===== 탭 전환 =====
 function switchView(name, skipHistory) {
   document.querySelectorAll('.view').forEach(function(v) { v.classList.remove('active'); });
@@ -2164,6 +2278,7 @@ function switchView(name, skipHistory) {
   if (name === 'bookmarks') renderBookmarkFullPage();
   if (name === 'lawgraph' && !window._lgLoaded) loadLawGraph();
   if (name === 'legislation' && !window._legLoaded) loadLegislation();
+  if (name === 'timeline') loadTimelineGroupFilter();
   // URL 업데이트
   if (!skipHistory && window.history && window.history.replaceState) {
     var url = window.location.pathname + '?view=' + name;
@@ -6965,7 +7080,16 @@ function runLegAiSearch(noCache) {
         html += '<div style="text-align:left">';
         var dispItems = items.slice(0, 3);
         dispItems.forEach(function(item) {
-          var name = item.bill_name || item.name || item.title || item.report_nm || String(item);
+          // 객체인 경우 이름 속성 추출, 문자열인 경우 그대로 사용
+          var name = item.bill_name || item.name || item.title || item.report_nm || '';
+          if (!name && typeof item === 'string') name = item;
+          if (!name && typeof item === 'object' && item !== null) {
+            // 알려진 속성들을 순회하며 첫 번째 문자열 값을 사용
+            var keys = ['BILL_NAME', 'bill_name', 'name', 'title', 'report_nm', '법안명', '의안명'];
+            for (var i = 0; i < keys.length; i++) {
+              if (typeof item[keys[i]] === 'string') { name = item[keys[i]]; break; }
+            }
+          }
           var date = item.date || item.propose_date || item.issue_de || '';
           var id = item.bill_id || item.id || '';
           if (name && name !== '이름없음') {
@@ -7177,10 +7301,27 @@ function runLegAiSearch(noCache) {
         html += '<details style="margin-bottom:10px"><summary style="cursor:pointer;font-weight:600;font-size:.86rem;color:#333">' + stageName + '</summary>';
         if (Array.isArray(stageData)) {
           stageData.forEach(function(item) {
-            html += '<div style="padding:4px 8px;border-bottom:1px solid #f0f0f0;font-size:.82rem">' + _esc(String(item)) + '</div>';
+            var displayText = '';
+            if (typeof item === 'string') {
+              displayText = item;
+            } else if (typeof item === 'object' && item !== null) {
+              // 객체에서 표시할 속성 추출
+              displayText = item.bill_name || item.name || item.title || item.report_nm || item.BILL_NAME || JSON.stringify(item);
+            } else {
+              displayText = String(item);
+            }
+            html += '<div style="padding:4px 8px;border-bottom:1px solid #f0f0f0;font-size:.82rem">' + _esc(displayText) + '</div>';
           });
         } else {
-          html += '<div style="padding:4px 8px;font-size:.82rem">' + _esc(String(stageData)) + '</div>';
+          var displayData = '';
+          if (typeof stageData === 'string') {
+            displayData = stageData;
+          } else if (typeof stageData === 'object' && stageData !== null) {
+            displayData = stageData.bill_name || stageData.name || stageData.title || stageData.report_nm || stageData.BILL_NAME || JSON.stringify(stageData);
+          } else {
+            displayData = String(stageData);
+          }
+          html += '<div style="padding:4px 8px;font-size:.82rem">' + _esc(displayData) + '</div>';
         }
         html += '</details>';
       });
