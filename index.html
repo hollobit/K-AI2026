@@ -2129,6 +2129,18 @@ function switchView(viewId) {
     }
     renderReferences(refInput ? refInput.value.trim().toLowerCase() : '');
   }
+  // 탭 전환 시 URL group 파라미터를 대상 탭의 필터에 동기화
+  try {
+    var _url = new URL(window.location);
+    var _g = _url.searchParams.get('group');
+    if (viewId === 'tasks') {
+      var _fg = document.getElementById('filterGroup');
+      if (_fg && _g && _fg.value !== _g) { _fg.value = _g; applyFilters(); }
+    } else if (viewId === 'timeline') {
+      var _tg = document.getElementById('tlFilterGroup');
+      if (_tg && _g && _tg.value !== _g) _tg.value = _g;
+    }
+  } catch (e) { /* ignore */ }
   // 타임라인 탭: 차트 초기화 (view 표시 후 캔버스가 visible 상태에서 생성)
   if (viewId === 'timeline') {
     setTimeout(function() { renderTimeline(); }, 50);
@@ -2522,6 +2534,13 @@ function applyFilters() {
   const keyword = document.getElementById('filterKeyword').value.trim().toLowerCase();
 
   STATE.filters = { axis: axisVal, area: areaVal, group: groupVal, ministry: ministryVal, keyword: keyword, deadline: deadlineVal };
+
+  // URL 동기화 (과제별 상세 탭의 분과 필터)
+  try {
+    var _u = new URL(window.location);
+    if (groupVal) _u.searchParams.set('group', groupVal); else _u.searchParams.delete('group');
+    history.replaceState(null, '', _u);
+  } catch (e) { /* ignore */ }
 
   const filtered = DATA.tasks.tasks.filter(t => {
     if (axisVal && String(t.policy_axis_id) !== axisVal) return false;
@@ -3327,8 +3346,16 @@ function _loadAndPopulateGroupFilters() {
     try {
       var url = new URL(window.location);
       var g = url.searchParams.get('group');
+      var view = url.searchParams.get('view') || STATE.currentView || '';
       if (g && GROUP_MAPPING.groups.indexOf(g) !== -1) {
-        if (fg) { fg.value = g; applyFilters(); }
+        // tasks 뷰: filterGroup, timeline 뷰: tlFilterGroup
+        if (view === 'timeline' && tg) {
+          tg.value = g;
+          if (typeof renderTimeline === 'function') renderTimeline();
+        } else if (fg) {
+          fg.value = g;
+          applyFilters();
+        }
       }
     } catch (e) { /* ignore */ }
   }).catch(function(err) {
@@ -3860,6 +3887,15 @@ function renderTimeline() {
   const groupVal   = document.getElementById('tlFilterGroup')?.value   || '';
   const ministryVal= document.getElementById('tlFilterMinistry')?.value|| '';
   const kwVal      = (document.getElementById('tlFilterKeyword')?.value|| '').trim().toLowerCase();
+
+  // URL 동기화 (타임라인 탭의 분과 필터) — 현재 탭이 timeline일 때만
+  try {
+    if (STATE.currentView === 'timeline') {
+      var _u = new URL(window.location);
+      if (groupVal) _u.searchParams.set('group', groupVal); else _u.searchParams.delete('group');
+      history.replaceState(null, '', _u);
+    }
+  } catch (e) { /* ignore */ }
   const kwList     = kwVal ? parseKeywords(kwVal) : [];
 
   const quarters = { 'none': [], '26Q1': [], '26Q2': [], '26Q3': [], '26Q4': [], '27+': [] };
@@ -6511,6 +6547,8 @@ document.addEventListener('DOMContentLoaded', function() {
       // 필터 파라미터 적용
       if (axisParam) { var el = document.getElementById('tlFilterAxis'); if (el) el.value = axisParam; }
       if (areaParam) { var el = document.getElementById('tlFilterArea'); if (el) el.value = areaParam; }
+      var groupParam = params.get('group');
+      if (groupParam) { var el = document.getElementById('tlFilterGroup'); if (el) el.value = decodeURIComponent(groupParam); }
       if (ministryParam) { var el = document.getElementById('tlFilterMinistry'); if (el) el.value = decodeURIComponent(ministryParam); }
       if (keywordParam) { var el = document.getElementById('tlFilterKeyword'); if (el) el.value = decodeURIComponent(keywordParam); }
       if (sortParam === 'task') _ganttSort = 'task';
@@ -7548,10 +7586,12 @@ function updateURL() {
     // 타임라인 필터 상태
     var tlAxis = document.getElementById('tlFilterAxis');
     var tlArea = document.getElementById('tlFilterArea');
+    var tlGroup = document.getElementById('tlFilterGroup');
     var tlMin = document.getElementById('tlFilterMinistry');
     var tlKw = document.getElementById('tlFilterKeyword');
     if (tlAxis && tlAxis.value) params.set('axis', tlAxis.value);
     if (tlArea && tlArea.value) params.set('area', tlArea.value);
+    if (tlGroup && tlGroup.value) params.set('group', tlGroup.value);
     if (tlMin && tlMin.value) params.set('ministry', tlMin.value);
     if (tlKw && tlKw.value) params.set('keyword', tlKw.value);
   }
@@ -8358,6 +8398,7 @@ function renderDelivView() {
   // 타임라인 필터 적용
   var axisVal = (document.getElementById('tlFilterAxis') || {}).value || '';
   var areaVal = (document.getElementById('tlFilterArea') || {}).value || '';
+  var groupVal = (document.getElementById('tlFilterGroup') || {}).value || '';
   var ministryVal = (document.getElementById('tlFilterMinistry') || {}).value || '';
   var kwVal = ((document.getElementById('tlFilterKeyword') || {}).value || '').trim().toLowerCase();
   var kwList = kwVal ? parseKeywords(kwVal) : [];
@@ -8369,6 +8410,7 @@ function renderDelivView() {
   DATA.tasks.tasks.forEach(function(t) {
     if (axisVal && String(t.policy_axis_id) !== axisVal) return;
     if (areaVal && String(t.strategic_area_id) !== areaVal) return;
+    if (groupVal && typeof taskInGroup === 'function' && !taskInGroup(t, groupVal)) return;
 
     t.recommendations.forEach(function(r) {
       if (ministryVal && r.ministry !== ministryVal && (extractMinistries(r.content) || '').indexOf(ministryVal) === -1 && extractCoopMinistries(r.content).indexOf(ministryVal) === -1) return;
@@ -8470,6 +8512,7 @@ function renderGanttView() {
   // 타임라인과 동일한 필터 조건 적용
   var axisVal = (document.getElementById('tlFilterAxis') || {}).value || '';
   var areaVal = (document.getElementById('tlFilterArea') || {}).value || '';
+  var groupVal = (document.getElementById('tlFilterGroup') || {}).value || '';
   var ministryVal = (document.getElementById('tlFilterMinistry') || {}).value || '';
   var kwVal = ((document.getElementById('tlFilterKeyword') || {}).value || '').trim().toLowerCase();
   var kwList = kwVal ? parseKeywords(kwVal) : [];
@@ -8482,6 +8525,7 @@ function renderGanttView() {
   DATA.tasks.tasks.forEach(function(t) {
     if (axisVal && String(t.policy_axis_id) !== axisVal) return;
     if (areaVal && String(t.strategic_area_id) !== areaVal) return;
+    if (groupVal && typeof taskInGroup === 'function' && !taskInGroup(t, groupVal)) return;
 
     t.recommendations.forEach(function(r) {
       if (ministryVal && r.ministry !== ministryVal && (extractMinistries(r.content) || '').indexOf(ministryVal) === -1 && extractCoopMinistries(r.content).indexOf(ministryVal) === -1) return;

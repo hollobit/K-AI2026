@@ -2179,6 +2179,14 @@ function loadTimelineGroupFilter() {
         o.textContent = g;
         sel.appendChild(o);
       });
+      // URL ?group=<분과명> 적용 (타임라인 진입 시 자동 필터)
+      try {
+        var _u = new URL(window.location);
+        var _g = _u.searchParams.get('group');
+        if (_g && (m.groups || []).indexOf(_g) !== -1) {
+          sel.value = _g;
+        }
+      } catch (e) { /* ignore */ }
       // data-group 속성 주입 (과제 N → task_primary_group)
       var items = document.querySelectorAll('#view-timeline .timeline-item');
       items.forEach(function(it) {
@@ -2230,6 +2238,13 @@ function loadTimelineGroupFilter() {
 function applyTimelineGroupFilter() {
   var sel = document.getElementById('tlGroupFilter');
   var val = sel ? sel.value : '';
+  // URL 동기화
+  try {
+    var _u = new URL(window.location);
+    if (val) _u.searchParams.set('group', val); else _u.searchParams.delete('group');
+    _u.searchParams.set('view', 'timeline');
+    history.replaceState(null, '', _u);
+  } catch (e) { /* ignore */ }
   var items = document.querySelectorAll('#view-timeline .timeline-item');
   var visibleTasks = 0;
   items.forEach(function(it) {
