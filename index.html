@@ -88,6 +88,7 @@ body { font-family: var(--font); background: var(--bg); color: var(--text, var(-
 [data-theme="dark"] .ref-search-bar,
 [data-theme="dark"] .ref-search-results-box { background: var(--card-bg); color: var(--text); }
 [data-theme="dark"] .nav-tabs { background: var(--card-bg); border-color: var(--border); }
+[data-theme="dark"] .nav-tabs::after { background: linear-gradient(to right, transparent, var(--card-bg) 70%); }
 [data-theme="dark"] .nav-tab { color: var(--text-muted); }
 [data-theme="dark"] .nav-tab:hover { background: rgba(74,158,255,0.1); }
 [data-theme="dark"] .summary-table td,
@@ -406,9 +407,17 @@ mark.highlight {
   background: white; border-bottom: 2px solid var(--border);
   display: flex; overflow-x: auto; position: sticky; top: 0; z-index: 100;
   box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  scrollbar-width: thin;
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+}
+.nav-tabs::after {
+  content: ''; position: sticky; right: 0; min-width: 24px; flex-shrink: 0;
+  background: linear-gradient(to right, transparent, white 70%);
+  pointer-events: none; z-index: 1;
 }
 .nav-tab {
-  padding: 14px 20px; cursor: pointer; font-size: 0.9rem; font-weight: 500;
+  padding: 12px 14px; cursor: pointer; font-size: 0.84rem; font-weight: 500;
   border-bottom: 3px solid transparent; white-space: nowrap;
   color: var(--gray); transition: all 0.2s; user-select: none;
 }
@@ -1930,6 +1939,7 @@ mark.hl { background: #fff176; padding: 0 1px; border-radius: 2px; font-style: n
   <div id="globalcompList" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px"></div>
 </div>
 
+
 <script>
 var _API_BASE = (function() {
   var h = window.location.hostname;
@@ -2115,6 +2125,7 @@ function switchView(viewId) {
     tab.classList.add('active');
     tab.setAttribute('aria-selected', 'true');
     tab.setAttribute('tabindex', '0');
+    tab.scrollIntoView({behavior: 'smooth', block: 'nearest', inline: 'nearest'});
   }
   // Lazy init charts on first overview visit
   if (viewId === 'overview' && !STATE.chartsInitialized) {
@@ -2835,6 +2846,7 @@ function openTaskModal(taskId, recSeq) {
   html += '</div></div>';
 
   document.getElementById('modalBody').innerHTML = html;
+
 
   // Update navigation buttons
   const tasks = STATE.filteredTasks.length > 0 ? STATE.filteredTasks : DATA.tasks.tasks;
@@ -9418,6 +9430,7 @@ function renderRiskNewsLinks() {
 // M7: Multi-compare mode (3-4 tasks)
 // ============================================================
 // Overrides are applied to existing compare functions above
+
 
 </script>
 

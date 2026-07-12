@@ -1075,6 +1075,32 @@ tbody td { padding: 11px 14px; font-size: 0.85rem; border-bottom: 1px solid var(
     <span style="font-size:.78rem;color:var(--gray)">&#9432; 법령 시행 컬럼은 항상 표시됩니다.</span>
   </div>
 
+  <!-- 분과 색상 범례 -->
+  <div id="tlGroupLegend" style="display:flex;flex-wrap:wrap;gap:6px 14px;margin-bottom:12px;padding:8px 14px;border:1px solid var(--border);border-radius:8px;background:var(--light);font-size:.75rem">
+    <span style="font-weight:600;color:var(--dark);margin-right:4px">분과 색상:</span>
+    <script>
+    (function() {
+      var el = document.getElementById('tlGroupLegend');
+      var items = [
+        ['기술혁신·인프라 분과','#1565C0'],['데이터 분과','#6A1B9A'],['AI기본의료 소그룹','#00838F'],
+        ['과학 분과','#2E7D32'],['보안 특위','#C62828'],['교육·인재 분과','#E65100'],
+        ['산업AX·생태계 분과','#4527A0'],['글로벌 협력 분과','#00695C'],['법률TF','#AD1457'],
+        ['공공AX 분과','#0277BD'],['지역 특위','#9E9D24'],['사회 분과','#5D4037'],
+        ['국방안보 분과','#37474F'],['AI민주주의 분과','#B71C1C']
+      ];
+      items.forEach(function(pair) {
+        var s = document.createElement('span');
+        s.style.cssText = 'display:inline-flex;align-items:center;gap:4px;white-space:nowrap';
+        var dot = document.createElement('span');
+        dot.style.cssText = 'display:inline-block;width:10px;height:10px;border-radius:2px;background:' + pair[1];
+        s.appendChild(dot);
+        s.appendChild(document.createTextNode(pair[0]));
+        el.appendChild(s);
+      });
+    })();
+    </script>
+  </div>
+
   <div class="timeline-scroll">
     <div class="timeline-grid">
 
@@ -2160,6 +2186,24 @@ var PRIORITY_COLORS = {
   '주의': '<span class="badge badge-warning">주의</span>'
 };
 
+// ===== 타임라인 분과별 색상 =====
+var GROUP_COLORS = {
+  '기술혁신·인프라 분과': '#1565C0',
+  '데이터 분과':         '#6A1B9A',
+  'AI기본의료 소그룹':   '#00838F',
+  '과학 분과':           '#2E7D32',
+  '보안 특위':           '#C62828',
+  '교육·인재 분과':      '#E65100',
+  '산업AX·생태계 분과':  '#4527A0',
+  '글로벌 협력 분과':    '#00695C',
+  '법률TF':              '#AD1457',
+  '공공AX 분과':         '#0277BD',
+  '지역 특위':           '#9E9D24',
+  '사회 분과':           '#5D4037',
+  '국방안보 분과':       '#37474F',
+  'AI민주주의 분과':     '#B71C1C'
+};
+
 // ===== 타임라인 분과 필터 =====
 var TL_GROUP_MAPPING = null;
 var TL_GROUP_LOADED = false;
@@ -2197,12 +2241,17 @@ function loadTimelineGroupFilter() {
         var dateEl = it.querySelector('.ti-date');
         var text = dateEl ? dateEl.textContent : '';
         var match = text.match(/과제\s*(\d+)/);
+        var g = '';
         if (match) {
           var tn = match[1];
-          var g = m.task_primary_group[tn] || '';
+          g = m.task_primary_group[tn] || '';
           it.setAttribute('data-group', g);
         } else {
-          it.setAttribute('data-group', '기타');
+          g = '기타';
+          it.setAttribute('data-group', g);
+        }
+        if (GROUP_COLORS[g]) {
+          it.style.borderLeftColor = GROUP_COLORS[g];
         }
       });
       applyTimelineGroupFilter();
