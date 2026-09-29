@@ -1414,7 +1414,7 @@ mark.hl { background: #fff176; padding: 0 1px; border-radius: 2px; font-style: n
       <h4 id="alertPanelTitle">기한초과 · 기한 임박 과제</h4>
       <div style="display:flex;gap:6px;align-items:center">
         <button class="alert-ctrl-btn" id="alertRecViewBtn" onclick="toggleAlertRecView()">📋 정책권고 목록</button>
-        <button class="alert-ctrl-btn" id="alertCollapseBtn" onclick="toggleAlertCollapse()">▲ 접기</button>
+        <button class="alert-ctrl-btn" id="alertCollapseBtn" onclick="toggleAlertCollapse()">▼ 펼치기</button>
       </div>
     </div>
     <div id="alertItems"></div>
@@ -3032,7 +3032,7 @@ function renderOverview() {
   if (urgentItems.length > 0) {
     document.getElementById('alertPanel').style.display = 'block';
     STATE._alertItems = urgentItems;
-    STATE._alertCollapsed = false;
+    STATE._alertCollapsed = true;   // 초기 화면: 접힌 상태가 기본
     STATE._alertRecView = false;
     renderAlertItems();
   }
@@ -3291,6 +3291,7 @@ function toggleAlertCollapse() {
 
 function toggleAlertRecView() {
   STATE._alertRecView = !STATE._alertRecView;
+  STATE._alertCollapsed = false;   // 보기 전환 시 결과가 보이도록 펼침
   renderAlertItems();
 }
 
